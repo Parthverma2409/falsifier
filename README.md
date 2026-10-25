@@ -24,8 +24,14 @@ _TODO: known limitations._
 
 ## Prior art
 
-    Falsifier is an independent implementation. Three projects shaped the design:
-    - PatchProof (Apache-2.0) for the red, patch, green loop and per-attempt evidence
-    - Kelp (MIT) for evidence-gated findings: the model proposes, execution decides
-    - CodeMore (MIT) for pairing every rule with true-positive and false-positive fixtures
-    No code was copied from any of them.
+Falsifier is an independent implementation. Three projects shaped the design:
+
+- PatchProof (Apache-2.0) for the red, patch, green loop and per-attempt evidence
+- Kelp (MIT) for evidence-gated findings: the model proposes, execution decides
+- CodeMore (MIT) for pairing every rule with true-positive and false-positive fixtures
+
+No code was copied from any of them.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
