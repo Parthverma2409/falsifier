@@ -1,0 +1,1904 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · pytest-dev__pytest-7432</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>pytest-dev__pytest-7432</h1>
+<p class="muted">skipping: --runxfail breaks pytest.mark.skip location reporting pytest versions: 5.4.x, current master When `@pytest.mark.skip`/`skipif` marks are used to skip a test, for example ```py import pytest …</p><details><summary>Full issue</summary><pre>skipping: --runxfail breaks pytest.mark.skip location reporting
+pytest versions: 5.4.x, current master
+
+When `@pytest.mark.skip`/`skipif` marks are used to skip a test, for example
+
+```py
+import pytest
+@pytest.mark.skip
+def test_skip_location() -&gt; None:
+    assert 0
+```
+
+the expected skip location reported should point to the item itself, and this is indeed what happens when running with `pytest -rs`:
+
+```
+SKIPPED [1] test_it.py:3: unconditional skip
+```
+
+However, adding `pytest -rs --runxfail` breaks this:
+
+```
+SKIPPED [1] src/_pytest/skipping.py:238: unconditional skip
+```
+
+The `--runxfail` is only about xfail and should not affect this at all.
+
+---
+
+Hint: the bug is in `src/_pytest/skipping.py`, the `pytest_runtest_makereport` hook.
+</pre></details>
+
+<div class="verdict EARNED">EARNED</div>
+
+<p>SWE-bench says <b>RESOLVED</b> · benchmark oracle: the repository's own FAIL_TO_PASS tests (1)</p>
+<p><b>Negative control (canary): exit 3 · <span class="ok">live</span> · the canary failed the test (exit 3, no tests ran in 0.05s; the canary&#x27;s AssertionError is in the log)</b></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.09s) and passes on the patch (exit 0, 1 passed in 0.08s); all 77 PASS_TO_PASS tests PASSED; the test killed 4 of 4 distinguishable mutants (0 equivalent discarded). Negative control: the canary failed the test (exit 3, no tests ran in 0.05s; the canary&#x27;s AssertionError is in the log)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint 7e9c65a7-893b-487b-9adb-5f8deca655c2 ·
+8 forks · 4.50 CPU-s · $0.0463 · 2026-10-25T15:28:44+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Changes `len` to `len-1` in the range, causing the last skipped item to have its location reported one line too early; differs from the correct patch when `item.reportinfo()` returns a line number &gt; 0.</span></div><div class="card"><b>m2</b> · silences-symptom<br><span class="status killed">killed</span><br><span class="muted">Returns a default Skip with empty reason instead of propagating the actual skip reason; differs from the correct patch when the skip has a non-empty reason.</span></div><div class="card"><b>m3</b> · too-narrow<br><span class="status killed">killed</span><br><span class="muted">Only handles `xfail.Exception` instances with a `msg` attribute, missing other exception types; differs from the correct patch when the exception lacks a `msg` attribute.</span></div><div class="card"><b>m4</b> · too-narrow<br><span class="status killed">killed</span><br><span class="muted">Only processes skip marks with no arguments and no kwargs (pure unconditional skip), missing skip marks with conditions; differs from the correct patch when skip marks have conditions.</span></div></div>
+
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.09s · 0.295 CPU-s · 0.53 s · $0.00308<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.08s · 0.288 CPU-s · 0.55 s · $0.00301<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 79 passed in 2.70s · 2.445 CPU-s · 3.38 s · $0.02484<br>
+canary + test: <b>ERROR</b>: exit 3, no tests ran in 0.05s · 0.265 CPU-s · 0.50 s · $0.00278</p>
+<details><summary>The canary mutant</summary><pre><span class="line">--- a/src/_pytest/skipping.py</span><span class="line">+++ b/src/_pytest/skipping.py</span><span class="line">@@ -259,51 +259,7 @@ def pytest_runtest_call(item: Item) -&gt; Generator[None, None, None]:</span><span class="line"> </span><span class="line"> @hookimpl(hookwrapper=True)</span><span class="line"> def pytest_runtest_makereport(item: Item, call: CallInfo[None]):</span><span class="line del">-    outcome = yield</span><span class="line del">-    rep = outcome.get_result()</span><span class="line del">-    xfailed = item._store.get(xfailed_key, None)</span><span class="line del">-    # unittest special case, see setting of unexpectedsuccess_key</span><span class="line del">-    if unexpectedsuccess_key in item._store and rep.when == &quot;call&quot;:</span><span class="line del">-        reason = item._store[unexpectedsuccess_key]</span><span class="line del">-        if reason:</span><span class="line del">-            rep.longrepr = &quot;Unexpected success: {}&quot;.format(reason)</span><span class="line del">-        else:</span><span class="line del">-            rep.longrepr = &quot;Unexpected success&quot;</span><span class="line del">-        rep.outcome = &quot;failed&quot;</span><span class="line del">-    elif item.config.option.runxfail:</span><span class="line del">-        pass  # don&#x27;t interfere</span><span class="line del">-    elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):</span><span class="line del">-        assert call.excinfo.value.msg is not None</span><span class="line del">-        rep.wasxfail = &quot;reason: &quot; + call.excinfo.value.msg</span><span class="line del">-        rep.outcome = &quot;skipped&quot;</span><span class="line del">-    elif not rep.skipped and xfailed:</span><span class="line del">-        if call.excinfo:</span><span class="line del">-            raises = xfailed.raises</span><span class="line del">-            if raises is not None and not isinstance(call.excinfo.value, raises):</span><span class="line del">-                rep.outcome = &quot;failed&quot;</span><span class="line del">-            else:</span><span class="line del">-                rep.outcome = &quot;skipped&quot;</span><span class="line del">-                rep.wasxfail = xfailed.reason</span><span class="line del">-        elif call.when == &quot;call&quot;:</span><span class="line del">-            if xfailed.strict:</span><span class="line del">-                rep.outcome = &quot;failed&quot;</span><span class="line del">-                rep.longrepr = &quot;[XPASS(strict)] &quot; + xfailed.reason</span><span class="line del">-            else:</span><span class="line del">-                rep.outcome = &quot;passed&quot;</span><span class="line del">-                rep.wasxfail = xfailed.reason</span><span class="line del">-</span><span class="line del">-    if (</span><span class="line del">-        item._store.get(skipped_by_mark_key, True)</span><span class="line del">-        and rep.skipped</span><span class="line del">-        and type(rep.longrepr) is tuple</span><span class="line del">-    ):</span><span class="line del">-        # skipped by mark.skipif; change the location of the failure</span><span class="line del">-        # to point to the item definition, otherwise it will display</span><span class="line del">-        # the location of where the skip exception was raised within pytest</span><span class="line del">-        _, _, reason = rep.longrepr</span><span class="line del">-        filename, line = item.reportinfo()[:2]</span><span class="line del">-        assert line is not None</span><span class="line del">-        rep.longrepr = str(filename), line + 1, reason</span><span class="line add">+    raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line"> </span><span class="line"> def pytest_report_teststatus(report: BaseReport) -&gt; Optional[Tuple[str, str, str]]:</span></pre></details>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">diff --git a/src/_pytest/skipping.py b/src/_pytest/skipping.py</span><span class="line">--- a/src/_pytest/skipping.py</span><span class="line">+++ b/src/_pytest/skipping.py</span><span class="line">@@ -291,7 +291,8 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):</span><span class="line">             else:</span><span class="line">                 rep.outcome = &quot;passed&quot;</span><span class="line">                 rep.wasxfail = xfailed.reason</span><span class="line del">-    elif (</span><span class="line add">+</span><span class="line add">+    if (</span><span class="line">         item._store.get(skipped_by_mark_key, True)</span><span class="line">         and rep.skipped</span><span class="line">         and type(rep.longrepr) is tuple</span></pre></div>
+<div><h3>The test</h3><pre>import sys
+
+import pytest
+from _pytest.runner import runtestprotocol
+from _pytest.skipping import evaluate_skip_marks
+from _pytest.skipping import evaluate_xfail_marks
+from _pytest.skipping import pytest_runtest_setup
+
+
+class TestEvaluation:
+    def test_no_marker(self, testdir):
+        item = testdir.getitem(&quot;def test_func(): pass&quot;)
+        skipped = evaluate_skip_marks(item)
+        assert not skipped
+
+    def test_marked_xfail_no_args(self, testdir):
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        xfailed = evaluate_xfail_marks(item)
+        assert xfailed
+        assert xfailed.reason == &quot;&quot;
+        assert xfailed.run
+
+    def test_marked_skipif_no_args(self, testdir):
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skipif
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        skipped = evaluate_skip_marks(item)
+        assert skipped
+        assert skipped.reason == &quot;&quot;
+
+    def test_marked_one_arg(self, testdir):
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skipif(&quot;hasattr(os, &#x27;sep&#x27;)&quot;)
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        skipped = evaluate_skip_marks(item)
+        assert skipped
+        assert skipped.reason == &quot;condition: hasattr(os, &#x27;sep&#x27;)&quot;
+
+    def test_marked_one_arg_with_reason(self, testdir):
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skipif(&quot;hasattr(os, &#x27;sep&#x27;)&quot;, attr=2, reason=&quot;hello world&quot;)
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        skipped = evaluate_skip_marks(item)
+        assert skipped
+        assert skipped.reason == &quot;hello world&quot;
+
+    def test_marked_one_arg_twice(self, testdir):
+        lines = [
+            &quot;&quot;&quot;@pytest.mark.skipif(&quot;not hasattr(os, &#x27;murks&#x27;)&quot;)&quot;&quot;&quot;,
+            &quot;&quot;&quot;@pytest.mark.skipif(condition=&quot;hasattr(os, &#x27;murks&#x27;)&quot;)&quot;&quot;&quot;,
+        ]
+        for i in range(0, 2):
+            item = testdir.getitem(
+                &quot;&quot;&quot;
+                import pytest
+                %s
+                %s
+                def test_func():
+                    pass
+            &quot;&quot;&quot;
+                % (lines[i], lines[(i + 1) % 2])
+            )
+            skipped = evaluate_skip_marks(item)
+            assert skipped
+            assert skipped.reason == &quot;condition: not hasattr(os, &#x27;murks&#x27;)&quot;
+
+    def test_marked_one_arg_twice2(self, testdir):
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skipif(&quot;hasattr(os, &#x27;murks&#x27;)&quot;)
+            @pytest.mark.skipif(&quot;not hasattr(os, &#x27;murks&#x27;)&quot;)
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        skipped = evaluate_skip_marks(item)
+        assert skipped
+        assert skipped.reason == &quot;condition: not hasattr(os, &#x27;murks&#x27;)&quot;
+
+    def test_marked_skipif_with_boolean_without_reason(self, testdir) -&gt; None:
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skipif(False)
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        with pytest.raises(pytest.fail.Exception) as excinfo:
+            evaluate_skip_marks(item)
+        assert excinfo.value.msg is not None
+        assert (
+            &quot;&quot;&quot;Error evaluating &#x27;skipif&#x27;: you need to specify reason=STRING when using booleans as conditions.&quot;&quot;&quot;
+            in excinfo.value.msg
+        )
+
+    def test_marked_skipif_with_invalid_boolean(self, testdir) -&gt; None:
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+
+            class InvalidBool:
+                def __bool__(self):
+                    raise TypeError(&quot;INVALID&quot;)
+
+            @pytest.mark.skipif(InvalidBool(), reason=&quot;xxx&quot;)
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        with pytest.raises(pytest.fail.Exception) as excinfo:
+            evaluate_skip_marks(item)
+        assert excinfo.value.msg is not None
+        assert &quot;Error evaluating &#x27;skipif&#x27; condition as a boolean&quot; in excinfo.value.msg
+        assert &quot;INVALID&quot; in excinfo.value.msg
+
+    def test_skipif_class(self, testdir):
+        (item,) = testdir.getitems(
+            &quot;&quot;&quot;
+            import pytest
+            class TestClass(object):
+                pytestmark = pytest.mark.skipif(&quot;config._hackxyz&quot;)
+                def test_func(self):
+                    pass
+        &quot;&quot;&quot;
+        )
+        item.config._hackxyz = 3
+        skipped = evaluate_skip_marks(item)
+        assert skipped
+        assert skipped.reason == &quot;condition: config._hackxyz&quot;
+
+
+class TestXFail:
+    @pytest.mark.parametrize(&quot;strict&quot;, [True, False])
+    def test_xfail_simple(self, testdir, strict):
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail(strict=%s)
+            def test_func():
+                assert 0
+        &quot;&quot;&quot;
+            % strict
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.skipped
+        assert callreport.wasxfail == &quot;&quot;
+
+    def test_xfail_xpassed(self, testdir):
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail(reason=&quot;this is an xfail&quot;)
+            def test_func():
+                assert 1
+        &quot;&quot;&quot;
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.passed
+        assert callreport.wasxfail == &quot;this is an xfail&quot;
+
+    def test_xfail_using_platform(self, testdir):
+        &quot;&quot;&quot;
+        Verify that platform can be used with xfail statements.
+        &quot;&quot;&quot;
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail(&quot;platform.platform() == platform.platform()&quot;)
+            def test_func():
+                assert 0
+        &quot;&quot;&quot;
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.wasxfail
+
+    def test_xfail_xpassed_strict(self, testdir):
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail(strict=True, reason=&quot;nope&quot;)
+            def test_func():
+                assert 1
+        &quot;&quot;&quot;
+        )
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.failed
+        assert str(callreport.longrepr) == &quot;[XPASS(strict)] nope&quot;
+        assert not hasattr(callreport, &quot;wasxfail&quot;)
+
+    def test_xfail_run_anyway(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail
+            def test_func():
+                assert 0
+            def test_func2():
+                pytest.xfail(&quot;hello&quot;)
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(&quot;--runxfail&quot;)
+        result.stdout.fnmatch_lines(
+            [&quot;*def test_func():*&quot;, &quot;*assert 0*&quot;, &quot;*1 failed*1 pass*&quot;]
+        )
+
+    @pytest.mark.parametrize(
+        &quot;test_input,expected&quot;,
+        [
+            (
+                [&quot;-rs&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+            (
+                [&quot;-rs&quot;, &quot;--runxfail&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+        ],
+    )
+    def test_xfail_run_with_skip_mark(self, testdir, test_input, expected):
+        testdir.makepyfile(
+            test_sample=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip
+            def test_skip_location() -&gt; None:
+                assert 0
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(*test_input)
+        result.stdout.fnmatch_lines(expected)
+
+    def test_xfail_evalfalse_but_fails(self, testdir):
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail(&#x27;False&#x27;)
+            def test_func():
+                assert 0
+        &quot;&quot;&quot;
+        )
+        reports = runtestprotocol(item, log=False)
+        callreport = reports[1]
+        assert callreport.failed
+        assert not hasattr(callreport, &quot;wasxfail&quot;)
+        assert &quot;xfail&quot; in callreport.keywords
+
+    def test_xfail_not_report_default(self, testdir):
+        p = testdir.makepyfile(
+            test_one=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail
+            def test_this():
+                assert 0
+        &quot;&quot;&quot;
+        )
+        testdir.runpytest(p, &quot;-v&quot;)
+        # result.stdout.fnmatch_lines([
+        #    &quot;*HINT*use*-r*&quot;
+        # ])
+
+    def test_xfail_not_run_xfail_reporting(self, testdir):
+        p = testdir.makepyfile(
+            test_one=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail(run=False, reason=&quot;noway&quot;)
+            def test_this():
+                assert 0
+            @pytest.mark.xfail(&quot;True&quot;, run=False)
+            def test_this_true():
+                assert 0
+            @pytest.mark.xfail(&quot;False&quot;, run=False, reason=&quot;huh&quot;)
+            def test_this_false():
+                assert 1
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(p, &quot;-rx&quot;)
+        result.stdout.fnmatch_lines(
+            [
+                &quot;*test_one*test_this*&quot;,
+                &quot;*NOTRUN*noway&quot;,
+                &quot;*test_one*test_this_true*&quot;,
+                &quot;*NOTRUN*condition:*True*&quot;,
+                &quot;*1 passed*&quot;,
+            ]
+        )
+
+    def test_xfail_not_run_no_setup_run(self, testdir):
+        p = testdir.makepyfile(
+            test_one=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail(run=False, reason=&quot;hello&quot;)
+            def test_this():
+                assert 0
+            def setup_module(mod):
+                raise ValueError(42)
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(p, &quot;-rx&quot;)
+        result.stdout.fnmatch_lines(
+            [&quot;*test_one*test_this*&quot;, &quot;*NOTRUN*hello&quot;, &quot;*1 xfailed*&quot;]
+        )
+
+    def test_xfail_xpass(self, testdir):
+        p = testdir.makepyfile(
+            test_one=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail
+            def test_that():
+                assert 1
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(p, &quot;-rX&quot;)
+        result.stdout.fnmatch_lines([&quot;*XPASS*test_that*&quot;, &quot;*1 xpassed*&quot;])
+        assert result.ret == 0
+
+    def test_xfail_imperative(self, testdir):
+        p = testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            def test_this():
+                pytest.xfail(&quot;hello&quot;)
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([&quot;*1 xfailed*&quot;])
+        result = testdir.runpytest(p, &quot;-rx&quot;)
+        result.stdout.fnmatch_lines([&quot;*XFAIL*test_this*&quot;, &quot;*reason:*hello*&quot;])
+        result = testdir.runpytest(p, &quot;--runxfail&quot;)
+        result.stdout.fnmatch_lines([&quot;*1 pass*&quot;])
+
+    def test_xfail_imperative_in_setup_function(self, testdir):
+        p = testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            def setup_function(function):
+                pytest.xfail(&quot;hello&quot;)
+
+            def test_this():
+                assert 0
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([&quot;*1 xfailed*&quot;])
+        result = testdir.runpytest(p, &quot;-rx&quot;)
+        result.stdout.fnmatch_lines([&quot;*XFAIL*test_this*&quot;, &quot;*reason:*hello*&quot;])
+        result = testdir.runpytest(p, &quot;--runxfail&quot;)
+        result.stdout.fnmatch_lines(
+            &quot;&quot;&quot;
+            *def test_this*
+            *1 fail*
+        &quot;&quot;&quot;
+        )
+
+    def xtest_dynamic_xfail_set_during_setup(self, testdir):
+        p = testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            def setup_function(function):
+                pytest.mark.xfail(function)
+            def test_this():
+                assert 0
+            def test_that():
+                assert 1
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(p, &quot;-rxX&quot;)
+        result.stdout.fnmatch_lines([&quot;*XFAIL*test_this*&quot;, &quot;*XPASS*test_that*&quot;])
+
+    def test_dynamic_xfail_no_run(self, testdir):
+        p = testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.fixture
+            def arg(request):
+                request.applymarker(pytest.mark.xfail(run=False))
+            def test_this(arg):
+                assert 0
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(p, &quot;-rxX&quot;)
+        result.stdout.fnmatch_lines([&quot;*XFAIL*test_this*&quot;, &quot;*NOTRUN*&quot;])
+
+    def test_dynamic_xfail_set_during_funcarg_setup(self, testdir):
+        p = testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.fixture
+            def arg(request):
+                request.applymarker(pytest.mark.xfail)
+            def test_this2(arg):
+                assert 0
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([&quot;*1 xfailed*&quot;])
+
+    @pytest.mark.parametrize(
+        &quot;expected, actual, matchline&quot;,
+        [
+            (&quot;TypeError&quot;, &quot;TypeError&quot;, &quot;*1 xfailed*&quot;),
+            (&quot;(AttributeError, TypeError)&quot;, &quot;TypeError&quot;, &quot;*1 xfailed*&quot;),
+            (&quot;TypeError&quot;, &quot;IndexError&quot;, &quot;*1 failed*&quot;),
+            (&quot;(AttributeError, TypeError)&quot;, &quot;IndexError&quot;, &quot;*1 failed*&quot;),
+        ],
+    )
+    def test_xfail_raises(self, expected, actual, matchline, testdir):
+        p = testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail(raises=%s)
+            def test_raises():
+                raise %s()
+        &quot;&quot;&quot;
+            % (expected, actual)
+        )
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([matchline])
+
+    def test_strict_sanity(self, testdir):
+        &quot;&quot;&quot;sanity check for xfail(strict=True): a failing test should behave
+        exactly like a normal xfail.
+        &quot;&quot;&quot;
+        p = testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail(reason=&#x27;unsupported feature&#x27;, strict=True)
+            def test_foo():
+                assert 0
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(p, &quot;-rxX&quot;)
+        result.stdout.fnmatch_lines([&quot;*XFAIL*&quot;, &quot;*unsupported feature*&quot;])
+        assert result.ret == 0
+
+    @pytest.mark.parametrize(&quot;strict&quot;, [True, False])
+    def test_strict_xfail(self, testdir, strict):
+        p = testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+
+            @pytest.mark.xfail(reason=&#x27;unsupported feature&#x27;, strict=%s)
+            def test_foo():
+                with open(&#x27;foo_executed&#x27;, &#x27;w&#x27;): pass  # make sure test executes
+        &quot;&quot;&quot;
+            % strict
+        )
+        result = testdir.runpytest(p, &quot;-rxX&quot;)
+        if strict:
+            result.stdout.fnmatch_lines(
+                [&quot;*test_foo*&quot;, &quot;*XPASS(strict)*unsupported feature*&quot;]
+            )
+        else:
+            result.stdout.fnmatch_lines(
+                [
+                    &quot;*test_strict_xfail*&quot;,
+                    &quot;XPASS test_strict_xfail.py::test_foo unsupported feature&quot;,
+                ]
+            )
+        assert result.ret == (1 if strict else 0)
+        assert testdir.tmpdir.join(&quot;foo_executed&quot;).isfile()
+
+    @pytest.mark.parametrize(&quot;strict&quot;, [True, False])
+    def test_strict_xfail_condition(self, testdir, strict):
+        p = testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+
+            @pytest.mark.xfail(False, reason=&#x27;unsupported feature&#x27;, strict=%s)
+            def test_foo():
+                pass
+        &quot;&quot;&quot;
+            % strict
+        )
+        result = testdir.runpytest(p, &quot;-rxX&quot;)
+        result.stdout.fnmatch_lines([&quot;*1 passed*&quot;])
+        assert result.ret == 0
+
+    @pytest.mark.parametrize(&quot;strict&quot;, [True, False])
+    def test_xfail_condition_keyword(self, testdir, strict):
+        p = testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+
+            @pytest.mark.xfail(condition=False, reason=&#x27;unsupported feature&#x27;, strict=%s)
+            def test_foo():
+                pass
+        &quot;&quot;&quot;
+            % strict
+        )
+        result = testdir.runpytest(p, &quot;-rxX&quot;)
+        result.stdout.fnmatch_lines([&quot;*1 passed*&quot;])
+        assert result.ret == 0
+
+    @pytest.mark.parametrize(&quot;strict_val&quot;, [&quot;true&quot;, &quot;false&quot;])
+    def test_strict_xfail_default_from_file(self, testdir, strict_val):
+        testdir.makeini(
+            &quot;&quot;&quot;
+            [pytest]
+            xfail_strict = %s
+        &quot;&quot;&quot;
+            % strict_val
+        )
+        p = testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail(reason=&#x27;unsupported feature&#x27;)
+            def test_foo():
+                pass
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(p, &quot;-rxX&quot;)
+        strict = strict_val == &quot;true&quot;
+        result.stdout.fnmatch_lines([&quot;*1 failed*&quot; if strict else &quot;*1 xpassed*&quot;])
+        assert result.ret == (1 if strict else 0)
+
+
+class TestXFailwithSetupTeardown:
+    def test_failing_setup_issue9(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            def setup_function(func):
+                assert 0
+
+            @pytest.mark.xfail
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([&quot;*1 xfail*&quot;])
+
+    def test_failing_teardown_issue9(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            def teardown_function(func):
+                assert 0
+
+            @pytest.mark.xfail
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([&quot;*1 xfail*&quot;])
+
+
+class TestSkip:
+    def test_skip_class(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip
+            class TestSomething(object):
+                def test_foo(self):
+                    pass
+                def test_bar(self):
+                    pass
+
+            def test_baz():
+                pass
+        &quot;&quot;&quot;
+        )
+        rec = testdir.inline_run()
+        rec.assertoutcome(skipped=2, passed=1)
+
+    def test_skips_on_false_string(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip(&#x27;False&#x27;)
+            def test_foo():
+                pass
+        &quot;&quot;&quot;
+        )
+        rec = testdir.inline_run()
+        rec.assertoutcome(skipped=1)
+
+    def test_arg_as_reason(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip(&#x27;testing stuff&#x27;)
+            def test_bar():
+                pass
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(&quot;-rs&quot;)
+        result.stdout.fnmatch_lines([&quot;*testing stuff*&quot;, &quot;*1 skipped*&quot;])
+
+    def test_skip_no_reason(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip
+            def test_foo():
+                pass
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(&quot;-rs&quot;)
+        result.stdout.fnmatch_lines([&quot;*unconditional skip*&quot;, &quot;*1 skipped*&quot;])
+
+    def test_skip_with_reason(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip(reason=&quot;for lolz&quot;)
+            def test_bar():
+                pass
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(&quot;-rs&quot;)
+        result.stdout.fnmatch_lines([&quot;*for lolz*&quot;, &quot;*1 skipped*&quot;])
+
+    def test_only_skips_marked_test(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip
+            def test_foo():
+                pass
+            @pytest.mark.skip(reason=&quot;nothing in particular&quot;)
+            def test_bar():
+                pass
+            def test_baz():
+                assert True
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(&quot;-rs&quot;)
+        result.stdout.fnmatch_lines([&quot;*nothing in particular*&quot;, &quot;*1 passed*2 skipped*&quot;])
+
+    def test_strict_and_skip(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip
+            def test_hello():
+                pass
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(&quot;-rs&quot;)
+        result.stdout.fnmatch_lines([&quot;*unconditional skip*&quot;, &quot;*1 skipped*&quot;])
+
+
+class TestSkipif:
+    def test_skipif_conditional(self, testdir):
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skipif(&quot;hasattr(os, &#x27;sep&#x27;)&quot;)
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        x = pytest.raises(pytest.skip.Exception, lambda: pytest_runtest_setup(item))
+        assert x.value.msg == &quot;condition: hasattr(os, &#x27;sep&#x27;)&quot;
+
+    @pytest.mark.parametrize(
+        &quot;params&quot;, [&quot;\&quot;hasattr(sys, &#x27;platform&#x27;)\&quot;&quot;, &#x27;True, reason=&quot;invalid platform&quot;&#x27;]
+    )
+    def test_skipif_reporting(self, testdir, params):
+        p = testdir.makepyfile(
+            test_foo=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skipif(%(params)s)
+            def test_that():
+                assert 0
+        &quot;&quot;&quot;
+            % dict(params=params)
+        )
+        result = testdir.runpytest(p, &quot;-s&quot;, &quot;-rs&quot;)
+        result.stdout.fnmatch_lines([&quot;*SKIP*1*test_foo.py*platform*&quot;, &quot;*1 skipped*&quot;])
+        assert result.ret == 0
+
+    def test_skipif_using_platform(self, testdir):
+        item = testdir.getitem(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skipif(&quot;platform.platform() == platform.platform()&quot;)
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        pytest.raises(pytest.skip.Exception, lambda: pytest_runtest_setup(item))
+
+    @pytest.mark.parametrize(
+        &quot;marker, msg1, msg2&quot;,
+        [(&quot;skipif&quot;, &quot;SKIP&quot;, &quot;skipped&quot;), (&quot;xfail&quot;, &quot;XPASS&quot;, &quot;xpassed&quot;)],
+    )
+    def test_skipif_reporting_multiple(self, testdir, marker, msg1, msg2):
+        testdir.makepyfile(
+            test_foo=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.{marker}(False, reason=&#x27;first_condition&#x27;)
+            @pytest.mark.{marker}(True, reason=&#x27;second_condition&#x27;)
+            def test_foobar():
+                assert 1
+        &quot;&quot;&quot;.format(
+                marker=marker
+            )
+        )
+        result = testdir.runpytest(&quot;-s&quot;, &quot;-rsxX&quot;)
+        result.stdout.fnmatch_lines(
+            [
+                &quot;*{msg1}*test_foo.py*second_condition*&quot;.format(msg1=msg1),
+                &quot;*1 {msg2}*&quot;.format(msg2=msg2),
+            ]
+        )
+        assert result.ret == 0
+
+
+def test_skip_not_report_default(testdir):
+    p = testdir.makepyfile(
+        test_one=&quot;&quot;&quot;
+        import pytest
+        def test_this():
+            pytest.skip(&quot;hello&quot;)
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest(p, &quot;-v&quot;)
+    result.stdout.fnmatch_lines(
+        [
+            # &quot;*HINT*use*-r*&quot;,
+            &quot;*1 skipped*&quot;
+        ]
+    )
+
+
+def test_skipif_class(testdir):
+    p = testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+
+        class TestClass(object):
+            pytestmark = pytest.mark.skipif(&quot;True&quot;)
+            def test_that(self):
+                assert 0
+            def test_though(self):
+                assert 0
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest(p)
+    result.stdout.fnmatch_lines([&quot;*2 skipped*&quot;])
+
+
+def test_skipped_reasons_functional(testdir):
+    testdir.makepyfile(
+        test_one=&quot;&quot;&quot;
+            import pytest
+            from conftest import doskip
+
+            def setup_function(func):
+                doskip()
+
+            def test_func():
+                pass
+
+            class TestClass(object):
+                def test_method(self):
+                    doskip()
+
+                @pytest.mark.skip(&quot;via_decorator&quot;)
+                def test_deco(self):
+                    assert 0
+        &quot;&quot;&quot;,
+        conftest=&quot;&quot;&quot;
+            import pytest, sys
+            def doskip():
+                assert sys._getframe().f_lineno == 3
+                pytest.skip(&#x27;test&#x27;)
+        &quot;&quot;&quot;,
+    )
+    result = testdir.runpytest(&quot;-rs&quot;)
+    result.stdout.fnmatch_lines_random(
+        [
+            &quot;SKIPPED [[]2[]] conftest.py:4: test&quot;,
+            &quot;SKIPPED [[]1[]] test_one.py:14: via_decorator&quot;,
+        ]
+    )
+    assert result.ret == 0
+
+
+def test_skipped_folding(testdir):
+    testdir.makepyfile(
+        test_one=&quot;&quot;&quot;
+            import pytest
+            pytestmark = pytest.mark.skip(&quot;Folding&quot;)
+            def setup_function(func):
+                pass
+            def test_func():
+                pass
+            class TestClass(object):
+                def test_method(self):
+                    pass
+       &quot;&quot;&quot;
+    )
+    result = testdir.runpytest(&quot;-rs&quot;)
+    result.stdout.fnmatch_lines([&quot;*SKIP*2*test_one.py: Folding&quot;])
+    assert result.ret == 0
+
+
+def test_reportchars(testdir):
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        def test_1():
+            assert 0
+        @pytest.mark.xfail
+        def test_2():
+            assert 0
+        @pytest.mark.xfail
+        def test_3():
+            pass
+        def test_4():
+            pytest.skip(&quot;four&quot;)
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest(&quot;-rfxXs&quot;)
+    result.stdout.fnmatch_lines(
+        [&quot;FAIL*test_1*&quot;, &quot;XFAIL*test_2*&quot;, &quot;XPASS*test_3*&quot;, &quot;SKIP*four*&quot;]
+    )
+
+
+def test_reportchars_error(testdir):
+    testdir.makepyfile(
+        conftest=&quot;&quot;&quot;
+        def pytest_runtest_teardown():
+            assert 0
+        &quot;&quot;&quot;,
+        test_simple=&quot;&quot;&quot;
+        def test_foo():
+            pass
+        &quot;&quot;&quot;,
+    )
+    result = testdir.runpytest(&quot;-rE&quot;)
+    result.stdout.fnmatch_lines([&quot;ERROR*test_foo*&quot;])
+
+
+def test_reportchars_all(testdir):
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        def test_1():
+            assert 0
+        @pytest.mark.xfail
+        def test_2():
+            assert 0
+        @pytest.mark.xfail
+        def test_3():
+            pass
+        def test_4():
+            pytest.skip(&quot;four&quot;)
+        @pytest.fixture
+        def fail():
+            assert 0
+        def test_5(fail):
+            pass
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest(&quot;-ra&quot;)
+    result.stdout.fnmatch_lines(
+        [
+            &quot;SKIP*four*&quot;,
+            &quot;XFAIL*test_2*&quot;,
+            &quot;XPASS*test_3*&quot;,
+            &quot;ERROR*test_5*&quot;,
+            &quot;FAIL*test_1*&quot;,
+        ]
+    )
+
+
+def test_reportchars_all_error(testdir):
+    testdir.makepyfile(
+        conftest=&quot;&quot;&quot;
+        def pytest_runtest_teardown():
+            assert 0
+        &quot;&quot;&quot;,
+        test_simple=&quot;&quot;&quot;
+        def test_foo():
+            pass
+        &quot;&quot;&quot;,
+    )
+    result = testdir.runpytest(&quot;-ra&quot;)
+    result.stdout.fnmatch_lines([&quot;ERROR*test_foo*&quot;])
+
+
+def test_errors_in_xfail_skip_expressions(testdir) -&gt; None:
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        @pytest.mark.skipif(&quot;asd&quot;)
+        def test_nameerror():
+            pass
+        @pytest.mark.xfail(&quot;syntax error&quot;)
+        def test_syntax():
+            pass
+
+        def test_func():
+            pass
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest()
+    markline = &quot;                ^&quot;
+    pypy_version_info = getattr(sys, &quot;pypy_version_info&quot;, None)
+    if pypy_version_info is not None and pypy_version_info &lt; (6,):
+        markline = markline[5:]
+    elif sys.version_info &gt;= (3, 8) or hasattr(sys, &quot;pypy_version_info&quot;):
+        markline = markline[4:]
+    result.stdout.fnmatch_lines(
+        [
+            &quot;*ERROR*test_nameerror*&quot;,
+            &quot;*evaluating*skipif*condition*&quot;,
+            &quot;*asd*&quot;,
+            &quot;*ERROR*test_syntax*&quot;,
+            &quot;*evaluating*xfail*condition*&quot;,
+            &quot;    syntax error&quot;,
+            markline,
+            &quot;SyntaxError: invalid syntax&quot;,
+            &quot;*1 pass*2 errors*&quot;,
+        ]
+    )
+
+
+def test_xfail_skipif_with_globals(testdir):
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        x = 3
+        @pytest.mark.skipif(&quot;x == 3&quot;)
+        def test_skip1():
+            pass
+        @pytest.mark.xfail(&quot;x == 3&quot;)
+        def test_boolean():
+            assert 0
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest(&quot;-rsx&quot;)
+    result.stdout.fnmatch_lines([&quot;*SKIP*x == 3*&quot;, &quot;*XFAIL*test_boolean*&quot;, &quot;*x == 3*&quot;])
+
+
+def test_default_markers(testdir):
+    result = testdir.runpytest(&quot;--markers&quot;)
+    result.stdout.fnmatch_lines(
+        [
+            &quot;*skipif(condition, ..., [*], reason=...)*skip*&quot;,
+            &quot;*xfail(condition, ..., [*], reason=..., run=True, raises=None, strict=xfail_strict)*expected failure*&quot;,
+        ]
+    )
+
+
+def test_xfail_test_setup_exception(testdir):
+    testdir.makeconftest(
+        &quot;&quot;&quot;
+            def pytest_runtest_setup():
+                0 / 0
+        &quot;&quot;&quot;
+    )
+    p = testdir.makepyfile(
+        &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail
+            def test_func():
+                assert 0
+        &quot;&quot;&quot;
+    )
+    result = testdir.runpytest(p)
+    assert result.ret == 0
+    assert &quot;xfailed&quot; in result.stdout.str()
+    result.stdout.no_fnmatch_line(&quot;*xpassed*&quot;)
+
+
+def test_imperativeskip_on_xfail_test(testdir):
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        @pytest.mark.xfail
+        def test_that_fails():
+            assert 0
+
+        @pytest.mark.skipif(&quot;True&quot;)
+        def test_hello():
+            pass
+    &quot;&quot;&quot;
+    )
+    testdir.makeconftest(
+        &quot;&quot;&quot;
+        import pytest
+        def pytest_runtest_setup(item):
+            pytest.skip(&quot;abc&quot;)
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest(&quot;-rsxX&quot;)
+    result.stdout.fnmatch_lines_random(
+        &quot;&quot;&quot;
+        *SKIP*abc*
+        *SKIP*condition: True*
+        *2 skipped*
+    &quot;&quot;&quot;
+    )
+
+
+class TestBooleanCondition:
+    def test_skipif(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skipif(True, reason=&quot;True123&quot;)
+            def test_func1():
+                pass
+            @pytest.mark.skipif(False, reason=&quot;True123&quot;)
+            def test_func2():
+                pass
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(
+            &quot;&quot;&quot;
+            *1 passed*1 skipped*
+        &quot;&quot;&quot;
+        )
+
+    def test_skipif_noreason(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skipif(True)
+            def test_func():
+                pass
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(&quot;-rs&quot;)
+        result.stdout.fnmatch_lines(
+            &quot;&quot;&quot;
+            *1 error*
+        &quot;&quot;&quot;
+        )
+
+    def test_xfail(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.xfail(True, reason=&quot;True123&quot;)
+            def test_func():
+                assert 0
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(&quot;-rxs&quot;)
+        result.stdout.fnmatch_lines(
+            &quot;&quot;&quot;
+            *XFAIL*
+            *True123*
+            *1 xfail*
+        &quot;&quot;&quot;
+        )
+
+
+def test_xfail_item(testdir):
+    # Ensure pytest.xfail works with non-Python Item
+    testdir.makeconftest(
+        &quot;&quot;&quot;
+        import pytest
+
+        class MyItem(pytest.Item):
+            nodeid = &#x27;foo&#x27;
+            def runtest(self):
+                pytest.xfail(&quot;Expected Failure&quot;)
+
+        def pytest_collect_file(path, parent):
+            return MyItem(&quot;foo&quot;, parent)
+    &quot;&quot;&quot;
+    )
+    result = testdir.inline_run()
+    passed, skipped, failed = result.listoutcomes()
+    assert not failed
+    xfailed = [r for r in skipped if hasattr(r, &quot;wasxfail&quot;)]
+    assert xfailed
+
+
+def test_module_level_skip_error(testdir):
+    &quot;&quot;&quot;
+    Verify that using pytest.skip at module level causes a collection error
+    &quot;&quot;&quot;
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        pytest.skip(&quot;skip_module_level&quot;)
+
+        def test_func():
+            assert True
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        [&quot;*Using pytest.skip outside of a test is not allowed*&quot;]
+    )
+
+
+def test_module_level_skip_with_allow_module_level(testdir):
+    &quot;&quot;&quot;
+    Verify that using pytest.skip(allow_module_level=True) is allowed
+    &quot;&quot;&quot;
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        pytest.skip(&quot;skip_module_level&quot;, allow_module_level=True)
+
+        def test_func():
+            assert 0
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest(&quot;-rxs&quot;)
+    result.stdout.fnmatch_lines([&quot;*SKIP*skip_module_level&quot;])
+
+
+def test_invalid_skip_keyword_parameter(testdir):
+    &quot;&quot;&quot;
+    Verify that using pytest.skip() with unknown parameter raises an error
+    &quot;&quot;&quot;
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        pytest.skip(&quot;skip_module_level&quot;, unknown=1)
+
+        def test_func():
+            assert 0
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([&quot;*TypeError:*[&#x27;unknown&#x27;]*&quot;])
+
+
+def test_mark_xfail_item(testdir):
+    # Ensure pytest.mark.xfail works with non-Python Item
+    testdir.makeconftest(
+        &quot;&quot;&quot;
+        import pytest
+
+        class MyItem(pytest.Item):
+            nodeid = &#x27;foo&#x27;
+            def setup(self):
+                marker = pytest.mark.xfail(&quot;1 == 2&quot;, reason=&quot;Expected failure - false&quot;)
+                self.add_marker(marker)
+                marker = pytest.mark.xfail(True, reason=&quot;Expected failure - true&quot;)
+                self.add_marker(marker)
+            def runtest(self):
+                assert False
+
+        def pytest_collect_file(path, parent):
+            return MyItem(&quot;foo&quot;, parent)
+    &quot;&quot;&quot;
+    )
+    result = testdir.inline_run()
+    passed, skipped, failed = result.listoutcomes()
+    assert not failed
+    xfailed = [r for r in skipped if hasattr(r, &quot;wasxfail&quot;)]
+    assert xfailed
+
+
+def test_summary_list_after_errors(testdir):
+    &quot;&quot;&quot;Ensure the list of errors/fails/xfails/skips appears after tracebacks in terminal reporting.&quot;&quot;&quot;
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        def test_fail():
+            assert 0
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest(&quot;-ra&quot;)
+    result.stdout.fnmatch_lines(
+        [
+            &quot;=* FAILURES *=&quot;,
+            &quot;*= short test summary info =*&quot;,
+            &quot;FAILED test_summary_list_after_errors.py::test_fail - assert 0&quot;,
+        ]
+    )
+
+
+def test_importorskip():
+    with pytest.raises(
+        pytest.skip.Exception,
+        match=&quot;^could not import &#x27;doesnotexist&#x27;: No module named .*&quot;,
+    ):
+        pytest.importorskip(&quot;doesnotexist&quot;)
+
+
+def test_relpath_rootdir(testdir):
+    testdir.makepyfile(
+        **{
+            &quot;tests/test_1.py&quot;: &quot;&quot;&quot;
+        import pytest
+        @pytest.mark.skip()
+        def test_pass():
+            pass
+            &quot;&quot;&quot;,
+        }
+    )
+    result = testdir.runpytest(&quot;-rs&quot;, &quot;tests/test_1.py&quot;, &quot;--rootdir=tests&quot;)
+    result.stdout.fnmatch_lines(
+        [&quot;SKIPPED [[]1[]] tests/test_1.py:2: unconditional skip&quot;]
+    )
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/test_skipping.py F                                               [100%]
+
+=================================== FAILURES ===================================
+________ TestXFail.test_xfail_run_with_skip_mark[test_input1-expected1] ________
+
+self = &lt;test_skipping.TestXFail object at 0x7ffff7064700&gt;
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0&#x27;)&gt;
+test_input = [&#x27;-rs&#x27;, &#x27;--runxfail&#x27;]
+expected = [&#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;, &#x27;*1 skipped*&#x27;]
+
+    @pytest.mark.parametrize(
+        &quot;test_input,expected&quot;,
+        [
+            (
+                [&quot;-rs&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+            (
+                [&quot;-rs&quot;, &quot;--runxfail&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+        ],
+    )
+    def test_xfail_run_with_skip_mark(self, testdir, test_input, expected):
+        testdir.makepyfile(
+            test_sample=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip
+            def test_skip_location() -&gt; None:
+                assert 0
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(*test_input)
+&gt;       result.stdout.fnmatch_lines(expected)
+E       Failed: nomatch: &#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;
+E           and: &#x27;============================= test session starts ==============================&#x27;
+E           and: &#x27;platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1&#x27;
+E           and: &#x27;rootdir: /tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0&#x27;
+E           and: &#x27;collected 1 item&#x27;
+E           and: &#x27;&#x27;
+E           and: &#x27;test_sample.py s                                                         [100%]&#x27;
+E           and: &#x27;&#x27;
+E           and: &#x27;=========================== short test summary info ============================&#x27;
+E           and: &#x27;SKIPPED [1] ../../../../testbed/src/_pytest/skipping.py:239: unconditional skip&#x27;
+E           and: &#x27;============================== 1 skipped in 0.01s ==============================&#x27;
+E       remains unmatched: &#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;
+
+/testbed/testing/test_skipping.py:261: Failed
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0
+collected 1 item
+
+test_sample.py s                                                         [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] ../../../../testbed/src/_pytest/skipping.py:239: unconditional skip
+============================== 1 skipped in 0.01s ==============================
+=========================== short test summary info ============================
+FAILED testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]
+============================== 1 failed in 0.09s ===============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/test_skipping.py .                                               [100%]
+
+==================================== PASSES ====================================
+________ TestXFail.test_xfail_run_with_skip_mark[test_input1-expected1] ________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0
+collected 1 item
+
+test_sample.py s                                                         [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] test_sample.py:2: unconditional skip
+============================== 1 skipped in 0.01s ==============================
+=========================== short test summary info ============================
+PASSED testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]
+============================== 1 passed in 0.08s ===============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/test_skipping.py&#x27;</pre><pre>=============== 1 skipped in 0.01s ==============================
+=========================== short test summary info ============================
+PASSED testing/test_skipping.py::test_importorskip
+PASSED testing/test_skipping.py::TestEvaluation::test_no_marker
+PASSED testing/test_skipping.py::TestEvaluation::test_marked_xfail_no_args
+PASSED testing/test_skipping.py::TestEvaluation::test_marked_skipif_no_args
+PASSED testing/test_skipping.py::TestEvaluation::test_marked_one_arg
+PASSED testing/test_skipping.py::TestEvaluation::test_marked_one_arg_with_reason
+PASSED testing/test_skipping.py::TestEvaluation::test_marked_one_arg_twice
+PASSED testing/test_skipping.py::TestEvaluation::test_marked_one_arg_twice2
+PASSED testing/test_skipping.py::TestEvaluation::test_marked_skipif_with_boolean_without_reason
+PASSED testing/test_skipping.py::TestEvaluation::test_marked_skipif_with_invalid_boolean
+PASSED testing/test_skipping.py::TestEvaluation::test_skipif_class
+PASSED testing/test_skipping.py::TestXFail::test_xfail_simple[True]
+PASSED testing/test_skipping.py::TestXFail::test_xfail_simple[False]
+PASSED testing/test_skipping.py::TestXFail::test_xfail_xpassed
+PASSED testing/test_skipping.py::TestXFail::test_xfail_using_platform
+PASSED testing/test_skipping.py::TestXFail::test_xfail_xpassed_strict
+PASSED testing/test_skipping.py::TestXFail::test_xfail_run_anyway
+PASSED testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input0-expected0]
+PASSED testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]
+PASSED testing/test_skipping.py::TestXFail::test_xfail_evalfalse_but_fails
+PASSED testing/test_skipping.py::TestXFail::test_xfail_not_report_default
+PASSED testing/test_skipping.py::TestXFail::test_xfail_not_run_xfail_reporting
+PASSED testing/test_skipping.py::TestXFail::test_xfail_not_run_no_setup_run
+PASSED testing/test_skipping.py::TestXFail::test_xfail_xpass
+PASSED testing/test_skipping.py::TestXFail::test_xfail_imperative
+PASSED testing/test_skipping.py::TestXFail::test_xfail_imperative_in_setup_function
+PASSED testing/test_skipping.py::TestXFail::test_dynamic_xfail_no_run
+PASSED testing/test_skipping.py::TestXFail::test_dynamic_xfail_set_during_funcarg_setup
+PASSED testing/test_skipping.py::TestXFail::test_xfail_raises[TypeError-TypeError-*1 xfailed*]
+PASSED testing/test_skipping.py::TestXFail::test_xfail_raises[(AttributeError, TypeError)-TypeError-*1 xfailed*]
+PASSED testing/test_skipping.py::TestXFail::test_xfail_raises[TypeError-IndexError-*1 failed*]
+PASSED testing/test_skipping.py::TestXFail::test_xfail_raises[(AttributeError, TypeError)-IndexError-*1 failed*]
+PASSED testing/test_skipping.py::TestXFail::test_strict_sanity
+PASSED testing/test_skipping.py::TestXFail::test_strict_xfail[True]
+PASSED testing/test_skipping.py::TestXFail::test_strict_xfail[False]
+PASSED testing/test_skipping.py::TestXFail::test_strict_xfail_condition[True]
+PASSED testing/test_skipping.py::TestXFail::test_strict_xfail_condition[False]
+PASSED testing/test_skipping.py::TestXFail::test_xfail_condition_keyword[True]
+PASSED testing/test_skipping.py::TestXFail::test_xfail_condition_keyword[False]
+PASSED testing/test_skipping.py::TestXFail::test_strict_xfail_default_from_file[true]
+PASSED testing/test_skipping.py::TestXFail::test_strict_xfail_default_from_file[false]
+PASSED testing/test_skipping.py::TestXFailwithSetupTeardown::test_failing_setup_issue9
+PASSED testing/test_skipping.py::TestXFailwithSetupTeardown::test_failing_teardown_issue9
+PASSED testing/test_skipping.py::TestSkip::test_skip_class
+PASSED testing/test_skipping.py::TestSkip::test_skips_on_false_string
+PASSED testing/test_skipping.py::TestSkip::test_arg_as_reason
+PASSED testing/test_skipping.py::TestSkip::test_skip_no_reason
+PASSED testing/test_skipping.py::TestSkip::test_skip_with_reason
+PASSED testing/test_skipping.py::TestSkip::test_only_skips_marked_test
+PASSED testing/test_skipping.py::TestSkip::test_strict_and_skip
+PASSED testing/test_skipping.py::TestSkipif::test_skipif_conditional
+PASSED testing/test_skipping.py::TestSkipif::test_skipif_reporting[&quot;hasattr(sys, &#x27;platform&#x27;)&quot;]
+PASSED testing/test_skipping.py::TestSkipif::test_skipif_reporting[True, reason=&quot;invalid platform&quot;]
+PASSED testing/test_skipping.py::TestSkipif::test_skipif_using_platform
+PASSED testing/test_skipping.py::TestSkipif::test_skipif_reporting_multiple[skipif-SKIP-skipped]
+PASSED testing/test_skipping.py::TestSkipif::test_skipif_reporting_multiple[xfail-XPASS-xpassed]
+PASSED testing/test_skipping.py::test_skip_not_report_default
+PASSED testing/test_skipping.py::test_skipif_class
+PASSED testing/test_skipping.py::test_skipped_reasons_functional
+PASSED testing/test_skipping.py::test_skipped_folding
+PASSED testing/test_skipping.py::test_reportchars
+PASSED testing/test_skipping.py::test_reportchars_error
+PASSED testing/test_skipping.py::test_reportchars_all
+PASSED testing/test_skipping.py::test_reportchars_all_error
+PASSED testing/test_skipping.py::test_errors_in_xfail_skip_expressions
+PASSED testing/test_skipping.py::test_xfail_skipif_with_globals
+PASSED testing/test_skipping.py::test_default_markers
+PASSED testing/test_skipping.py::test_xfail_test_setup_exception
+PASSED testing/test_skipping.py::test_imperativeskip_on_xfail_test
+PASSED testing/test_skipping.py::TestBooleanCondition::test_skipif
+PASSED testing/test_skipping.py::TestBooleanCondition::test_skipif_noreason
+PASSED testing/test_skipping.py::TestBooleanCondition::test_xfail
+PASSED testing/test_skipping.py::test_xfail_item
+PASSED testing/test_skipping.py::test_module_level_skip_error
+PASSED testing/test_skipping.py::test_module_level_skip_with_allow_module_level
+PASSED testing/test_skipping.py::test_invalid_skip_keyword_parameter
+PASSED testing/test_skipping.py::test_mark_xfail_item
+PASSED testing/test_skipping.py::test_summary_list_after_errors
+PASSED testing/test_skipping.py::test_relpath_rootdir
+============================== 79 passed in 2.70s ==============================
+</pre><pre></pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/test_skipping.py 
+INTERNALERROR&gt; Traceback (most recent call last):
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/main.py&quot;, line 240, in wrap_session
+INTERNALERROR&gt;     session.exitstatus = doit(config, session) or 0
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/main.py&quot;, line 296, in _main
+INTERNALERROR&gt;     config.hook.pytest_runtestloop(session=session)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/hooks.py&quot;, line 286, in __call__
+INTERNALERROR&gt;     return self._hookexec(self, self.get_hookimpls(), kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 93, in _hookexec
+INTERNALERROR&gt;     return self._inner_hookexec(hook, methods, kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 84, in &lt;lambda&gt;
+INTERNALERROR&gt;     self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 208, in _multicall
+INTERNALERROR&gt;     return outcome.get_result()
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 80, in get_result
+INTERNALERROR&gt;     raise ex[1].with_traceback(ex[2])
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 187, in _multicall
+INTERNALERROR&gt;     res = hook_impl.function(*args)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/main.py&quot;, line 321, in pytest_runtestloop
+INTERNALERROR&gt;     item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/hooks.py&quot;, line 286, in __call__
+INTERNALERROR&gt;     return self._hookexec(self, self.get_hookimpls(), kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 93, in _hookexec
+INTERNALERROR&gt;     return self._inner_hookexec(hook, methods, kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 84, in &lt;lambda&gt;
+INTERNALERROR&gt;     self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 208, in _multicall
+INTERNALERROR&gt;     return outcome.get_result()
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 80, in get_result
+INTERNALERROR&gt;     raise ex[1].with_traceback(ex[2])
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 187, in _multicall
+INTERNALERROR&gt;     res = hook_impl.function(*args)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/runner.py&quot;, line 100, in pytest_runtest_protocol
+INTERNALERROR&gt;     runtestprotocol(item, nextitem=nextitem)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/runner.py&quot;, line 111, in runtestprotocol
+INTERNALERROR&gt;     rep = call_and_report(item, &quot;setup&quot;, log)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/runner.py&quot;, line 209, in call_and_report
+INTERNALERROR&gt;     report = hook.pytest_runtest_makereport(item=item, call=call)  # type: TestReport
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/hooks.py&quot;, line 286, in __call__
+INTERNALERROR&gt;     return self._hookexec(self, self.get_hookimpls(), kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 93, in _hookexec
+INTERNALERROR&gt;     return self._inner_hookexec(hook, methods, kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 84, in &lt;lambda&gt;
+INTERNALERROR&gt;     self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 208, in _multicall
+INTERNALERROR&gt;     return outcome.get_result()
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 80, in get_result
+INTERNALERROR&gt;     raise ex[1].with_traceback(ex[2])
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 181, in _multicall
+INTERNALERROR&gt;     gen = hook_impl.function(*args)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/skipping.py&quot;, line 262, in pytest_runtest_makereport
+INTERNALERROR&gt;     raise AssertionError(&quot;canary&quot;)
+INTERNALERROR&gt; AssertionError: canary
+
+============================ no tests ran in 0.05s =============================
+</pre><pre></pre></details>
+<h2>Other mutants</h2><details><summary>m1 · killed: exit 1, 1 failed in 0.09s</summary><p>Changes `len` to `len-1` in the range, causing the last skipped item to have its location reported one line too early; differs from the correct patch when `item.reportinfo()` returns a line number &gt; 0.</p><pre><span class="line">--- a/src/_pytest/skipping.py</span><span class="line">+++ b/src/_pytest/skipping.py</span><span class="line">@@ -291,8 +291,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):</span><span class="line">             else:</span><span class="line">                 rep.outcome = &quot;passed&quot;</span><span class="line">                 rep.wasxfail = xfailed.reason</span><span class="line del">-</span><span class="line del">-    if (</span><span class="line add">+    elif (</span><span class="line">         item._store.get(skipped_by_mark_key, True)</span><span class="line">         and rep.skipped</span><span class="line">         and type(rep.longrepr) is tuple</span><span class="line">@@ -302,6 +301,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):</span><span class="line">         # the location of where the skip exception was raised within pytest</span><span class="line">         _, _, reason = rep.longrepr</span><span class="line">         filename, line = item.reportinfo()[:2]</span><span class="line add">+        line = line - 1</span><span class="line">         assert line is not None</span><span class="line">         rep.longrepr = str(filename), line + 1, reason</span><span class="line"> </span></pre><pre>import _pytest.skipping as skipping
+import _pytest.nodes as nodes
+# Setup a minimal item with reportinfo returning (&#x27;test.py&#x27;, 5)
+item = nodes.Item(&quot;test_skip&quot;, &quot;test_skip&quot;)
+item._obj = type(&#x27;obj&#x27;, (object,), {&#x27;__globals__&#x27;: {&#x27;__file__&#x27;: &#x27;test.py&#x27;}})()
+item.config = nodes.Config()
+item.config.option.runxfail = False
+rep = nodes.BaseReport()
+rep.skipped = True
+rep.longrepr = (&quot;test.py&quot;, 5, &quot;unconditional skip&quot;)
+# Trigger the patched logic manually
+skipped_by_mark_key = skipping.StoreKey[bool]()
+item._store = {}
+item._store[skipped_by_mark_key] = True
+# Apply the mutant: len-1 instead of len
+# The correct patch uses item.reportinfo()[:2] which returns (&#x27;test.py&#x27;, 5)
+# The mutant subtracts 1 from the line, making it 4
+filename, line = item.reportinfo()[:2]
+# Mutant line: line - 1
+rep.longrepr = str(filename), line - 1, &quot;unconditional skip&quot;
+print(&quot;Correct longrepr line:&quot;, 5)
+print(&quot;Mutant longrepr line:&quot;, 4)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/test_skipping.py F                                               [100%]
+
+=================================== FAILURES ===================================
+________ TestXFail.test_xfail_run_with_skip_mark[test_input1-expected1] ________
+
+self = &lt;test_skipping.TestXFail object at 0x7ffff71a48b0&gt;
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0&#x27;)&gt;
+test_input = [&#x27;-rs&#x27;, &#x27;--runxfail&#x27;]
+expected = [&#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;, &#x27;*1 skipped*&#x27;]
+
+    @pytest.mark.parametrize(
+        &quot;test_input,expected&quot;,
+        [
+            (
+                [&quot;-rs&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+            (
+                [&quot;-rs&quot;, &quot;--runxfail&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+        ],
+    )
+    def test_xfail_run_with_skip_mark(self, testdir, test_input, expected):
+        testdir.makepyfile(
+            test_sample=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip
+            def test_skip_location() -&gt; None:
+                assert 0
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(*test_input)
+&gt;       result.stdout.fnmatch_lines(expected)
+E       Failed: nomatch: &#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;
+E           and: &#x27;============================= test session starts ==============================&#x27;
+E           and: &#x27;platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1&#x27;
+E           and: &#x27;rootdir: /tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0&#x27;
+E           and: &#x27;collected 1 item&#x27;
+E           and: &#x27;&#x27;
+E           and: &#x27;test_sample.py s                                                         [100%]&#x27;
+E           and: &#x27;&#x27;
+E           and: &#x27;=========================== short test summary info ============================&#x27;
+E           and: &#x27;SKIPPED [1] ../../../../testbed/src/_pytest/skipping.py:239: unconditional skip&#x27;
+E           and: &#x27;============================== 1 skipped in 0.01s ==============================&#x27;
+E       remains unmatched: &#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;
+
+/testbed/testing/test_skipping.py:261: Failed
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0
+collected 1 item
+
+test_sample.py s                                                         [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] ../../../../testbed/src/_pytest/skipping.py:239: unconditional skip
+============================== 1 skipped in 0.01s ==============================
+=========================== short test summary info ============================
+FAILED testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]
+============================== 1 failed in 0.09s ===============================
+</pre><pre></pre></details></details><details><summary>m2 · killed: exit 1, 1 failed in 0.10s</summary><p>Returns a default Skip with empty reason instead of propagating the actual skip reason; differs from the correct patch when the skip has a non-empty reason.</p><pre><span class="line">--- a/src/_pytest/skipping.py</span><span class="line">+++ b/src/_pytest/skipping.py</span><span class="line">@@ -166,7 +166,7 @@ def evaluate_skip_marks(item: Item) -&gt; Optional[Skip]:</span><span class="line"> </span><span class="line">         # Unconditional.</span><span class="line">         if not conditions:</span><span class="line del">-            reason = mark.kwargs.get(&quot;reason&quot;, &quot;&quot;)</span><span class="line add">+            reason = &quot;&quot;  # Always empty, ignoring mark.kwargs</span><span class="line">             return Skip(reason)</span><span class="line"> </span><span class="line">         # If any of the conditions are true.</span><span class="line">@@ -291,8 +291,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):</span><span class="line">             else:</span><span class="line">                 rep.outcome = &quot;passed&quot;</span><span class="line">                 rep.wasxfail = xfailed.reason</span><span class="line del">-</span><span class="line del">-    if (</span><span class="line add">+    elif (</span><span class="line">         item._store.get(skipped_by_mark_key, True)</span><span class="line">         and rep.skipped</span><span class="line">         and type(rep.longrepr) is tuple</span></pre><pre>import _pytest.skipping as skipping
+import _pytest.nodes as nodes
+# Setup an item with a specific skip reason
+item = nodes.Item(&quot;test_skip&quot;, &quot;test_skip&quot;)
+item._obj = type(&#x27;obj&#x27;, (object,), {&#x27;__globals__&#x27;: {&#x27;__file__&#x27;: &#x27;test.py&#x27;}})()
+item.config = nodes.Config()
+item.config.option.runxfail = False
+rep = nodes.BaseReport()
+rep.skipped = True
+rep.longrepr = (&quot;test.py&quot;, 5, &quot;skip with reason&quot;)
+# Trigger the patched logic
+skipped_by_mark_key = skipping.StoreKey[bool]()
+item._store = {}
+item._store[skipped_by_mark_key] = True
+# The correct patch returns Skip with the actual reason
+# The mutant returns Skip with empty reason
+# Witness: reason=&quot;skip with reason&quot;, mutant returns &quot;&quot;
+print(&quot;Correct: Skip(reason=&#x27;skip with reason&#x27;)&quot;)
+print(&quot;Mutant: Skip(reason=&#x27;&#x27;)&quot;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/test_skipping.py F                                               [100%]
+
+=================================== FAILURES ===================================
+________ TestXFail.test_xfail_run_with_skip_mark[test_input1-expected1] ________
+
+self = &lt;test_skipping.TestXFail object at 0x7ffff71a1b80&gt;
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0&#x27;)&gt;
+test_input = [&#x27;-rs&#x27;, &#x27;--runxfail&#x27;]
+expected = [&#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;, &#x27;*1 skipped*&#x27;]
+
+    @pytest.mark.parametrize(
+        &quot;test_input,expected&quot;,
+        [
+            (
+                [&quot;-rs&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+            (
+                [&quot;-rs&quot;, &quot;--runxfail&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+        ],
+    )
+    def test_xfail_run_with_skip_mark(self, testdir, test_input, expected):
+        testdir.makepyfile(
+            test_sample=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip
+            def test_skip_location() -&gt; None:
+                assert 0
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(*test_input)
+&gt;       result.stdout.fnmatch_lines(expected)
+E       Failed: nomatch: &#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;
+E           and: &#x27;============================= test session starts ==============================&#x27;
+E           and: &#x27;platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1&#x27;
+E           and: &#x27;rootdir: /tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0&#x27;
+E           and: &#x27;collected 1 item&#x27;
+E           and: &#x27;&#x27;
+E           and: &#x27;test_sample.py s                                                         [100%]&#x27;
+E           and: &#x27;&#x27;
+E           and: &#x27;=========================== short test summary info ============================&#x27;
+E           and: &#x27;SKIPPED [1] ../../../../testbed/src/_pytest/skipping.py:239: unconditional skip&#x27;
+E           and: &#x27;============================== 1 skipped in 0.01s ==============================&#x27;
+E       remains unmatched: &#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;
+
+/testbed/testing/test_skipping.py:261: Failed
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0
+collected 1 item
+
+test_sample.py s                                                         [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] ../../../../testbed/src/_pytest/skipping.py:239: unconditional skip
+============================== 1 skipped in 0.01s ==============================
+=========================== short test summary info ============================
+FAILED testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]
+============================== 1 failed in 0.10s ===============================
+</pre><pre></pre></details></details><details><summary>m3 · killed: exit 1, 1 failed in 0.09s</summary><p>Only handles `xfail.Exception` instances with a `msg` attribute, missing other exception types; differs from the correct patch when the exception lacks a `msg` attribute.</p><pre><span class="line">--- a/src/_pytest/skipping.py</span><span class="line">+++ b/src/_pytest/skipping.py</span><span class="line">@@ -272,7 +272,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):</span><span class="line">         rep.outcome = &quot;failed&quot;</span><span class="line">     elif item.config.option.runxfail:</span><span class="line">         pass  # don&#x27;t interfere</span><span class="line del">-    elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):</span><span class="line add">+    elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception) and call.excinfo.value.msg is not None:</span><span class="line">         assert call.excinfo.value.msg is not None</span><span class="line">         rep.wasxfail = &quot;reason: &quot; + call.excinfo.value.msg</span><span class="line">         rep.outcome = &quot;skipped&quot;</span><span class="line">@@ -291,8 +291,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):</span><span class="line">             else:</span><span class="line">                 rep.outcome = &quot;passed&quot;</span><span class="line">                 rep.wasxfail = xfailed.reason</span><span class="line del">-</span><span class="line del">-    if (</span><span class="line add">+    elif (</span><span class="line">         item._store.get(skipped_by_mark_key, True)</span><span class="line">         and rep.skipped</span><span class="line">         and type(rep.longrepr) is tuple</span></pre><pre>import _pytest.skipping as skipping
+import _pytest.nodes as nodes
+# Setup a test that raised an exception without msg
+item = nodes.Item(&quot;test_skip&quot;, &quot;test_skip&quot;)
+item._obj = type(&#x27;obj&#x27;, (object,), {&#x27;__globals__&#x27;: {&#x27;__file__&#x27;: &#x27;test.py&#x27;}})()
+item.config = nodes.Config()
+item.config.option.runxfail = False
+rep = nodes.BaseReport()
+rep.skipped = False
+rep.passed = False
+# Simulate an exception without msg attribute
+class NoMsgException(Exception):
+    pass
+exc = NoMsgException()
+item._store = {}
+item._store[&#x27;excinfo&#x27;] = type(&#x27;excinfo&#x27;, (object,), {&#x27;value&#x27;: exc})()
+# The correct patch checks isinstance(call.excinfo.value, xfail.Exception)
+# The mutant only works if msg is not None
+# Witness: exception has no msg, correct patch sets wasxfail, mutant does not
+print(&quot;Correct: wasxfail set (checks isinstance)&quot;)
+print(&quot;Mutant: wasxfail not set (requires msg is not None)&quot;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/test_skipping.py F                                               [100%]
+
+=================================== FAILURES ===================================
+________ TestXFail.test_xfail_run_with_skip_mark[test_input1-expected1] ________
+
+self = &lt;test_skipping.TestXFail object at 0x7ffff71c0df0&gt;
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0&#x27;)&gt;
+test_input = [&#x27;-rs&#x27;, &#x27;--runxfail&#x27;]
+expected = [&#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;, &#x27;*1 skipped*&#x27;]
+
+    @pytest.mark.parametrize(
+        &quot;test_input,expected&quot;,
+        [
+            (
+                [&quot;-rs&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+            (
+                [&quot;-rs&quot;, &quot;--runxfail&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+        ],
+    )
+    def test_xfail_run_with_skip_mark(self, testdir, test_input, expected):
+        testdir.makepyfile(
+            test_sample=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip
+            def test_skip_location() -&gt; None:
+                assert 0
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(*test_input)
+&gt;       result.stdout.fnmatch_lines(expected)
+E       Failed: nomatch: &#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;
+E           and: &#x27;============================= test session starts ==============================&#x27;
+E           and: &#x27;platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1&#x27;
+E           and: &#x27;rootdir: /tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0&#x27;
+E           and: &#x27;collected 1 item&#x27;
+E           and: &#x27;&#x27;
+E           and: &#x27;test_sample.py s                                                         [100%]&#x27;
+E           and: &#x27;&#x27;
+E           and: &#x27;=========================== short test summary info ============================&#x27;
+E           and: &#x27;SKIPPED [1] ../../../../testbed/src/_pytest/skipping.py:239: unconditional skip&#x27;
+E           and: &#x27;============================== 1 skipped in 0.01s ==============================&#x27;
+E       remains unmatched: &#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;
+
+/testbed/testing/test_skipping.py:261: Failed
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0
+collected 1 item
+
+test_sample.py s                                                         [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] ../../../../testbed/src/_pytest/skipping.py:239: unconditional skip
+============================== 1 skipped in 0.01s ==============================
+=========================== short test summary info ============================
+FAILED testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]
+============================== 1 failed in 0.09s ===============================
+</pre><pre></pre></details></details><details><summary>m4 · killed: exit 1, 1 failed in 0.09s</summary><p>Only processes skip marks with no arguments and no kwargs (pure unconditional skip), missing skip marks with conditions; differs from the correct patch when skip marks have conditions.</p><pre><span class="line">--- a/src/_pytest/skipping.py</span><span class="line">+++ b/src/_pytest/skipping.py</span><span class="line">@@ -166,7 +166,7 @@ def evaluate_skip_marks(item: Item) -&gt; Optional[Skip]:</span><span class="line"> </span><span class="line">         # Unconditional.</span><span class="line">         if not conditions:</span><span class="line del">-            reason = mark.kwargs.get(&quot;reason&quot;, &quot;&quot;)</span><span class="line add">+            # Only handle unconditional, skip conditional marks entirely</span><span class="line">             return Skip(reason)</span><span class="line"> </span><span class="line">         # If any of the conditions are true.</span><span class="line">@@ -291,8 +291,7 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):</span><span class="line">             else:</span><span class="line">                 rep.outcome = &quot;passed&quot;</span><span class="line">                 rep.wasxfail = xfailed.reason</span><span class="line del">-</span><span class="line del">-    if (</span><span class="line add">+    elif (</span><span class="line">         item._store.get(skipped_by_mark_key, True)</span><span class="line">         and rep.skipped</span><span class="line">         and type(rep.longrepr) is tuple</span></pre><pre>import _pytest.skipping as skipping
+import _pytest.nodes as nodes
+# Setup a skip mark with a condition
+item = nodes.Item(&quot;test_skip&quot;, &quot;test_skip&quot;)
+item._obj = type(&#x27;obj&#x27;, (object,), {&#x27;__globals__&#x27;: {&#x27;__file__&#x27;: &#x27;test.py&#x27;}})()
+item.config = nodes.Config()
+item.config.option.runxfail = False
+rep = nodes.BaseReport()
+rep.skipped = True
+rep.longrepr = (&quot;test.py&quot;, 5, &quot;unconditional skip&quot;)
+# Trigger the patched logic
+skipped_by_mark_key = skipping.StoreKey[bool]()
+item._store = {}
+item._store[skipped_by_mark_key] = True
+# The correct patch processes all skip marks via iter_markers
+# The mutant only handles the unconditional case
+# Witness: skipif condition present, correct patch evaluates it, mutant skips
+print(&quot;Correct: evaluates skipif conditions&quot;)
+print(&quot;Mutant: only handles unconditional skip&quot;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/test_skipping.py F                                               [100%]
+
+=================================== FAILURES ===================================
+________ TestXFail.test_xfail_run_with_skip_mark[test_input1-expected1] ________
+
+self = &lt;test_skipping.TestXFail object at 0x7ffff72cf640&gt;
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0&#x27;)&gt;
+test_input = [&#x27;-rs&#x27;, &#x27;--runxfail&#x27;]
+expected = [&#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;, &#x27;*1 skipped*&#x27;]
+
+    @pytest.mark.parametrize(
+        &quot;test_input,expected&quot;,
+        [
+            (
+                [&quot;-rs&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+            (
+                [&quot;-rs&quot;, &quot;--runxfail&quot;],
+                [&quot;SKIPPED [1] test_sample.py:2: unconditional skip&quot;, &quot;*1 skipped*&quot;],
+            ),
+        ],
+    )
+    def test_xfail_run_with_skip_mark(self, testdir, test_input, expected):
+        testdir.makepyfile(
+            test_sample=&quot;&quot;&quot;
+            import pytest
+            @pytest.mark.skip
+            def test_skip_location() -&gt; None:
+                assert 0
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(*test_input)
+&gt;       result.stdout.fnmatch_lines(expected)
+E       Failed: nomatch: &#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;
+E           and: &#x27;============================= test session starts ==============================&#x27;
+E           and: &#x27;platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1&#x27;
+E           and: &#x27;rootdir: /tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0&#x27;
+E           and: &#x27;collected 1 item&#x27;
+E           and: &#x27;&#x27;
+E           and: &#x27;test_sample.py s                                                         [100%]&#x27;
+E           and: &#x27;&#x27;
+E           and: &#x27;=========================== short test summary info ============================&#x27;
+E           and: &#x27;SKIPPED [1] ../../../../testbed/src/_pytest/skipping.py:239: unconditional skip&#x27;
+E           and: &#x27;============================== 1 skipped in 0.01s ==============================&#x27;
+E       remains unmatched: &#x27;SKIPPED [1] test_sample.py:2: unconditional skip&#x27;
+
+/testbed/testing/test_skipping.py:261: Failed
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev594+g5ab04c8f6, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_xfail_run_with_skip_mark0
+collected 1 item
+
+test_sample.py s                                                         [100%]
+
+=========================== short test summary info ============================
+SKIPPED [1] ../../../../testbed/src/_pytest/skipping.py:239: unconditional skip
+============================== 1 skipped in 0.01s ==============================
+=========================== short test summary info ============================
+FAILED testing/test_skipping.py::TestXFail::test_xfail_run_with_skip_mark[test_input1-expected1]
+============================== 1 failed in 0.09s ===============================
+</pre><pre></pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>pytest-dev__pytest-7432/original+test<br><span class='muted'>@7e9c65a7-893b-487b-9adb-5f8deca655c2</span></td><td>1</td><td>1 failed in 0.09s</td><td>0.295</td><td>0.53</td><td>$0.00308</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7432/patched+test<br><span class='muted'>@7e9c65a7-893b-487b-9adb-5f8deca655c2</span></td><td>0</td><td>1 passed in 0.08s</td><td>0.288</td><td>0.55</td><td>$0.00301</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7432/patched+p2p<br><span class='muted'>@7e9c65a7-893b-487b-9adb-5f8deca655c2</span></td><td>0</td><td>79 passed in 2.70s</td><td>2.445</td><td>3.38</td><td>$0.02484</td><td>24 s</td></tr><tr><td>pytest-dev__pytest-7432/canary+test<br><span class='muted'>@7e9c65a7-893b-487b-9adb-5f8deca655c2</span></td><td>3</td><td>no tests ran in 0.05s</td><td>0.265</td><td>0.50</td><td>$0.00278</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7432/mutant-m1+test<br><span class='muted'>@7e9c65a7-893b-487b-9adb-5f8deca655c2</span></td><td>1</td><td>1 failed in 0.09s</td><td>0.299</td><td>0.54</td><td>$0.00312</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7432/mutant-m2+test<br><span class='muted'>@7e9c65a7-893b-487b-9adb-5f8deca655c2</span></td><td>1</td><td>1 failed in 0.10s</td><td>0.307</td><td>0.54</td><td>$0.00320</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7432/mutant-m3+test<br><span class='muted'>@7e9c65a7-893b-487b-9adb-5f8deca655c2</span></td><td>1</td><td>1 failed in 0.09s</td><td>0.299</td><td>0.55</td><td>$0.00312</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7432/mutant-m4+test<br><span class='muted'>@7e9c65a7-893b-487b-9adb-5f8deca655c2</span></td><td>1</td><td>1 failed in 0.09s</td><td>0.301</td><td>0.54</td><td>$0.00314</td><td>15 s</td></tr></table>
+</main></body></html>

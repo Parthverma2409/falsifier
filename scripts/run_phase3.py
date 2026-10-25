@@ -161,7 +161,7 @@ async def run(n: int, tag: str, client, guard, upload, rows, out_dir) -> list:
         except Exception as exc:  # recorded and reported; the other instances still run
             FAILURES[iid] = f"{type(exc).__name__}: {str(exc)[:400]}"
             print(f"{iid}: NOT RUN: {FAILURES[iid]}")
-    if results:
+    if results and len(INSTANCES) == 5:  # partial completions are re-rendered by render_results
         comparison([r[0] for r in results], {r[0].instance_id: r[2] for r in results}, out_dir)
     return results
 
@@ -194,7 +194,7 @@ async def run_one(iid, n, tag, client, guard, upload, rows, out_dir):
     return v, inst, o
 
 
-async def main_async() -> int:
+async def main_async(n_mutants: int) -> int:
     from contree_sdk import Contree
     from contree_sdk.config import ContreeConfig
 
@@ -205,6 +205,18 @@ async def main_async() -> int:
     rows = load_rows(INSTANCES)
     status, results = 0, []
     try:
+        if n_mutants != N_MUTANTS:  # the pre-committed escalation, run directly (8fd9bc8)
+            print(f"escalation run: {n_mutants} mutants on the same five instances")
+            results = await run(
+                n_mutants,
+                f"-x{n_mutants}",
+                client,
+                guard,
+                upload,
+                rows,
+                OUT / f"escalation-{n_mutants}",
+            )
+            return status
         results = await run(N_MUTANTS, "", client, guard, upload, rows, OUT)
         ran = [v for v, _, _ in results if any(m.status != NOT_RUN for m in v.mutants)]
         survivors = sum(m.status in F2P_SURVIVOR for v, _, _ in results for m in v.mutants)
@@ -230,8 +242,18 @@ async def main_async() -> int:
 
 
 def main() -> int:
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--mutants", type=int, default=N_MUTANTS)
+    ap.add_argument(
+        "--only", nargs="*", help="complete these instances only (e.g. after a transport failure)"
+    )
+    args = ap.parse_args()
+    if args.only:
+        INSTANCES[:] = [i for i in INSTANCES if i in set(args.only)]
     load_dotenv(ROOT / ".env")
-    return asyncio.run(main_async())
+    return asyncio.run(main_async(args.mutants))
 
 
 if __name__ == "__main__":

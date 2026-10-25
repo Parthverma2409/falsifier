@@ -1,0 +1,1330 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · psf__requests-6028</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>psf__requests-6028</h1>
+<p class="muted">Proxy authentication bug &lt;!-- Summary. --&gt; When using proxies in python 3.8.12, I get an error 407. Using any other version of python works fine. I am assuming it could be to do with this …</p><details><summary>Full issue</summary><pre>Proxy authentication bug
+&lt;!-- Summary. --&gt;
+
+When using proxies in python 3.8.12, I get an error 407. Using any other version of python works fine. I am assuming it could be to do with this https://docs.python.org/3/whatsnew/3.8.html#notable-changes-in-python-3-8-12.
+
+&lt;!-- What you expected. --&gt;
+
+I should get a status of 200.
+
+&lt;!-- What happened instead. --&gt;
+
+I get a status code of 407.
+
+```python
+import requests
+
+
+r = requests.get(&#x27;https://example.org/&#x27;, proxies=proxies) # You will need a proxy to test with, I am using a paid service.
+print(r.status_code)
+
+```
+
+## System Information
+
+```json
+{
+  &quot;chardet&quot;: {
+    &quot;version&quot;: null
+  },
+  &quot;charset_normalizer&quot;: {
+    &quot;version&quot;: &quot;2.0.9&quot;
+  },
+  &quot;cryptography&quot;: {
+    &quot;version&quot;: &quot;&quot;
+  },
+  &quot;idna&quot;: {
+    &quot;version&quot;: &quot;3.3&quot;
+  },
+  &quot;implementation&quot;: {
+    &quot;name&quot;: &quot;CPython&quot;,
+    &quot;version&quot;: &quot;3.8.12&quot;
+  },
+  &quot;platform&quot;: {
+    &quot;release&quot;: &quot;5.13.0-7620-generic&quot;,
+    &quot;system&quot;: &quot;Linux&quot;
+  },
+  &quot;pyOpenSSL&quot;: {
+    &quot;openssl_version&quot;: &quot;&quot;,
+    &quot;version&quot;: null
+  },
+  &quot;requests&quot;: {
+    &quot;version&quot;: &quot;2.27.0&quot;
+  },
+  &quot;system_ssl&quot;: {
+    &quot;version&quot;: &quot;101010cf&quot;
+  },
+  &quot;urllib3&quot;: {
+    &quot;version&quot;: &quot;1.26.7&quot;
+  },
+  &quot;using_charset_normalizer&quot;: true,
+  &quot;using_pyopenssl&quot;: false
+}
+```
+</pre></details>
+
+<div class="verdict EARNED">EARNED</div>
+
+<p>SWE-bench says <b>RESOLVED</b> · benchmark oracle: the repository's own FAIL_TO_PASS tests (2)</p>
+<p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 2 failed in 0.08s; the canary&#x27;s AssertionError is in the log)</b></p>
+<p class="reason">the test fails on the original (exit 1, 2 failed in 0.07s) and passes on the patch (exit 0, 2 passed in 0.05s); all 185 PASS_TO_PASS tests PASSED; the test killed 2 of 2 distinguishable mutants (0 equivalent discarded). Negative control: the canary failed the test (exit 1, 2 failed in 0.08s; the canary&#x27;s AssertionError is in the log)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint d4fe6077-fba6-4bdf-bc35-1aa2cae37712 ·
+6 forks · 1.65 CPU-s · $0.0175 · 2026-10-25T14:53:20+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The mutant places the `if auth:` check before the `if not netloc:` swap, so when a URL has no netloc but has auth (e.g., `http://user@host`), the auth gets prepended to the swapped path instead of being handled after the netloc/path swap, producing a different netloc structure than the correct patch which applies auth after the swap.</span></div><div class="card"><b>m2</b> · too-narrow<br><span class="status killed">killed</span><br><span class="muted">The mutant only prepends auth when the netloc is empty after the swap, but the correct patch always prepends auth regardless of whether a swap occurred. For a URL like `http://user:pass@example.org/` where netloc is already present, the correct patch adds `@` between auth and netloc, while the mutant skips this because netloc is truthy, leaving the URL unchanged.</span></div></div>
+
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 2 failed in 0.07s · 0.259 CPU-s · 0.53 s · $0.00276<br>
+patched + test: <b>PASS</b>: exit 0, 2 passed in 0.05s · 0.230 CPU-s · 0.51 s · $0.00247<br>
+patched + PASS_TO_PASS: <b>FAIL</b>: exit 1, 195 passed, 11 skipped, 8 errors in 0.29s · 0.374 CPU-s · 0.73 s · $0.00391<br>
+canary + test: <b>FAIL</b>: exit 1, 2 failed in 0.08s · 0.263 CPU-s · 0.54 s · $0.00281</p>
+<details><summary>The canary mutant</summary><pre><span class="line">--- a/requests/utils.py</span><span class="line">+++ b/requests/utils.py</span><span class="line">@@ -958,32 +958,7 @@ def guess_json_utf(data):</span><span class="line"> </span><span class="line"> </span><span class="line"> def prepend_scheme_if_needed(url, new_scheme):</span><span class="line del">-    &quot;&quot;&quot;Given a URL that may or may not have a scheme, prepend the given scheme.</span><span class="line del">-    Does not replace a present scheme with the one provided as an argument.</span><span class="line del">-</span><span class="line del">-    :rtype: str</span><span class="line del">-    &quot;&quot;&quot;</span><span class="line del">-    parsed = parse_url(url)</span><span class="line del">-    scheme, auth, host, port, path, query, fragment = parsed</span><span class="line del">-</span><span class="line del">-    # A defect in urlparse determines that there isn&#x27;t a netloc present in some</span><span class="line del">-    # urls. We previously assumed parsing was overly cautious, and swapped the</span><span class="line del">-    # netloc and path. Due to a lack of tests on the original defect, this is</span><span class="line del">-    # maintained with parse_url for backwards compatibility.</span><span class="line del">-    netloc = parsed.netloc</span><span class="line del">-    if not netloc:</span><span class="line del">-        netloc, path = path, netloc</span><span class="line del">-</span><span class="line del">-    if auth:</span><span class="line del">-        # parse_url doesn&#x27;t provide the netloc with auth</span><span class="line del">-        # so we&#x27;ll add it ourselves.</span><span class="line del">-        netloc = &#x27;@&#x27;.join([auth, netloc])</span><span class="line del">-    if scheme is None:</span><span class="line del">-        scheme = new_scheme</span><span class="line del">-    if path is None:</span><span class="line del">-        path = &#x27;&#x27;</span><span class="line del">-</span><span class="line del">-    return urlunparse((scheme, netloc, path, &#x27;&#x27;, query, fragment))</span><span class="line add">+    raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line"> </span><span class="line"> def get_auth_from_url(url):</span></pre></details>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">diff --git a/requests/utils.py b/requests/utils.py</span><span class="line">--- a/requests/utils.py</span><span class="line">+++ b/requests/utils.py</span><span class="line">@@ -974,6 +974,10 @@ def prepend_scheme_if_needed(url, new_scheme):</span><span class="line">     if not netloc:</span><span class="line">         netloc, path = path, netloc</span><span class="line"> </span><span class="line add">+    if auth:</span><span class="line add">+        # parse_url doesn&#x27;t provide the netloc with auth</span><span class="line add">+        # so we&#x27;ll add it ourselves.</span><span class="line add">+        netloc = &#x27;@&#x27;.join([auth, netloc])</span><span class="line">     if scheme is None:</span><span class="line">         scheme = new_scheme</span><span class="line">     if path is None:</span></pre></div>
+<div><h3>The test</h3><pre># -*- coding: utf-8 -*-
+
+import os
+import copy
+import filecmp
+from io import BytesIO
+import tarfile
+import zipfile
+from collections import deque
+
+import pytest
+from requests import compat
+from requests.cookies import RequestsCookieJar
+from requests.structures import CaseInsensitiveDict
+from requests.utils import (
+    address_in_network, dotted_netmask, extract_zipped_paths,
+    get_auth_from_url, _parse_content_type_header, get_encoding_from_headers,
+    get_encodings_from_content, get_environ_proxies,
+    guess_filename, guess_json_utf, is_ipv4_address,
+    is_valid_cidr, iter_slices, parse_dict_header,
+    parse_header_links, prepend_scheme_if_needed,
+    requote_uri, select_proxy, should_bypass_proxies, super_len,
+    to_key_val_list, to_native_string,
+    unquote_header_value, unquote_unreserved,
+    urldefragauth, add_dict_to_cookiejar, set_environ)
+from requests._internal_utils import unicode_is_ascii
+
+from .compat import StringIO, cStringIO
+
+
+class TestSuperLen:
+
+    @pytest.mark.parametrize(
+        &#x27;stream, value&#x27;, (
+            (StringIO.StringIO, &#x27;Test&#x27;),
+            (BytesIO, b&#x27;Test&#x27;),
+            pytest.param(cStringIO, &#x27;Test&#x27;,
+                         marks=pytest.mark.skipif(&#x27;cStringIO is None&#x27;)),
+        ))
+    def test_io_streams(self, stream, value):
+        &quot;&quot;&quot;Ensures that we properly deal with different kinds of IO streams.&quot;&quot;&quot;
+        assert super_len(stream()) == 0
+        assert super_len(stream(value)) == 4
+
+    def test_super_len_correctly_calculates_len_of_partially_read_file(self):
+        &quot;&quot;&quot;Ensure that we handle partially consumed file like objects.&quot;&quot;&quot;
+        s = StringIO.StringIO()
+        s.write(&#x27;foobarbogus&#x27;)
+        assert super_len(s) == 0
+
+    @pytest.mark.parametrize(&#x27;error&#x27;, [IOError, OSError])
+    def test_super_len_handles_files_raising_weird_errors_in_tell(self, error):
+        &quot;&quot;&quot;If tell() raises errors, assume the cursor is at position zero.&quot;&quot;&quot;
+        class BoomFile(object):
+            def __len__(self):
+                return 5
+
+            def tell(self):
+                raise error()
+
+        assert super_len(BoomFile()) == 0
+
+    @pytest.mark.parametrize(&#x27;error&#x27;, [IOError, OSError])
+    def test_super_len_tell_ioerror(self, error):
+        &quot;&quot;&quot;Ensure that if tell gives an IOError super_len doesn&#x27;t fail&quot;&quot;&quot;
+        class NoLenBoomFile(object):
+            def tell(self):
+                raise error()
+
+            def seek(self, offset, whence):
+                pass
+
+        assert super_len(NoLenBoomFile()) == 0
+
+    def test_string(self):
+        assert super_len(&#x27;Test&#x27;) == 4
+
+    @pytest.mark.parametrize(
+        &#x27;mode, warnings_num&#x27;, (
+            (&#x27;r&#x27;, 1),
+            (&#x27;rb&#x27;, 0),
+        ))
+    def test_file(self, tmpdir, mode, warnings_num, recwarn):
+        file_obj = tmpdir.join(&#x27;test.txt&#x27;)
+        file_obj.write(&#x27;Test&#x27;)
+        with file_obj.open(mode) as fd:
+            assert super_len(fd) == 4
+        assert len(recwarn) == warnings_num
+
+    def test_tarfile_member(self, tmpdir):
+        file_obj = tmpdir.join(&#x27;test.txt&#x27;)
+        file_obj.write(&#x27;Test&#x27;)
+
+        tar_obj = str(tmpdir.join(&#x27;test.tar&#x27;))
+        with tarfile.open(tar_obj, &#x27;w&#x27;) as tar:
+            tar.add(str(file_obj), arcname=&#x27;test.txt&#x27;)
+
+        with tarfile.open(tar_obj) as tar:
+            member = tar.extractfile(&#x27;test.txt&#x27;)
+            assert super_len(member) == 4
+
+    def test_super_len_with__len__(self):
+        foo = [1,2,3,4]
+        len_foo = super_len(foo)
+        assert len_foo == 4
+
+    def test_super_len_with_no__len__(self):
+        class LenFile(object):
+            def __init__(self):
+                self.len = 5
+
+        assert super_len(LenFile()) == 5
+
+    def test_super_len_with_tell(self):
+        foo = StringIO.StringIO(&#x27;12345&#x27;)
+        assert super_len(foo) == 5
+        foo.read(2)
+        assert super_len(foo) == 3
+
+    def test_super_len_with_fileno(self):
+        with open(__file__, &#x27;rb&#x27;) as f:
+            length = super_len(f)
+            file_data = f.read()
+        assert length == len(file_data)
+
+    def test_super_len_with_no_matches(self):
+        &quot;&quot;&quot;Ensure that objects without any length methods default to 0&quot;&quot;&quot;
+        assert super_len(object()) == 0
+
+
+class TestToKeyValList:
+
+    @pytest.mark.parametrize(
+        &#x27;value, expected&#x27;, (
+            ([(&#x27;key&#x27;, &#x27;val&#x27;)], [(&#x27;key&#x27;, &#x27;val&#x27;)]),
+            (((&#x27;key&#x27;, &#x27;val&#x27;), ), [(&#x27;key&#x27;, &#x27;val&#x27;)]),
+            ({&#x27;key&#x27;: &#x27;val&#x27;}, [(&#x27;key&#x27;, &#x27;val&#x27;)]),
+            (None, None)
+        ))
+    def test_valid(self, value, expected):
+        assert to_key_val_list(value) == expected
+
+    def test_invalid(self):
+        with pytest.raises(ValueError):
+            to_key_val_list(&#x27;string&#x27;)
+
+
+class TestUnquoteHeaderValue:
+
+    @pytest.mark.parametrize(
+        &#x27;value, expected&#x27;, (
+            (None, None),
+            (&#x27;Test&#x27;, &#x27;Test&#x27;),
+            (&#x27;&quot;Test&quot;&#x27;, &#x27;Test&#x27;),
+            (&#x27;&quot;Test\\\\&quot;&#x27;, &#x27;Test\\&#x27;),
+            (&#x27;&quot;\\\\Comp\\Res&quot;&#x27;, &#x27;\\Comp\\Res&#x27;),
+        ))
+    def test_valid(self, value, expected):
+        assert unquote_header_value(value) == expected
+
+    def test_is_filename(self):
+        assert unquote_header_value(&#x27;&quot;\\\\Comp\\Res&quot;&#x27;, True) == &#x27;\\\\Comp\\Res&#x27;
+
+
+class TestGetEnvironProxies:
+    &quot;&quot;&quot;Ensures that IP addresses are correctly matches with ranges
+    in no_proxy variable.
+    &quot;&quot;&quot;
+
+    @pytest.fixture(autouse=True, params=[&#x27;no_proxy&#x27;, &#x27;NO_PROXY&#x27;])
+    def no_proxy(self, request, monkeypatch):
+        monkeypatch.setenv(request.param, &#x27;192.168.0.0/24,127.0.0.1,localhost.localdomain,172.16.1.1&#x27;)
+
+    @pytest.mark.parametrize(
+        &#x27;url&#x27;, (
+            &#x27;http://192.168.0.1:5000/&#x27;,
+            &#x27;http://192.168.0.1/&#x27;,
+            &#x27;http://172.16.1.1/&#x27;,
+            &#x27;http://172.16.1.1:5000/&#x27;,
+            &#x27;http://localhost.localdomain:5000/v1.0/&#x27;,
+        ))
+    def test_bypass(self, url):
+        assert get_environ_proxies(url, no_proxy=None) == {}
+
+    @pytest.mark.parametrize(
+        &#x27;url&#x27;, (
+            &#x27;http://192.168.1.1:5000/&#x27;,
+            &#x27;http://192.168.1.1/&#x27;,
+            &#x27;http://www.requests.com/&#x27;,
+        ))
+    def test_not_bypass(self, url):
+        assert get_environ_proxies(url, no_proxy=None) != {}
+
+    @pytest.mark.parametrize(
+        &#x27;url&#x27;, (
+            &#x27;http://192.168.1.1:5000/&#x27;,
+            &#x27;http://192.168.1.1/&#x27;,
+            &#x27;http://www.requests.com/&#x27;,
+        ))
+    def test_bypass_no_proxy_keyword(self, url):
+        no_proxy = &#x27;192.168.1.1,requests.com&#x27;
+        assert get_environ_proxies(url, no_proxy=no_proxy) == {}
+
+    @pytest.mark.parametrize(
+        &#x27;url&#x27;, (
+            &#x27;http://192.168.0.1:5000/&#x27;,
+            &#x27;http://192.168.0.1/&#x27;,
+            &#x27;http://172.16.1.1/&#x27;,
+            &#x27;http://172.16.1.1:5000/&#x27;,
+            &#x27;http://localhost.localdomain:5000/v1.0/&#x27;,
+        ))
+    def test_not_bypass_no_proxy_keyword(self, url, monkeypatch):
+        # This is testing that the &#x27;no_proxy&#x27; argument overrides the
+        # environment variable &#x27;no_proxy&#x27;
+        monkeypatch.setenv(&#x27;http_proxy&#x27;, &#x27;http://proxy.example.com:3128/&#x27;)
+        no_proxy = &#x27;192.168.1.1,requests.com&#x27;
+        assert get_environ_proxies(url, no_proxy=no_proxy) != {}
+
+
+class TestIsIPv4Address:
+
+    def test_valid(self):
+        assert is_ipv4_address(&#x27;8.8.8.8&#x27;)
+
+    @pytest.mark.parametrize(&#x27;value&#x27;, (&#x27;8.8.8.8.8&#x27;, &#x27;localhost.localdomain&#x27;))
+    def test_invalid(self, value):
+        assert not is_ipv4_address(value)
+
+
+class TestIsValidCIDR:
+
+    def test_valid(self):
+        assert is_valid_cidr(&#x27;192.168.1.0/24&#x27;)
+
+    @pytest.mark.parametrize(
+        &#x27;value&#x27;, (
+            &#x27;8.8.8.8&#x27;,
+            &#x27;192.168.1.0/a&#x27;,
+            &#x27;192.168.1.0/128&#x27;,
+            &#x27;192.168.1.0/-1&#x27;,
+            &#x27;192.168.1.999/24&#x27;,
+        ))
+    def test_invalid(self, value):
+        assert not is_valid_cidr(value)
+
+
+class TestAddressInNetwork:
+
+    def test_valid(self):
+        assert address_in_network(&#x27;192.168.1.1&#x27;, &#x27;192.168.1.0/24&#x27;)
+
+    def test_invalid(self):
+        assert not address_in_network(&#x27;172.16.0.1&#x27;, &#x27;192.168.1.0/24&#x27;)
+
+
+class TestGuessFilename:
+
+    @pytest.mark.parametrize(
+        &#x27;value&#x27;, (1, type(&#x27;Fake&#x27;, (object,), {&#x27;name&#x27;: 1})()),
+    )
+    def test_guess_filename_invalid(self, value):
+        assert guess_filename(value) is None
+
+    @pytest.mark.parametrize(
+        &#x27;value, expected_type&#x27;, (
+            (b&#x27;value&#x27;, compat.bytes),
+            (b&#x27;value&#x27;.decode(&#x27;utf-8&#x27;), compat.str)
+        ))
+    def test_guess_filename_valid(self, value, expected_type):
+        obj = type(&#x27;Fake&#x27;, (object,), {&#x27;name&#x27;: value})()
+        result = guess_filename(obj)
+        assert result == value
+        assert isinstance(result, expected_type)
+
+
+class TestExtractZippedPaths:
+
+    @pytest.mark.parametrize(
+        &#x27;path&#x27;, (
+            &#x27;/&#x27;,
+            __file__,
+            pytest.__file__,
+            &#x27;/etc/invalid/location&#x27;,
+        ))
+    def test_unzipped_paths_unchanged(self, path):
+        assert path == extract_zipped_paths(path)
+
+    def test_zipped_paths_extracted(self, tmpdir):
+        zipped_py = tmpdir.join(&#x27;test.zip&#x27;)
+        with zipfile.ZipFile(zipped_py.strpath, &#x27;w&#x27;) as f:
+            f.write(__file__)
+
+        _, name = os.path.splitdrive(__file__)
+        zipped_path = os.path.join(zipped_py.strpath, name.lstrip(r&#x27;\/&#x27;))
+        extracted_path = extract_zipped_paths(zipped_path)
+
+        assert extracted_path != zipped_path
+        assert os.path.exists(extracted_path)
+        assert filecmp.cmp(extracted_path, __file__)
+
+    def test_invalid_unc_path(self):
+        path = r&quot;\\localhost\invalid\location&quot;
+        assert extract_zipped_paths(path) == path
+
+
+class TestContentEncodingDetection:
+
+    def test_none(self):
+        encodings = get_encodings_from_content(&#x27;&#x27;)
+        assert not len(encodings)
+
+    @pytest.mark.parametrize(
+        &#x27;content&#x27;, (
+            # HTML5 meta charset attribute
+            &#x27;&lt;meta charset=&quot;UTF-8&quot;&gt;&#x27;,
+            # HTML4 pragma directive
+            &#x27;&lt;meta http-equiv=&quot;Content-type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#x27;,
+            # XHTML 1.x served with text/html MIME type
+            &#x27;&lt;meta http-equiv=&quot;Content-type&quot; content=&quot;text/html;charset=UTF-8&quot; /&gt;&#x27;,
+            # XHTML 1.x served as XML
+            &#x27;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#x27;,
+        ))
+    def test_pragmas(self, content):
+        encodings = get_encodings_from_content(content)
+        assert len(encodings) == 1
+        assert encodings[0] == &#x27;UTF-8&#x27;
+
+    def test_precedence(self):
+        content = &#x27;&#x27;&#x27;
+        &lt;?xml version=&quot;1.0&quot; encoding=&quot;XML&quot;?&gt;
+        &lt;meta charset=&quot;HTML5&quot;&gt;
+        &lt;meta http-equiv=&quot;Content-type&quot; content=&quot;text/html;charset=HTML4&quot; /&gt;
+        &#x27;&#x27;&#x27;.strip()
+        assert get_encodings_from_content(content) == [&#x27;HTML5&#x27;, &#x27;HTML4&#x27;, &#x27;XML&#x27;]
+
+
+class TestGuessJSONUTF:
+
+    @pytest.mark.parametrize(
+        &#x27;encoding&#x27;, (
+            &#x27;utf-32&#x27;, &#x27;utf-8-sig&#x27;, &#x27;utf-16&#x27;, &#x27;utf-8&#x27;, &#x27;utf-16-be&#x27;, &#x27;utf-16-le&#x27;,
+            &#x27;utf-32-be&#x27;, &#x27;utf-32-le&#x27;
+        ))
+    def test_encoded(self, encoding):
+        data = &#x27;{}&#x27;.encode(encoding)
+        assert guess_json_utf(data) == encoding
+
+    def test_bad_utf_like_encoding(self):
+        assert guess_json_utf(b&#x27;\x00\x00\x00\x00&#x27;) is None
+
+    @pytest.mark.parametrize(
+        (&#x27;encoding&#x27;, &#x27;expected&#x27;), (
+            (&#x27;utf-16-be&#x27;, &#x27;utf-16&#x27;),
+            (&#x27;utf-16-le&#x27;, &#x27;utf-16&#x27;),
+            (&#x27;utf-32-be&#x27;, &#x27;utf-32&#x27;),
+            (&#x27;utf-32-le&#x27;, &#x27;utf-32&#x27;)
+        ))
+    def test_guess_by_bom(self, encoding, expected):
+        data = u&#x27;\ufeff{}&#x27;.encode(encoding)
+        assert guess_json_utf(data) == expected
+
+
+USER = PASSWORD = &quot;%!*&#x27;();:@&amp;=+$,/?#[] &quot;
+ENCODED_USER = compat.quote(USER, &#x27;&#x27;)
+ENCODED_PASSWORD = compat.quote(PASSWORD, &#x27;&#x27;)
+
+
+@pytest.mark.parametrize(
+    &#x27;url, auth&#x27;, (
+        (
+            &#x27;http://&#x27; + ENCODED_USER + &#x27;:&#x27; + ENCODED_PASSWORD + &#x27;@&#x27; +
+            &#x27;request.com/url.html#test&#x27;,
+            (USER, PASSWORD)
+        ),
+        (
+            &#x27;http://user:pass@complex.url.com/path?query=yes&#x27;,
+            (&#x27;user&#x27;, &#x27;pass&#x27;)
+        ),
+        (
+            &#x27;http://user:pass%20pass@complex.url.com/path?query=yes&#x27;,
+            (&#x27;user&#x27;, &#x27;pass pass&#x27;)
+        ),
+        (
+            &#x27;http://user:pass pass@complex.url.com/path?query=yes&#x27;,
+            (&#x27;user&#x27;, &#x27;pass pass&#x27;)
+        ),
+        (
+            &#x27;http://user%25user:pass@complex.url.com/path?query=yes&#x27;,
+            (&#x27;user%user&#x27;, &#x27;pass&#x27;)
+        ),
+        (
+            &#x27;http://user:pass%23pass@complex.url.com/path?query=yes&#x27;,
+            (&#x27;user&#x27;, &#x27;pass#pass&#x27;)
+        ),
+        (
+            &#x27;http://complex.url.com/path?query=yes&#x27;,
+            (&#x27;&#x27;, &#x27;&#x27;)
+        ),
+    ))
+def test_get_auth_from_url(url, auth):
+    assert get_auth_from_url(url) == auth
+
+
+@pytest.mark.parametrize(
+    &#x27;uri, expected&#x27;, (
+        (
+            # Ensure requoting doesn&#x27;t break expectations
+            &#x27;http://example.com/fiz?buz=%25ppicture&#x27;,
+            &#x27;http://example.com/fiz?buz=%25ppicture&#x27;,
+        ),
+        (
+            # Ensure we handle unquoted percent signs in redirects
+            &#x27;http://example.com/fiz?buz=%ppicture&#x27;,
+            &#x27;http://example.com/fiz?buz=%25ppicture&#x27;,
+        ),
+    ))
+def test_requote_uri_with_unquoted_percents(uri, expected):
+    &quot;&quot;&quot;See: https://github.com/psf/requests/issues/2356&quot;&quot;&quot;
+    assert requote_uri(uri) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;uri, expected&#x27;, (
+        (
+            # Illegal bytes
+            &#x27;http://example.com/?a=%--&#x27;,
+            &#x27;http://example.com/?a=%--&#x27;,
+        ),
+        (
+            # Reserved characters
+            &#x27;http://example.com/?a=%300&#x27;,
+            &#x27;http://example.com/?a=00&#x27;,
+        )
+    ))
+def test_unquote_unreserved(uri, expected):
+    assert unquote_unreserved(uri) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;mask, expected&#x27;, (
+        (8, &#x27;255.0.0.0&#x27;),
+        (24, &#x27;255.255.255.0&#x27;),
+        (25, &#x27;255.255.255.128&#x27;),
+    ))
+def test_dotted_netmask(mask, expected):
+    assert dotted_netmask(mask) == expected
+
+
+http_proxies = {&#x27;http&#x27;: &#x27;http://http.proxy&#x27;,
+                &#x27;http://some.host&#x27;: &#x27;http://some.host.proxy&#x27;}
+all_proxies = {&#x27;all&#x27;: &#x27;socks5://http.proxy&#x27;,
+               &#x27;all://some.host&#x27;: &#x27;socks5://some.host.proxy&#x27;}
+mixed_proxies = {&#x27;http&#x27;: &#x27;http://http.proxy&#x27;,
+                 &#x27;http://some.host&#x27;: &#x27;http://some.host.proxy&#x27;,
+                 &#x27;all&#x27;: &#x27;socks5://http.proxy&#x27;}
+@pytest.mark.parametrize(
+    &#x27;url, expected, proxies&#x27;, (
+        (&#x27;hTTp://u:p@Some.Host/path&#x27;, &#x27;http://some.host.proxy&#x27;, http_proxies),
+        (&#x27;hTTp://u:p@Other.Host/path&#x27;, &#x27;http://http.proxy&#x27;, http_proxies),
+        (&#x27;hTTp:///path&#x27;, &#x27;http://http.proxy&#x27;, http_proxies),
+        (&#x27;hTTps://Other.Host&#x27;, None, http_proxies),
+        (&#x27;file:///etc/motd&#x27;, None, http_proxies),
+
+        (&#x27;hTTp://u:p@Some.Host/path&#x27;, &#x27;socks5://some.host.proxy&#x27;, all_proxies),
+        (&#x27;hTTp://u:p@Other.Host/path&#x27;, &#x27;socks5://http.proxy&#x27;, all_proxies),
+        (&#x27;hTTp:///path&#x27;, &#x27;socks5://http.proxy&#x27;, all_proxies),
+        (&#x27;hTTps://Other.Host&#x27;, &#x27;socks5://http.proxy&#x27;, all_proxies),
+
+        (&#x27;http://u:p@other.host/path&#x27;, &#x27;http://http.proxy&#x27;, mixed_proxies),
+        (&#x27;http://u:p@some.host/path&#x27;, &#x27;http://some.host.proxy&#x27;, mixed_proxies),
+        (&#x27;https://u:p@other.host/path&#x27;, &#x27;socks5://http.proxy&#x27;, mixed_proxies),
+        (&#x27;https://u:p@some.host/path&#x27;, &#x27;socks5://http.proxy&#x27;, mixed_proxies),
+        (&#x27;https://&#x27;, &#x27;socks5://http.proxy&#x27;, mixed_proxies),
+        # XXX: unsure whether this is reasonable behavior
+        (&#x27;file:///etc/motd&#x27;, &#x27;socks5://http.proxy&#x27;, all_proxies),
+    ))
+def test_select_proxies(url, expected, proxies):
+    &quot;&quot;&quot;Make sure we can select per-host proxies correctly.&quot;&quot;&quot;
+    assert select_proxy(url, proxies) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;value, expected&#x27;, (
+        (&#x27;foo=&quot;is a fish&quot;, bar=&quot;as well&quot;&#x27;, {&#x27;foo&#x27;: &#x27;is a fish&#x27;, &#x27;bar&#x27;: &#x27;as well&#x27;}),
+        (&#x27;key_without_value&#x27;, {&#x27;key_without_value&#x27;: None})
+    ))
+def test_parse_dict_header(value, expected):
+    assert parse_dict_header(value) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;value, expected&#x27;, (
+        (
+            &#x27;application/xml&#x27;,
+            (&#x27;application/xml&#x27;, {})
+        ),
+        (
+            &#x27;application/json ; charset=utf-8&#x27;,
+            (&#x27;application/json&#x27;, {&#x27;charset&#x27;: &#x27;utf-8&#x27;})
+        ),
+        (
+            &#x27;application/json ; Charset=utf-8&#x27;,
+            (&#x27;application/json&#x27;, {&#x27;charset&#x27;: &#x27;utf-8&#x27;})
+        ),
+        (
+            &#x27;text/plain&#x27;,
+            (&#x27;text/plain&#x27;, {})
+        ),
+        (
+            &#x27;multipart/form-data; boundary = something ; boundary2=\&#x27;something_else\&#x27; ; no_equals &#x27;,
+            (&#x27;multipart/form-data&#x27;, {&#x27;boundary&#x27;: &#x27;something&#x27;, &#x27;boundary2&#x27;: &#x27;something_else&#x27;, &#x27;no_equals&#x27;: True})
+        ),
+        (
+                &#x27;multipart/form-data; boundary = something ; boundary2=&quot;something_else&quot; ; no_equals &#x27;,
+                (&#x27;multipart/form-data&#x27;, {&#x27;boundary&#x27;: &#x27;something&#x27;, &#x27;boundary2&#x27;: &#x27;something_else&#x27;, &#x27;no_equals&#x27;: True})
+        ),
+        (
+            &#x27;multipart/form-data; boundary = something ; \&#x27;boundary2=something_else\&#x27; ; no_equals &#x27;,
+            (&#x27;multipart/form-data&#x27;, {&#x27;boundary&#x27;: &#x27;something&#x27;, &#x27;boundary2&#x27;: &#x27;something_else&#x27;, &#x27;no_equals&#x27;: True})
+        ),
+        (
+            &#x27;multipart/form-data; boundary = something ; &quot;boundary2=something_else&quot; ; no_equals &#x27;,
+            (&#x27;multipart/form-data&#x27;, {&#x27;boundary&#x27;: &#x27;something&#x27;, &#x27;boundary2&#x27;: &#x27;something_else&#x27;, &#x27;no_equals&#x27;: True})
+        ),
+        (
+            &#x27;application/json ; ; &#x27;,
+            (&#x27;application/json&#x27;, {})
+        )
+    ))
+def test__parse_content_type_header(value, expected):
+    assert _parse_content_type_header(value) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;value, expected&#x27;, (
+        (
+            CaseInsensitiveDict(),
+            None
+        ),
+        (
+            CaseInsensitiveDict({&#x27;content-type&#x27;: &#x27;application/json; charset=utf-8&#x27;}),
+            &#x27;utf-8&#x27;
+        ),
+        (
+            CaseInsensitiveDict({&#x27;content-type&#x27;: &#x27;text/plain&#x27;}),
+            &#x27;ISO-8859-1&#x27;
+        ),
+    ))
+def test_get_encoding_from_headers(value, expected):
+    assert get_encoding_from_headers(value) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;value, length&#x27;, (
+        (&#x27;&#x27;, 0),
+        (&#x27;T&#x27;, 1),
+        (&#x27;Test&#x27;, 4),
+        (&#x27;Cont&#x27;, 0),
+        (&#x27;Other&#x27;, -5),
+        (&#x27;Content&#x27;, None),
+    ))
+def test_iter_slices(value, length):
+    if length is None or (length &lt;= 0 and len(value) &gt; 0):
+        # Reads all content at once
+        assert len(list(iter_slices(value, length))) == 1
+    else:
+        assert len(list(iter_slices(value, 1))) == length
+
+
+@pytest.mark.parametrize(
+    &#x27;value, expected&#x27;, (
+        (
+            &#x27;&lt;http:/.../front.jpeg&gt;; rel=front; type=&quot;image/jpeg&quot;&#x27;,
+            [{&#x27;url&#x27;: &#x27;http:/.../front.jpeg&#x27;, &#x27;rel&#x27;: &#x27;front&#x27;, &#x27;type&#x27;: &#x27;image/jpeg&#x27;}]
+        ),
+        (
+            &#x27;&lt;http:/.../front.jpeg&gt;&#x27;,
+            [{&#x27;url&#x27;: &#x27;http:/.../front.jpeg&#x27;}]
+        ),
+        (
+            &#x27;&lt;http:/.../front.jpeg&gt;;&#x27;,
+            [{&#x27;url&#x27;: &#x27;http:/.../front.jpeg&#x27;}]
+        ),
+        (
+            &#x27;&lt;http:/.../front.jpeg&gt;; type=&quot;image/jpeg&quot;,&lt;http://.../back.jpeg&gt;;&#x27;,
+            [
+                {&#x27;url&#x27;: &#x27;http:/.../front.jpeg&#x27;, &#x27;type&#x27;: &#x27;image/jpeg&#x27;},
+                {&#x27;url&#x27;: &#x27;http://.../back.jpeg&#x27;}
+            ]
+        ),
+        (
+            &#x27;&#x27;,
+            []
+        ),
+    ))
+def test_parse_header_links(value, expected):
+    assert parse_header_links(value) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;value, expected&#x27;, (
+        (&#x27;example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+        (&#x27;//example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+        (&#x27;example.com:80&#x27;, &#x27;http://example.com:80&#x27;),
+        (
+            &#x27;http://user:pass@example.com/path?query&#x27;,
+            &#x27;http://user:pass@example.com/path?query&#x27;
+        ),
+        (
+            &#x27;http://user@example.com/path?query&#x27;,
+            &#x27;http://user@example.com/path?query&#x27;
+        )
+    ))
+def test_prepend_scheme_if_needed(value, expected):
+    assert prepend_scheme_if_needed(value, &#x27;http&#x27;) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;value, expected&#x27;, (
+        (&#x27;T&#x27;, &#x27;T&#x27;),
+        (b&#x27;T&#x27;, &#x27;T&#x27;),
+        (u&#x27;T&#x27;, &#x27;T&#x27;),
+    ))
+def test_to_native_string(value, expected):
+    assert to_native_string(value) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;url, expected&#x27;, (
+        (&#x27;http://u:p@example.com/path?a=1#test&#x27;, &#x27;http://example.com/path?a=1&#x27;),
+        (&#x27;http://example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+        (&#x27;//u:p@example.com/path&#x27;, &#x27;//example.com/path&#x27;),
+        (&#x27;//example.com/path&#x27;, &#x27;//example.com/path&#x27;),
+        (&#x27;example.com/path&#x27;, &#x27;//example.com/path&#x27;),
+        (&#x27;scheme:u:p@example.com/path&#x27;, &#x27;scheme://example.com/path&#x27;),
+    ))
+def test_urldefragauth(url, expected):
+    assert urldefragauth(url) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;url, expected&#x27;, (
+            (&#x27;http://192.168.0.1:5000/&#x27;, True),
+            (&#x27;http://192.168.0.1/&#x27;, True),
+            (&#x27;http://172.16.1.1/&#x27;, True),
+            (&#x27;http://172.16.1.1:5000/&#x27;, True),
+            (&#x27;http://localhost.localdomain:5000/v1.0/&#x27;, True),
+            (&#x27;http://google.com:6000/&#x27;, True),
+            (&#x27;http://172.16.1.12/&#x27;, False),
+            (&#x27;http://172.16.1.12:5000/&#x27;, False),
+            (&#x27;http://google.com:5000/v1.0/&#x27;, False),
+            (&#x27;file:///some/path/on/disk&#x27;, True),
+    ))
+def test_should_bypass_proxies(url, expected, monkeypatch):
+    &quot;&quot;&quot;Tests for function should_bypass_proxies to check if proxy
+    can be bypassed or not
+    &quot;&quot;&quot;
+    monkeypatch.setenv(&#x27;no_proxy&#x27;, &#x27;192.168.0.0/24,127.0.0.1,localhost.localdomain,172.16.1.1, google.com:6000&#x27;)
+    monkeypatch.setenv(&#x27;NO_PROXY&#x27;, &#x27;192.168.0.0/24,127.0.0.1,localhost.localdomain,172.16.1.1, google.com:6000&#x27;)
+    assert should_bypass_proxies(url, no_proxy=None) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;url, expected&#x27;, (
+            (&#x27;http://172.16.1.1/&#x27;, &#x27;172.16.1.1&#x27;),
+            (&#x27;http://172.16.1.1:5000/&#x27;, &#x27;172.16.1.1&#x27;),
+            (&#x27;http://user:pass@172.16.1.1&#x27;, &#x27;172.16.1.1&#x27;),
+            (&#x27;http://user:pass@172.16.1.1:5000&#x27;, &#x27;172.16.1.1&#x27;),
+            (&#x27;http://hostname/&#x27;, &#x27;hostname&#x27;),
+            (&#x27;http://hostname:5000/&#x27;, &#x27;hostname&#x27;),
+            (&#x27;http://user:pass@hostname&#x27;, &#x27;hostname&#x27;),
+            (&#x27;http://user:pass@hostname:5000&#x27;, &#x27;hostname&#x27;),
+    ))
+def test_should_bypass_proxies_pass_only_hostname(url, expected, mocker):
+    &quot;&quot;&quot;The proxy_bypass function should be called with a hostname or IP without
+    a port number or auth credentials.
+    &quot;&quot;&quot;
+    proxy_bypass = mocker.patch(&#x27;requests.utils.proxy_bypass&#x27;)
+    should_bypass_proxies(url, no_proxy=None)
+    proxy_bypass.assert_called_once_with(expected)
+
+
+@pytest.mark.parametrize(
+    &#x27;cookiejar&#x27;, (
+        compat.cookielib.CookieJar(),
+        RequestsCookieJar()
+    ))
+def test_add_dict_to_cookiejar(cookiejar):
+    &quot;&quot;&quot;Ensure add_dict_to_cookiejar works for
+    non-RequestsCookieJar CookieJars
+    &quot;&quot;&quot;
+    cookiedict = {&#x27;test&#x27;: &#x27;cookies&#x27;,
+                  &#x27;good&#x27;: &#x27;cookies&#x27;}
+    cj = add_dict_to_cookiejar(cookiejar, cookiedict)
+    cookies = {cookie.name: cookie.value for cookie in cj}
+    assert cookiedict == cookies
+
+
+@pytest.mark.parametrize(
+    &#x27;value, expected&#x27;, (
+                (u&#x27;test&#x27;, True),
+                (u&#x27;æíöû&#x27;, False),
+                (u&#x27;ジェーピーニック&#x27;, False),
+    )
+)
+def test_unicode_is_ascii(value, expected):
+    assert unicode_is_ascii(value) is expected
+
+
+@pytest.mark.parametrize(
+    &#x27;url, expected&#x27;, (
+            (&#x27;http://192.168.0.1:5000/&#x27;, True),
+            (&#x27;http://192.168.0.1/&#x27;, True),
+            (&#x27;http://172.16.1.1/&#x27;, True),
+            (&#x27;http://172.16.1.1:5000/&#x27;, True),
+            (&#x27;http://localhost.localdomain:5000/v1.0/&#x27;, True),
+            (&#x27;http://172.16.1.12/&#x27;, False),
+            (&#x27;http://172.16.1.12:5000/&#x27;, False),
+            (&#x27;http://google.com:5000/v1.0/&#x27;, False),
+    ))
+def test_should_bypass_proxies_no_proxy(
+        url, expected, monkeypatch):
+    &quot;&quot;&quot;Tests for function should_bypass_proxies to check if proxy
+    can be bypassed or not using the &#x27;no_proxy&#x27; argument
+    &quot;&quot;&quot;
+    no_proxy = &#x27;192.168.0.0/24,127.0.0.1,localhost.localdomain,172.16.1.1&#x27;
+    # Test &#x27;no_proxy&#x27; argument
+    assert should_bypass_proxies(url, no_proxy=no_proxy) == expected
+
+
+@pytest.mark.skipif(os.name != &#x27;nt&#x27;, reason=&#x27;Test only on Windows&#x27;)
+@pytest.mark.parametrize(
+    &#x27;url, expected, override&#x27;, (
+            (&#x27;http://192.168.0.1:5000/&#x27;, True, None),
+            (&#x27;http://192.168.0.1/&#x27;, True, None),
+            (&#x27;http://172.16.1.1/&#x27;, True, None),
+            (&#x27;http://172.16.1.1:5000/&#x27;, True, None),
+            (&#x27;http://localhost.localdomain:5000/v1.0/&#x27;, True, None),
+            (&#x27;http://172.16.1.22/&#x27;, False, None),
+            (&#x27;http://172.16.1.22:5000/&#x27;, False, None),
+            (&#x27;http://google.com:5000/v1.0/&#x27;, False, None),
+            (&#x27;http://mylocalhostname:5000/v1.0/&#x27;, True, &#x27;&lt;local&gt;&#x27;),
+            (&#x27;http://192.168.0.1/&#x27;, False, &#x27;&#x27;),
+    ))
+def test_should_bypass_proxies_win_registry(url, expected, override,
+                                            monkeypatch):
+    &quot;&quot;&quot;Tests for function should_bypass_proxies to check if proxy
+    can be bypassed or not with Windows registry settings
+    &quot;&quot;&quot;
+    if override is None:
+        override = &#x27;192.168.*;127.0.0.1;localhost.localdomain;172.16.1.1&#x27;
+    if compat.is_py3:
+        import winreg
+    else:
+        import _winreg as winreg
+
+    class RegHandle:
+        def Close(self):
+            pass
+
+    ie_settings = RegHandle()
+    proxyEnableValues = deque([1, &quot;1&quot;])
+
+    def OpenKey(key, subkey):
+        return ie_settings
+
+    def QueryValueEx(key, value_name):
+        if key is ie_settings:
+            if value_name == &#x27;ProxyEnable&#x27;:
+                # this could be a string (REG_SZ) or a 32-bit number (REG_DWORD)
+                proxyEnableValues.rotate()
+                return [proxyEnableValues[0]]
+            elif value_name == &#x27;ProxyOverride&#x27;:
+                return [override]
+
+    monkeypatch.setenv(&#x27;http_proxy&#x27;, &#x27;&#x27;)
+    monkeypatch.setenv(&#x27;https_proxy&#x27;, &#x27;&#x27;)
+    monkeypatch.setenv(&#x27;ftp_proxy&#x27;, &#x27;&#x27;)
+    monkeypatch.setenv(&#x27;no_proxy&#x27;, &#x27;&#x27;)
+    monkeypatch.setenv(&#x27;NO_PROXY&#x27;, &#x27;&#x27;)
+    monkeypatch.setattr(winreg, &#x27;OpenKey&#x27;, OpenKey)
+    monkeypatch.setattr(winreg, &#x27;QueryValueEx&#x27;, QueryValueEx)
+    assert should_bypass_proxies(url, None) == expected
+
+
+@pytest.mark.parametrize(
+    &#x27;env_name, value&#x27;, (
+            (&#x27;no_proxy&#x27;, &#x27;192.168.0.0/24,127.0.0.1,localhost.localdomain&#x27;),
+            (&#x27;no_proxy&#x27;, None),
+            (&#x27;a_new_key&#x27;, &#x27;192.168.0.0/24,127.0.0.1,localhost.localdomain&#x27;),
+            (&#x27;a_new_key&#x27;, None),
+    ))
+def test_set_environ(env_name, value):
+    &quot;&quot;&quot;Tests set_environ will set environ values and will restore the environ.&quot;&quot;&quot;
+    environ_copy = copy.deepcopy(os.environ)
+    with set_environ(env_name, value):
+        assert os.environ.get(env_name) == value
+
+    assert os.environ == environ_copy
+
+
+def test_set_environ_raises_exception():
+    &quot;&quot;&quot;Tests set_environ will raise exceptions in context when the
+    value parameter is None.&quot;&quot;&quot;
+    with pytest.raises(Exception) as exception:
+        with set_environ(&#x27;test1&#x27;, None):
+            raise Exception(&#x27;Expected exception&#x27;)
+
+    assert &#x27;Expected exception&#x27; in str(exception.value)
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;tests/test_utils.py::test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;tests/test_utils.py::test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+configfile: pytest.ini
+collected 2 items
+
+tests/test_utils.py FF                                                   [100%]
+
+=================================== FAILURES ===================================
+_ test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query] _
+
+value = &#x27;http://user:pass@example.com/path?query&#x27;
+expected = &#x27;http://user:pass@example.com/path?query&#x27;
+
+    @pytest.mark.parametrize(
+        &#x27;value, expected&#x27;, (
+            (&#x27;example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;//example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;example.com:80&#x27;, &#x27;http://example.com:80&#x27;),
+            (
+                &#x27;http://user:pass@example.com/path?query&#x27;,
+                &#x27;http://user:pass@example.com/path?query&#x27;
+            ),
+            (
+                &#x27;http://user@example.com/path?query&#x27;,
+                &#x27;http://user@example.com/path?query&#x27;
+            )
+        ))
+    def test_prepend_scheme_if_needed(value, expected):
+&gt;       assert prepend_scheme_if_needed(value, &#x27;http&#x27;) == expected
+E       AssertionError: assert &#x27;http://examp...om/path?query&#x27; == &#x27;http://user:...om/path?query&#x27;
+E         - http://user:pass@example.com/path?query
+E         ?        ----------
+E         + http://example.com/path?query
+
+tests/test_utils.py:615: AssertionError
+_ test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query] _
+
+value = &#x27;http://user@example.com/path?query&#x27;
+expected = &#x27;http://user@example.com/path?query&#x27;
+
+    @pytest.mark.parametrize(
+        &#x27;value, expected&#x27;, (
+            (&#x27;example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;//example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;example.com:80&#x27;, &#x27;http://example.com:80&#x27;),
+            (
+                &#x27;http://user:pass@example.com/path?query&#x27;,
+                &#x27;http://user:pass@example.com/path?query&#x27;
+            ),
+            (
+                &#x27;http://user@example.com/path?query&#x27;,
+                &#x27;http://user@example.com/path?query&#x27;
+            )
+        ))
+    def test_prepend_scheme_if_needed(value, expected):
+&gt;       assert prepend_scheme_if_needed(value, &#x27;http&#x27;) == expected
+E       AssertionError: assert &#x27;http://examp...om/path?query&#x27; == &#x27;http://user@...om/path?query&#x27;
+E         - http://user@example.com/path?query
+E         ?        -----
+E         + http://example.com/path?query
+
+tests/test_utils.py:615: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_utils.py::test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query]
+FAILED tests/test_utils.py::test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query]
+============================== 2 failed in 0.07s ===============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;tests/test_utils.py::test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;tests/test_utils.py::test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+configfile: pytest.ini
+collected 2 items
+
+tests/test_utils.py ..                                                   [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_utils.py::test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query]
+PASSED tests/test_utils.py::test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query]
+============================== 2 passed in 0.05s ===============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_utils.py&#x27;</pre><pre>_type_header[multipart/form-data; boundary = something ; &quot;boundary2=something_else&quot; ; no_equals -expected7]
+PASSED tests/test_utils.py::test__parse_content_type_header[application/json ; ; -expected8]
+PASSED tests/test_utils.py::test_get_encoding_from_headers[value0-None]
+PASSED tests/test_utils.py::test_get_encoding_from_headers[value1-utf-8]
+PASSED tests/test_utils.py::test_get_encoding_from_headers[value2-ISO-8859-1]
+PASSED tests/test_utils.py::test_iter_slices[-0]
+PASSED tests/test_utils.py::test_iter_slices[T-1]
+PASSED tests/test_utils.py::test_iter_slices[Test-4]
+PASSED tests/test_utils.py::test_iter_slices[Cont-0]
+PASSED tests/test_utils.py::test_iter_slices[Other--5]
+PASSED tests/test_utils.py::test_iter_slices[Content-None]
+PASSED tests/test_utils.py::test_parse_header_links[&lt;http:/.../front.jpeg&gt;; rel=front; type=&quot;image/jpeg&quot;-expected0]
+PASSED tests/test_utils.py::test_parse_header_links[&lt;http:/.../front.jpeg&gt;-expected1]
+PASSED tests/test_utils.py::test_parse_header_links[&lt;http:/.../front.jpeg&gt;;-expected2]
+PASSED tests/test_utils.py::test_parse_header_links[&lt;http:/.../front.jpeg&gt;; type=&quot;image/jpeg&quot;,&lt;http://.../back.jpeg&gt;;-expected3]
+PASSED tests/test_utils.py::test_parse_header_links[-expected4]
+PASSED tests/test_utils.py::test_prepend_scheme_if_needed[example.com/path-http://example.com/path]
+PASSED tests/test_utils.py::test_prepend_scheme_if_needed[//example.com/path-http://example.com/path]
+PASSED tests/test_utils.py::test_prepend_scheme_if_needed[example.com:80-http://example.com:80]
+PASSED tests/test_utils.py::test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query]
+PASSED tests/test_utils.py::test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query]
+PASSED tests/test_utils.py::test_to_native_string[T-T0]
+PASSED tests/test_utils.py::test_to_native_string[T-T1]
+PASSED tests/test_utils.py::test_to_native_string[T-T2]
+PASSED tests/test_utils.py::test_urldefragauth[http://u:p@example.com/path?a=1#test-http://example.com/path?a=1]
+PASSED tests/test_utils.py::test_urldefragauth[http://example.com/path-http://example.com/path]
+PASSED tests/test_utils.py::test_urldefragauth[//u:p@example.com/path-//example.com/path]
+PASSED tests/test_utils.py::test_urldefragauth[//example.com/path-//example.com/path]
+PASSED tests/test_utils.py::test_urldefragauth[example.com/path-//example.com/path]
+PASSED tests/test_utils.py::test_urldefragauth[scheme:u:p@example.com/path-scheme://example.com/path]
+PASSED tests/test_utils.py::test_should_bypass_proxies[http://192.168.0.1:5000/-True]
+PASSED tests/test_utils.py::test_should_bypass_proxies[http://192.168.0.1/-True]
+PASSED tests/test_utils.py::test_should_bypass_proxies[http://172.16.1.1/-True]
+PASSED tests/test_utils.py::test_should_bypass_proxies[http://172.16.1.1:5000/-True]
+PASSED tests/test_utils.py::test_should_bypass_proxies[http://localhost.localdomain:5000/v1.0/-True]
+PASSED tests/test_utils.py::test_should_bypass_proxies[http://google.com:6000/-True]
+PASSED tests/test_utils.py::test_should_bypass_proxies[http://172.16.1.12/-False]
+PASSED tests/test_utils.py::test_should_bypass_proxies[http://172.16.1.12:5000/-False]
+PASSED tests/test_utils.py::test_should_bypass_proxies[http://google.com:5000/v1.0/-False]
+PASSED tests/test_utils.py::test_should_bypass_proxies[file:///some/path/on/disk-True]
+PASSED tests/test_utils.py::test_add_dict_to_cookiejar[cookiejar0]
+PASSED tests/test_utils.py::test_add_dict_to_cookiejar[cookiejar1]
+PASSED tests/test_utils.py::test_unicode_is_ascii[test-True]
+PASSED tests/test_utils.py::test_unicode_is_ascii[\xe6\xed\xf6\xfb-False]
+PASSED tests/test_utils.py::test_unicode_is_ascii[\u30b8\u30a7\u30fc\u30d4\u30fc\u30cb\u30c3\u30af-False]
+PASSED tests/test_utils.py::test_should_bypass_proxies_no_proxy[http://192.168.0.1:5000/-True]
+PASSED tests/test_utils.py::test_should_bypass_proxies_no_proxy[http://192.168.0.1/-True]
+PASSED tests/test_utils.py::test_should_bypass_proxies_no_proxy[http://172.16.1.1/-True]
+PASSED tests/test_utils.py::test_should_bypass_proxies_no_proxy[http://172.16.1.1:5000/-True]
+PASSED tests/test_utils.py::test_should_bypass_proxies_no_proxy[http://localhost.localdomain:5000/v1.0/-True]
+PASSED tests/test_utils.py::test_should_bypass_proxies_no_proxy[http://172.16.1.12/-False]
+PASSED tests/test_utils.py::test_should_bypass_proxies_no_proxy[http://172.16.1.12:5000/-False]
+PASSED tests/test_utils.py::test_should_bypass_proxies_no_proxy[http://google.com:5000/v1.0/-False]
+PASSED tests/test_utils.py::test_set_environ[no_proxy-192.168.0.0/24,127.0.0.1,localhost.localdomain]
+PASSED tests/test_utils.py::test_set_environ[no_proxy-None]
+PASSED tests/test_utils.py::test_set_environ[a_new_key-192.168.0.0/24,127.0.0.1,localhost.localdomain]
+PASSED tests/test_utils.py::test_set_environ[a_new_key-None]
+PASSED tests/test_utils.py::test_set_environ_raises_exception
+SKIPPED [1] tests/test_utils.py:33: condition: cStringIO is None
+SKIPPED [10] tests/test_utils.py:731: Test only on Windows
+ERROR tests/test_utils.py::test_should_bypass_proxies_pass_only_hostname[http://172.16.1.1/-172.16.1.1]
+ERROR tests/test_utils.py::test_should_bypass_proxies_pass_only_hostname[http://172.16.1.1:5000/-172.16.1.1]
+ERROR tests/test_utils.py::test_should_bypass_proxies_pass_only_hostname[http://user:pass@172.16.1.1-172.16.1.1]
+ERROR tests/test_utils.py::test_should_bypass_proxies_pass_only_hostname[http://user:pass@172.16.1.1:5000-172.16.1.1]
+ERROR tests/test_utils.py::test_should_bypass_proxies_pass_only_hostname[http://hostname/-hostname]
+ERROR tests/test_utils.py::test_should_bypass_proxies_pass_only_hostname[http://hostname:5000/-hostname]
+ERROR tests/test_utils.py::test_should_bypass_proxies_pass_only_hostname[http://user:pass@hostname-hostname]
+ERROR tests/test_utils.py::test_should_bypass_proxies_pass_only_hostname[http://user:pass@hostname:5000-hostname]
+================== 195 passed, 11 skipped, 8 errors in 0.29s ===================
+</pre><pre></pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;tests/test_utils.py::test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;tests/test_utils.py::test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+configfile: pytest.ini
+collected 2 items
+
+tests/test_utils.py FF                                                   [100%]
+
+=================================== FAILURES ===================================
+_ test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query] _
+
+value = &#x27;http://user:pass@example.com/path?query&#x27;
+expected = &#x27;http://user:pass@example.com/path?query&#x27;
+
+    @pytest.mark.parametrize(
+        &#x27;value, expected&#x27;, (
+            (&#x27;example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;//example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;example.com:80&#x27;, &#x27;http://example.com:80&#x27;),
+            (
+                &#x27;http://user:pass@example.com/path?query&#x27;,
+                &#x27;http://user:pass@example.com/path?query&#x27;
+            ),
+            (
+                &#x27;http://user@example.com/path?query&#x27;,
+                &#x27;http://user@example.com/path?query&#x27;
+            )
+        ))
+    def test_prepend_scheme_if_needed(value, expected):
+&gt;       assert prepend_scheme_if_needed(value, &#x27;http&#x27;) == expected
+
+tests/test_utils.py:615: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+url = &#x27;http://user:pass@example.com/path?query&#x27;, new_scheme = &#x27;http&#x27;
+
+    def prepend_scheme_if_needed(url, new_scheme):
+&gt;       raise AssertionError(&quot;canary&quot;)
+E       AssertionError: canary
+
+requests/utils.py:961: AssertionError
+_ test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query] _
+
+value = &#x27;http://user@example.com/path?query&#x27;
+expected = &#x27;http://user@example.com/path?query&#x27;
+
+    @pytest.mark.parametrize(
+        &#x27;value, expected&#x27;, (
+            (&#x27;example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;//example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;example.com:80&#x27;, &#x27;http://example.com:80&#x27;),
+            (
+                &#x27;http://user:pass@example.com/path?query&#x27;,
+                &#x27;http://user:pass@example.com/path?query&#x27;
+            ),
+            (
+                &#x27;http://user@example.com/path?query&#x27;,
+                &#x27;http://user@example.com/path?query&#x27;
+            )
+        ))
+    def test_prepend_scheme_if_needed(value, expected):
+&gt;       assert prepend_scheme_if_needed(value, &#x27;http&#x27;) == expected
+
+tests/test_utils.py:615: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+url = &#x27;http://user@example.com/path?query&#x27;, new_scheme = &#x27;http&#x27;
+
+    def prepend_scheme_if_needed(url, new_scheme):
+&gt;       raise AssertionError(&quot;canary&quot;)
+E       AssertionError: canary
+
+requests/utils.py:961: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_utils.py::test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query]
+FAILED tests/test_utils.py::test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query]
+============================== 2 failed in 0.08s ===============================
+</pre><pre></pre></details>
+<h2>Other mutants</h2><details><summary>m1 · killed: exit 1, 2 failed in 0.09s</summary><p>The mutant places the `if auth:` check before the `if not netloc:` swap, so when a URL has no netloc but has auth (e.g., `http://user@host`), the auth gets prepended to the swapped path instead of being handled after the netloc/path swap, producing a different netloc structure than the correct patch which applies auth after the swap.</p><pre><span class="line">--- a/requests/utils.py</span><span class="line">+++ b/requests/utils.py</span><span class="line">@@ -965,6 +965,10 @@ def prepend_scheme_if_needed(url, new_scheme):</span><span class="line">     &quot;&quot;&quot;</span><span class="line">     parsed = parse_url(url)</span><span class="line">     scheme, auth, host, port, path, query, fragment = parsed</span><span class="line add">+    if auth:</span><span class="line add">+        # parse_url doesn&#x27;t provide the netloc with auth</span><span class="line add">+        # so we&#x27;ll add it ourselves.</span><span class="line add">+        netloc = &#x27;@&#x27;.join([auth, netloc])</span><span class="line"> </span><span class="line">     # A defect in urlparse determines that there isn&#x27;t a netloc present in some</span><span class="line">     # urls. We previously assumed parsing was overly cautious, and swapped the</span><span class="line">@@ -974,10 +978,6 @@ def prepend_scheme_if_needed(url, new_scheme):</span><span class="line">     if not netloc:</span><span class="line">         netloc, path = path, netloc</span><span class="line"> </span><span class="line del">-    if auth:</span><span class="line del">-        # parse_url doesn&#x27;t provide the netloc with auth</span><span class="line del">-        # so we&#x27;ll add it ourselves.</span><span class="line del">-        netloc = &#x27;@&#x27;.join([auth, netloc])</span><span class="line">     if scheme is None:</span><span class="line">         scheme = new_scheme</span><span class="line">     if path is None:</span></pre><pre>from requests.utils import prepend_scheme_if_needed
+prepend_scheme_if_needed(&#x27;http://user@host/&#x27;, &#x27;https&#x27;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;tests/test_utils.py::test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;tests/test_utils.py::test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+configfile: pytest.ini
+collected 2 items
+
+tests/test_utils.py FF                                                   [100%]
+
+=================================== FAILURES ===================================
+_ test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query] _
+
+value = &#x27;http://user:pass@example.com/path?query&#x27;
+expected = &#x27;http://user:pass@example.com/path?query&#x27;
+
+    @pytest.mark.parametrize(
+        &#x27;value, expected&#x27;, (
+            (&#x27;example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;//example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;example.com:80&#x27;, &#x27;http://example.com:80&#x27;),
+            (
+                &#x27;http://user:pass@example.com/path?query&#x27;,
+                &#x27;http://user:pass@example.com/path?query&#x27;
+            ),
+            (
+                &#x27;http://user@example.com/path?query&#x27;,
+                &#x27;http://user@example.com/path?query&#x27;
+            )
+        ))
+    def test_prepend_scheme_if_needed(value, expected):
+&gt;       assert prepend_scheme_if_needed(value, &#x27;http&#x27;) == expected
+
+tests/test_utils.py:615: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+url = &#x27;http://user:pass@example.com/path?query&#x27;, new_scheme = &#x27;http&#x27;
+
+    def prepend_scheme_if_needed(url, new_scheme):
+        &quot;&quot;&quot;Given a URL that may or may not have a scheme, prepend the given scheme.
+        Does not replace a present scheme with the one provided as an argument.
+    
+        :rtype: str
+        &quot;&quot;&quot;
+        parsed = parse_url(url)
+        scheme, auth, host, port, path, query, fragment = parsed
+        if auth:
+            # parse_url doesn&#x27;t provide the netloc with auth
+            # so we&#x27;ll add it ourselves.
+&gt;           netloc = &#x27;@&#x27;.join([auth, netloc])
+E           UnboundLocalError: local variable &#x27;netloc&#x27; referenced before assignment
+
+requests/utils.py:971: UnboundLocalError
+_ test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query] _
+
+value = &#x27;http://user@example.com/path?query&#x27;
+expected = &#x27;http://user@example.com/path?query&#x27;
+
+    @pytest.mark.parametrize(
+        &#x27;value, expected&#x27;, (
+            (&#x27;example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;//example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;example.com:80&#x27;, &#x27;http://example.com:80&#x27;),
+            (
+                &#x27;http://user:pass@example.com/path?query&#x27;,
+                &#x27;http://user:pass@example.com/path?query&#x27;
+            ),
+            (
+                &#x27;http://user@example.com/path?query&#x27;,
+                &#x27;http://user@example.com/path?query&#x27;
+            )
+        ))
+    def test_prepend_scheme_if_needed(value, expected):
+&gt;       assert prepend_scheme_if_needed(value, &#x27;http&#x27;) == expected
+
+tests/test_utils.py:615: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+url = &#x27;http://user@example.com/path?query&#x27;, new_scheme = &#x27;http&#x27;
+
+    def prepend_scheme_if_needed(url, new_scheme):
+        &quot;&quot;&quot;Given a URL that may or may not have a scheme, prepend the given scheme.
+        Does not replace a present scheme with the one provided as an argument.
+    
+        :rtype: str
+        &quot;&quot;&quot;
+        parsed = parse_url(url)
+        scheme, auth, host, port, path, query, fragment = parsed
+        if auth:
+            # parse_url doesn&#x27;t provide the netloc with auth
+            # so we&#x27;ll add it ourselves.
+&gt;           netloc = &#x27;@&#x27;.join([auth, netloc])
+E           UnboundLocalError: local variable &#x27;netloc&#x27; referenced before assignment
+
+requests/utils.py:971: UnboundLocalError
+=========================== short test summary info ============================
+FAILED tests/test_utils.py::test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query]
+FAILED tests/test_utils.py::test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query]
+============================== 2 failed in 0.09s ===============================
+</pre><pre></pre></details></details><details><summary>m2 · killed: exit 1, 2 failed in 0.07s</summary><p>The mutant only prepends auth when the netloc is empty after the swap, but the correct patch always prepends auth regardless of whether a swap occurred. For a URL like `http://user:pass@example.org/` where netloc is already present, the correct patch adds `@` between auth and netloc, while the mutant skips this because netloc is truthy, leaving the URL unchanged.</p><pre><span class="line">--- a/requests/utils.py</span><span class="line">+++ b/requests/utils.py</span><span class="line">@@ -974,7 +974,7 @@ def prepend_scheme_if_needed(url, new_scheme):</span><span class="line">     if not netloc:</span><span class="line">         netloc, path = path, netloc</span><span class="line"> </span><span class="line del">-    if auth:</span><span class="line add">+    if not netloc and auth:</span><span class="line">         # parse_url doesn&#x27;t provide the netloc with auth</span><span class="line">         # so we&#x27;ll add it ourselves.</span><span class="line">         netloc = &#x27;@&#x27;.join([auth, netloc])</span></pre><pre>from requests.utils import prepend_scheme_if_needed
+prepend_scheme_if_needed(&#x27;http://user:pass@example.org/&#x27;, &#x27;https&#x27;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;tests/test_utils.py::test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;tests/test_utils.py::test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+configfile: pytest.ini
+collected 2 items
+
+tests/test_utils.py FF                                                   [100%]
+
+=================================== FAILURES ===================================
+_ test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query] _
+
+value = &#x27;http://user:pass@example.com/path?query&#x27;
+expected = &#x27;http://user:pass@example.com/path?query&#x27;
+
+    @pytest.mark.parametrize(
+        &#x27;value, expected&#x27;, (
+            (&#x27;example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;//example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;example.com:80&#x27;, &#x27;http://example.com:80&#x27;),
+            (
+                &#x27;http://user:pass@example.com/path?query&#x27;,
+                &#x27;http://user:pass@example.com/path?query&#x27;
+            ),
+            (
+                &#x27;http://user@example.com/path?query&#x27;,
+                &#x27;http://user@example.com/path?query&#x27;
+            )
+        ))
+    def test_prepend_scheme_if_needed(value, expected):
+&gt;       assert prepend_scheme_if_needed(value, &#x27;http&#x27;) == expected
+E       AssertionError: assert &#x27;http://examp...om/path?query&#x27; == &#x27;http://user:...om/path?query&#x27;
+E         - http://user:pass@example.com/path?query
+E         ?        ----------
+E         + http://example.com/path?query
+
+tests/test_utils.py:615: AssertionError
+_ test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query] _
+
+value = &#x27;http://user@example.com/path?query&#x27;
+expected = &#x27;http://user@example.com/path?query&#x27;
+
+    @pytest.mark.parametrize(
+        &#x27;value, expected&#x27;, (
+            (&#x27;example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;//example.com/path&#x27;, &#x27;http://example.com/path&#x27;),
+            (&#x27;example.com:80&#x27;, &#x27;http://example.com:80&#x27;),
+            (
+                &#x27;http://user:pass@example.com/path?query&#x27;,
+                &#x27;http://user:pass@example.com/path?query&#x27;
+            ),
+            (
+                &#x27;http://user@example.com/path?query&#x27;,
+                &#x27;http://user@example.com/path?query&#x27;
+            )
+        ))
+    def test_prepend_scheme_if_needed(value, expected):
+&gt;       assert prepend_scheme_if_needed(value, &#x27;http&#x27;) == expected
+E       AssertionError: assert &#x27;http://examp...om/path?query&#x27; == &#x27;http://user@...om/path?query&#x27;
+E         - http://user@example.com/path?query
+E         ?        -----
+E         + http://example.com/path?query
+
+tests/test_utils.py:615: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_utils.py::test_prepend_scheme_if_needed[http://user:pass@example.com/path?query-http://user:pass@example.com/path?query]
+FAILED tests/test_utils.py::test_prepend_scheme_if_needed[http://user@example.com/path?query-http://user@example.com/path?query]
+============================== 2 failed in 0.07s ===============================
+</pre><pre></pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>psf__requests-6028/original+test<br><span class='muted'>@d4fe6077-fba6-4bdf-bc35-1aa2cae37712</span></td><td>1</td><td>2 failed in 0.07s</td><td>0.259</td><td>0.53</td><td>$0.00276</td><td>15 s</td></tr><tr><td>psf__requests-6028/patched+test<br><span class='muted'>@d4fe6077-fba6-4bdf-bc35-1aa2cae37712</span></td><td>0</td><td>2 passed in 0.05s</td><td>0.230</td><td>0.51</td><td>$0.00247</td><td>15 s</td></tr><tr><td>psf__requests-6028/patched+p2p<br><span class='muted'>@d4fe6077-fba6-4bdf-bc35-1aa2cae37712</span></td><td>1</td><td>195 passed, 11 skipped, 8 errors in 0.29s</td><td>0.374</td><td>0.73</td><td>$0.00391</td><td>15 s</td></tr><tr><td>psf__requests-6028/canary+test<br><span class='muted'>@d4fe6077-fba6-4bdf-bc35-1aa2cae37712</span></td><td>1</td><td>2 failed in 0.08s</td><td>0.263</td><td>0.54</td><td>$0.00281</td><td>15 s</td></tr><tr><td>psf__requests-6028/mutant-m1+test<br><span class='muted'>@d4fe6077-fba6-4bdf-bc35-1aa2cae37712</span></td><td>1</td><td>2 failed in 0.09s</td><td>0.269</td><td>0.54</td><td>$0.00287</td><td>15 s</td></tr><tr><td>psf__requests-6028/mutant-m2+test<br><span class='muted'>@d4fe6077-fba6-4bdf-bc35-1aa2cae37712</span></td><td>1</td><td>2 failed in 0.07s</td><td>0.254</td><td>0.54</td><td>$0.00271</td><td>15 s</td></tr></table>
+</main></body></html>

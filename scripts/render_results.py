@@ -10,6 +10,7 @@ import argparse
 import json
 import sys
 from dataclasses import fields
+from pathlib import Path
 
 from falsifier.config import ROOT
 from falsifier.evidence import (
@@ -35,8 +36,8 @@ INSTANCES = [
 ]
 
 
-def load(iid: str) -> tuple[Verdict, dict, dict] | None:
-    path = OUT / f"{iid}.json"
+def load(iid: str, out=OUT) -> tuple[Verdict, dict, dict] | None:
+    path = out / f"{iid}.json"
     if not path.exists():
         return None
     d = json.loads(path.read_text())
@@ -44,23 +45,40 @@ def load(iid: str) -> tuple[Verdict, dict, dict] | None:
     mutants = [MutantResult(**{k: v for k, v in m.items() if k in keep}) for m in d["mutants"]]
     vkeep = {f.name for f in fields(Verdict)} - {"mutants"}
     v = Verdict(mutants=mutants, **{k: d[k] for k in vkeep if k in d})  # re-validates evidence
-    gen = OUT / f"{iid}.generation.json"
+    gen = out / f"{iid}.generation.json"
     return v, d["official"], json.loads(gen.read_text()) if gen.exists() else {}
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--missing-reason", default="not run")
+    ap.add_argument("--dir", default=str(OUT), help="evidence directory (e.g. escalation-30)")
+    ap.add_argument("--md", default=str(ROOT / "docs" / "results.md"))
     args = ap.parse_args()
-    loaded = {iid: load(iid) for iid in INSTANCES}
+    out = ROOT / args.dir if not args.dir.startswith("/") else Path(args.dir)
+    excl_path = out / "exclusions.json"
+    exclusions = json.loads(excl_path.read_text())["instances"] if excl_path.exists() else None
+    ids = sorted(exclusions) if exclusions else INSTANCES
+    loaded = {
+        iid: load(iid, out) if not exclusions or exclusions[iid].get("included") else None
+        for iid in ids
+    }
     done = {iid: x for iid, x in loaded.items() if x}
-    missing = {iid: args.missing_reason for iid, x in loaded.items() if not x}
+    missing = {
+        iid: (
+            f"{exclusions[iid]['reason']}: {exclusions[iid].get('detail', '')}"[:300]
+            if exclusions
+            else args.missing_reason
+        )
+        for iid, x in loaded.items()
+        if not x
+    }
     verdicts = [x[0] for x in done.values()]
     officials = {iid: x[1] for iid, x in done.items()}
-    comparison(verdicts, officials, OUT, missing)
+    comparison(verdicts, officials, out, missing)
     rows_by_id = load_rows(list(done))
     for iid, (v, official_d, _) in done.items():  # re-render each page from saved evidence
-        write(v, load_swebench(rows_by_id[iid]), OUT, official_d)
+        write(v, load_swebench(rows_by_id[iid]), out, official_d)
     rows = comparison_rows(verdicts, officials)
     L = [
         "# Results",
@@ -80,7 +98,16 @@ def main() -> int:
             f"**{r['survived_both']}** | {r['canary_exit']} | "
             f"{gen.get('returned', '?')} of {gen.get('asked', '?')} |"
         )
-    L += [f"| `{iid}` | not completed: {why} | | | | | | | | |" for iid, why in missing.items()]
+    if exclusions:
+        L += [
+            "",
+            f"**{len(ids)} instances enumerated, {len(done)} included.** Why each of the "
+            f"{len(missing)} others is out:",
+            "",
+        ]
+        L += [f"- `{iid}`: {why}" for iid, why in missing.items()]
+    else:
+        L += [f"| `{iid}` | not completed: {why} | | | | | | | | |" for iid, why in missing.items()]
     headline = sum(r["survived_both"] for r in rows)
     L += [
         "",
@@ -138,7 +165,7 @@ def main() -> int:
                 ),
                 "",
             ]
-    (ROOT / "docs" / "results.md").write_text("\n".join(L))
+    Path(args.md).write_text("\n".join(L))
     for r in rows:
         print(
             f"{r['instance']}: distinguishable {r['distinguishable']}; equivalent discarded "

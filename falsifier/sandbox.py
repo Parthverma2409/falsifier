@@ -28,15 +28,30 @@ DEFAULT_TRUNCATE_OUTPUT_AT = 1 << 20  # the SDK default is 64 KiB, too small for
 
 
 class SpendCeilingExceeded(RuntimeError):
-    """Raised before launch when a run's worst-case cost no longer fits under the ceiling."""
+    """Raised before launch when a run's worst-case cost no longer fits under the ceiling.
+    `scope` names the guard that refused: "global", or a per-instance guard's name."""
+
+    def __init__(self, msg: str, scope: str = "global"):
+        super().__init__(msg)
+        self.scope = scope
 
 
 class SpendGuard:
-    def __init__(self, limits: SpendLimits, ledger: Path | None = None):
+    def __init__(
+        self,
+        limits: SpendLimits,
+        ledger: Path | None = None,
+        parent: SpendGuard | None = None,
+        name: str = "global",
+    ):
         """With a ledger, spend is global: the guard starts from every cost already recorded there
-        and appends each run it settles, so the ceiling holds across processes."""
+        and appends each run it settles, so the ceiling holds across processes. With a parent, every
+        reservation, settlement and charge must also fit the parent: a per-instance guard nested
+        in the run's global guard."""
         self.limits = limits
         self.ledger = ledger
+        self.parent = parent
+        self.name = name
         self.prior_usd = self._ledger_total() if ledger else 0.0
         self.spent_usd = self.prior_usd
         self.reserved_usd = 0.0
@@ -61,13 +76,26 @@ class SpendGuard:
 
     def _no_room(self, label: str, worst: float) -> SpendCeilingExceeded:
         return SpendCeilingExceeded(
-            f"refusing to launch {label!r}: spent ${self.spent_usd:.4f} + worst case "
-            f"${worst:.4f} exceeds ceiling ${self.limits.ceiling_usd:.4f}"
+            f"{self.name} guard refusing to launch {label!r}: spent ${self.spent_usd:.4f} + worst "
+            f"case ${worst:.4f} exceeds ceiling ${self.limits.ceiling_usd:.4f}",
+            scope=self.name,
         )
 
     async def reserve(self, label: str, timeout_s: int) -> float:
         self.check_timeout(timeout_s)
         worst = self.worst_case_usd(timeout_s)
+        await self._reserve(label, worst)
+        if self.parent is not None:
+            try:
+                await self.parent._reserve(label, worst)
+            except BaseException:
+                async with self._cond:
+                    self.reserved_usd -= worst
+                    self._cond.notify_all()
+                raise
+        return worst
+
+    async def _reserve(self, label: str, worst: float) -> None:
         ceiling = self.limits.ceiling_usd
         async with self._cond:
             while self.spent_usd + self.reserved_usd + worst > ceiling:
@@ -75,9 +103,10 @@ class SpendGuard:
                     raise self._no_room(label, worst)
                 await self._cond.wait()
             self.reserved_usd += worst
-        return worst
 
     async def settle(self, worst: float, record: RunRecord) -> None:
+        if self.parent is not None:
+            await self.parent.settle(worst, record)
         async with self._cond:
             self.reserved_usd -= worst
             self.spent_usd += record.cost_for_accounting
@@ -102,9 +131,13 @@ class SpendGuard:
         """Raise before spending `usd` outside a sandbox run (model calls) if it cannot fit."""
         if self.spent_usd + self.reserved_usd + usd > self.limits.ceiling_usd:
             raise self._no_room(label, usd)
+        if self.parent is not None:
+            self.parent.require_room(label, usd)
 
     async def charge(self, label: str, usd: float) -> None:
         """Record spend made outside a sandbox run (model calls) against the same ceiling."""
+        if self.parent is not None:
+            await self.parent.charge(label, usd)
         async with self._cond:
             self.spent_usd += usd
             if self.ledger:

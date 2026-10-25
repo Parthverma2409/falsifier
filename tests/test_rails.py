@@ -144,3 +144,25 @@ def test_every_sandbox_run_call_passes_a_timeout():
     files = [*ROOT.glob("falsifier/**/*.py"), *ROOT.glob("scripts/*.py")]
     bad = [loc for f in files for loc in _run_calls_without_timeout(f)]
     assert not bad, f".run() without timeout= at: {bad}"
+
+
+async def test_per_instance_guard_nested_in_global():
+    worst_1s = USD_PER_RUN + USD_PER_CPU_SECOND * 1
+    top = SpendGuard(SpendLimits(ceiling_usd=10.0, cores=1))
+    inst = SpendGuard(SpendLimits(ceiling_usd=worst_1s * 1.5, cores=1), parent=top, name="inst")
+    img = FakeImage(cost=worst_1s)
+    await guarded_run(inst, img, label="a", shell="true", timeout_s=1)
+    assert top.spent_usd == pytest.approx(worst_1s) == pytest.approx(inst.spent_usd)
+    with pytest.raises(SpendCeilingExceeded) as exc:
+        await guarded_run(inst, img, label="b", shell="true", timeout_s=1)
+    assert exc.value.scope == "inst" and img.launched == 1
+    assert top.reserved_usd == pytest.approx(0) and inst.reserved_usd == pytest.approx(0)
+
+
+async def test_global_guard_refusal_releases_the_child_reservation():
+    worst_1s = USD_PER_RUN + USD_PER_CPU_SECOND * 1
+    top = SpendGuard(SpendLimits(ceiling_usd=worst_1s * 0.5, cores=1))
+    inst = SpendGuard(SpendLimits(ceiling_usd=10.0, cores=1), parent=top, name="inst")
+    with pytest.raises(SpendCeilingExceeded) as exc:
+        await guarded_run(inst, FakeImage(), label="a", shell="true", timeout_s=1)
+    assert exc.value.scope == "global" and inst.reserved_usd == pytest.approx(0)
