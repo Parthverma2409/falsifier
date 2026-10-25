@@ -74,3 +74,58 @@ are reasoning models that **think by default**. Thinking tokens bill as output.
 
 **§6 schedule.** It is 25 Oct and step 1, the gate, has not run, while the plan has steps 1–4 finished by 22 Oct.
 Beta access is live, so step 1 is unblocked.
+
+## 2026-10-25: step 1 gate amended to latency AND cost
+
+**Original gate (BUILD_PLAN §4 step 1):** wall clock only. Stop if a fork takes more than about 10 s,
+or if concurrency doesn't help.
+
+**Why it changed:** the plan assumed Sandboxes are free during beta (§1). That assumption is wrong,
+or at least unverified. Every run reports a nonzero `result.cost` with no documented unit
+(see the step 0 entry above). If cost scales with runtime, the plan's fan-out budget
+breaks: a Django test suite runs for minutes, not milliseconds.
+
+**Amended gate (Parth, 2026-10-25):** step 1 passes only if both conditions hold.
+
+1. **Latency:** per-fork wall clock is under about 10 s, and running forks in parallel cuts total wall clock.
+2. **Cost:** the projected Sandboxes cost of the full run (5 instances × 13 forks at realistic test
+   durations, plus builds) is known in real currency and fits the ~$30 total budget alongside
+   generation.
+
+Establishing the unit means comparing the probe's summed `cost` against the Token Factory
+console's billing page before and after the run.
+
+The probe records `cost` on every run and runs `sleep 1`, `sleep 60` and a 10 s CPU-busy fork, so it
+can tell fixed per-run cost from wall-time or CPU-time billing. Results are in `docs/probe.md`.
+
+## 2026-10-25: step 1 probe results against the amended gate
+
+The full data is in `docs/probe.md`, with raw records in `docs/probe_raw.json`.
+
+**Latency: pass.** Forks of a `python:3.12-slim` checkpoint running `python -c "print(1)"`:
+
+| N | Total wall clock | Slowest fork |
+|---:|---:|---:|
+| 1 | 0.9 s | 0.9 s |
+| 5 | 1.5 s | 1.5 s |
+| 10 | 1.7 s | 1.7 s |
+| 25 | 2.6 s | 2.6 s |
+| 50 | 2.9 s | 2.9 s |
+
+All 91 runs exited 0. Running in parallel took 2.9 s for 50 forks, against about 46 s one after another. The checkpoint (`pip install six` plus a file write) took 3.2 s.
+
+**Cost: billed, and it scales with CPU time.**
+- **§1 "Sandboxes are free during beta" is wrong.** Across the probe run the console billing rose by about $0.13, against an SDK-reported total of 0.1316. `cost` is in USD.
+- **Model:** cost = $4.2e-05 per run + **$0.0103 per CPU-second** (user+sys). R² = 1.000 over 95 runs; fitting against wall time gives R² = 0.02.
+- **Idle time is free:** `sleep 60` cost the same as `sleep 1`, about $0.00007.
+- **CPU time is not:** a 10 CPU-second busy loop cost $0.104.
+- Each `print(1)` fork cost about $0.00018, most of that Python startup CPU.
+
+**What this means for the budget.** $30 buys about 2,900 CPU-seconds of sandbox time in total, before
+generation and builds. For 5 instances that is roughly 580 CPU-s per instance across all 13 forks and the build.
+- A full PASS_TO_PASS run of a large suite can use more than that on its own.
+- Parallel test workers don't help: they burn CPU-seconds faster than wall-seconds, so they save time but not money.
+
+**Gate status: latency passes. Cost passes only if per-instance CPU stays at roughly ≤ 500 CPU-s.**
+That can't be confirmed until the real per-fork CPU time of a chosen instance is measured.
+This is Parth's call; no work past step 1 has started.

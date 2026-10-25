@@ -101,6 +101,8 @@ image.run(
 
 - `run()` is **lazy**: it only builds the request. Execution happens on `await prepared` (async) or `prepared.wait()` (sync). That call does `POST /v1/instances`, then polls `GET /v1/operations/{id}`.
 - The executed object exposes `.exit_code`, `.stdout`, `.stderr`, `.elapsed`, `.uuid` and `.tag`. `.result` is a `ContreeResult(stdout, stderr, exit_code, elapsed_time, cost)` with a `.truncated` property. The docs say not to use `cost` for invoice reconciliation.
+  - **`.elapsed` / `elapsed_time` is CPU time (user+sys), not wall time.** A `sleep 60` reports about 0.0025 s. Real duration is in `result._raw.result.resources.monotonic_time`.
+  - **`cost` is USD and follows CPU time:** about $0.0103 per CPU-second plus $4.2e-05 per run (R² = 1.000 over 95 runs; the console moved by about $0.13 for a reported 0.1316). See `docs/probe.md`.
 - A nonzero exit code is **not** an exception, so check `exit_code` yourself. Platform failures raise `FailedOperationError`, `OperationTimedOutError` or `CancelledOperationError`.
 - After `disposable=True` the result's `.uuid` is `None` (**verified live**), and calling `.run()` on it raises `DisposableImageRunError` (from the source: `run()` raises it when there is neither a uuid nor a tag).
 - Other helpers:
@@ -153,7 +155,7 @@ session's uuid to `None` and breaks later runs *(inferred)*.
 | checkpoint after the forks | `/state.txt` still `base`, so forks are isolated |
 | rollback: `images.use(ckpt.uuid, strict=True).run(...)` | sees `base` only |
 | session: two runs | `session.uuid` advanced in place; file shows `1 2` |
-| `result.cost` of a trivial disposable run | `4.975e-05` (unit not documented; the docs say not to reconcile invoices with it) |
+| `result.cost` of a trivial disposable run | `4.975e-05`. The unit was later established as USD, billed per CPU-second (`docs/probe.md`). |
 | `whoami().token_expiration` | about 300 s ahead of now, so the SDK logs `Token expires in 0 hours` on every client. Runs still succeed. |
 
 ## Destroy and cleanup
