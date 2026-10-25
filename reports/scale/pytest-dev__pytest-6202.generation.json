@@ -1,0 +1,18 @@
+{
+  "asked": 50,
+  "returned": 50,
+  "usd": 0.00362154,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 50,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 50,
+      "accepted": 50,
+      "rejected": []
+    }
+  ]
+}

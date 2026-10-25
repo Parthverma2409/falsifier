@@ -57,19 +57,28 @@ OUT = ROOT / "reports" / "scale"
 FLOOR_S = 15
 PARALLEL_INSTANCES = 4
 
-ENV, CANARY, CEILING, NO_DISTINGUISHABLE, NO_DIFFS = (
+ENV, CANARY, CEILING, NO_DISTINGUISHABLE, NO_DIFFS, INFRA = (
     "failed the environment check",
     "canary not live",
     "hit the per-instance ceiling",
     "zero distinguishable mutants",
     "zero applicable mutant diffs",
+    "infrastructure failure (transport or DNS), not a property of the instance",
+)
+_TRANSPORT = (
+    "ApiTimeoutError",
+    "ContreeTransportError",
+    "APIConnectionError",
+    "name resolution",
+    "Could not resolve host",
+    "CalledProcessError",
 )
 
 
 class Excluded(Exception):
-    def __init__(self, reason: str, detail: str):
+    def __init__(self, reason: str, detail: str, evidence: list | None = None):
         super().__init__(f"{reason}: {detail}")
-        self.reason, self.detail = reason, detail
+        self.reason, self.detail, self.evidence = reason, detail, evidence or []
 
 
 def enumerate_instances() -> list[dict]:
@@ -95,17 +104,23 @@ async def prepare(client, guard, upload, row):
         fork("envcheck/gold+p2p", both, p2p, t0.regression),
     )
     (o, o_why), (g, g_why) = classify_test_run(orig), classify_test_run(gold)
+    evidence = [r.to_dict() for r in (orig, gold, gold_p2p)]
+    for r in (orig, gold, gold_p2p):
+        if r.error and any(t in r.error for t in _TRANSPORT):
+            raise Excluded(INFRA, f"{r.label}: {r.error[:300]}", evidence)
     if o != FAIL:
-        raise Excluded(ENV, f"FAIL_TO_PASS on the original is {o}, not FAIL ({o_why})")
+        raise Excluded(ENV, f"FAIL_TO_PASS on the original is {o}, not FAIL ({o_why})", evidence)
     if g != PASS:
-        raise Excluded(ENV, f"FAIL_TO_PASS on the gold patch is {g}, not PASS ({g_why})")
+        raise Excluded(ENV, f"FAIL_TO_PASS on the gold patch is {g}, not PASS ({g_why})", evidence)
     seen = passed_ids(gold_p2p.stdout, normalize_options=inst.log_parser == "parse_log_requests")
     missing = [i for i in inst.p2p if i not in seen]
     if gold_p2p.exit_code not in (0, 1) or missing:
+        timed = f", timed out at {gold_p2p.timeout_s} s" if gold_p2p.timed_out else ""
         raise Excluded(
             ENV,
-            f"PASS_TO_PASS on the gold patch: exit {gold_p2p.exit_code}, {len(missing)} of "
-            f"{len(inst.p2p)} ids not PASSED (e.g. {missing[:2]})",
+            f"PASS_TO_PASS on the gold patch: exit {gold_p2p.exit_code}{timed}, {len(missing)} "
+            f"of {len(inst.p2p)} ids not PASSED (e.g. {missing[:2]})",
+            evidence,
         )
     inst.timeouts = dataclasses.replace(
         t0,
@@ -168,6 +183,8 @@ async def run_one(client, top: SpendGuard, upload, row, n: int) -> dict:
             live, why = canary_live(v.forks.get("canary"))
             if not live:
                 raise Excluded(CANARY, why)
+            if v.counts.get("error"):
+                raise Excluded(INFRA, f"{v.counts['error']} mutant fork(s) did not complete")
             if not any(m.status in (KILLED, SURVIVED, CAUGHT_BY_P2P) for m in v.mutants):
                 raise Excluded(NO_DISTINGUISHABLE, v.reason[-200:])
             raise Excluded(ENV, f"INCONCLUSIVE: {v.reason[-300:]}")
@@ -176,24 +193,31 @@ async def run_one(client, top: SpendGuard, upload, row, n: int) -> dict:
         entry["included"] = True
     except Excluded as exc:
         entry |= {"included": False, "reason": exc.reason, "detail": exc.detail}
+        if exc.evidence:
+            entry["evidence"] = exc.evidence
     except SpendCeilingExceeded as exc:
         if exc.scope == "global":
             raise
         entry |= {"included": False, "reason": CEILING, "detail": str(exc)}
-    except Exception as exc:  # build, import or transport failure: the environment, reported
-        entry |= {"included": False, "reason": ENV, "detail": f"{type(exc).__name__}: {exc}"[:400]}
+    except Exception as exc:  # build, import or transport failure: reported, never dropped
+        detail = f"{type(exc).__name__}: {exc}"[:400]
+        reason = INFRA if any(t in detail for t in _TRANSPORT) else ENV
+        entry |= {"included": False, "reason": reason, "detail": detail}
     entry["spent_usd"] = guard.spent_usd
     line = entry.get("verdict", "") if entry.get("included") else f"EXCLUDED ({entry['reason']})"
     print(f"{iid}: {line}; ${guard.spent_usd:.4f}", flush=True)
     return entry
 
 
-async def main_async(n: int) -> int:
+async def main_async(n: int, only: list[str] | None = None) -> int:
     from contree_sdk import Contree
     from contree_sdk.config import ContreeConfig
 
     OUT.mkdir(parents=True, exist_ok=True)
-    rows = enumerate_instances()
+    all_rows = enumerate_instances()
+    rows = [r for r in all_rows if not only or r["instance_id"] in set(only)]
+    if only:
+        print(f"re-running {len(rows)} instance(s) never evaluated in the first attempt")
     print(
         f"enumerated {len(rows)} SWE-bench Verified instances in {', '.join(REPOS3)}; "
         f"{n} mutants each"
@@ -218,7 +242,16 @@ async def main_async(n: int) -> int:
     except SpendCeilingExceeded as exc:
         print(f"STOPPED by the global ${GLOBAL_CEILING_USD:.2f} ceiling (not raised): {exc}")
         status = 2
-    for r in rows:  # never silently dropped
+    excl = OUT / "exclusions.json"
+    if only and excl.exists():  # merge, keeping each instance's earlier attempt as history
+        old = json.loads(excl.read_text())["instances"]
+        for iid, prev in old.items():
+            if iid in entries:
+                history = prev.pop("previous_attempts", [])
+                entries[iid]["previous_attempts"] = [*history, prev]
+            else:
+                entries[iid] = prev
+    for r in all_rows:  # never silently dropped
         entries.setdefault(
             r["instance_id"],
             {
@@ -229,7 +262,7 @@ async def main_async(n: int) -> int:
                 "detail": "",
             },
         )
-    (OUT / "exclusions.json").write_text(
+    excl.write_text(
         json.dumps({"mutants_per_instance": n, "instances": entries}, indent=2, default=str) + "\n"
     )
     s = top.summary()
@@ -240,9 +273,10 @@ async def main_async(n: int) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--mutants", type=int, default=50)
+    ap.add_argument("--only", nargs="*", help="re-run these instances; merge into exclusions.json")
     args = ap.parse_args()
     load_dotenv(ROOT / ".env")
-    return asyncio.run(main_async(args.mutants))
+    return asyncio.run(main_async(args.mutants, args.only))
 
 
 if __name__ == "__main__":

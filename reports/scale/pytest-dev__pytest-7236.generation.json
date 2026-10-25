@@ -1,0 +1,493 @@
+{
+  "asked": 50,
+  "returned": 0,
+  "usd": 0.011548260000000001,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 43,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 41,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 3,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 4,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 5,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 10,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 13,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 14,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 15,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 16,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 17,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 18,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 19,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 20,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 21,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 22,
+          "kind": "wrong-condition",
+          "reason": "touches files outside ['src/_pytest/unittest.py']: ['src/_pytest/unittest.py', 'src/_pytest/unittest.com']"
+        },
+        {
+          "mutant": 23,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 24,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 25,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 26,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 27,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 28,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 29,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 30,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 31,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 32,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 33,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 34,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 35,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 36,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 37,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 38,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 39,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 40,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 41,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 42,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 43,
+          "kind": "too-narrow",
+          "reason": "no ```diff block"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 50,
+      "parsed": 7,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 7,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 3,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 4,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 5,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 7,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 2,
+      "asked": 50,
+      "parsed": 40,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 39,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 3,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 4,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 5,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 10,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 13,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 14,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 15,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 16,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 17,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 18,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 19,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 20,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 21,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 22,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 23,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 24,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 25,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 26,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 27,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 28,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 29,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 30,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 31,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 32,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 33,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 34,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 35,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 36,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 37,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 38,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 39,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/unittest.py does not parse after the diff: expected an indented block after function definition on line 306 (unittest.py, line 307)"
+        },
+        {
+          "mutant": 40,
+          "kind": "silences-symptom",
+          "reason": "no ```diff block"
+        }
+      ]
+    }
+  ]
+}

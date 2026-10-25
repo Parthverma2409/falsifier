@@ -522,3 +522,66 @@ The generation responses were cached, so the mutants are the same ones as in the
 FAIL_TO_PASS, and 3 mutants did. Under the stricter post-split meaning (cleared both lists) the
 count is zero. Whether that zero should trigger the 10-to-30 escalation on the same five
 instances is Parth's decision. It was not run.
+
+## 2026-10-25: the pre-committed 30-mutant escalation
+
+**Pre-registration.** The results framing (Draft A for zero UNEARNED, Draft B for any) was committed
+and pushed in `3c8090f` before this run.
+
+**The run.** Same five instances, same code path, no substitution. pytest-7432 and pytest-7571 first
+failed on a local DNS outage (`Temporary failure in name resolution`, on the Token Factory call
+and on the image lookup). They were completed afterwards with `--only`.
+
+**Totals:** 67 distinguishable mutants, 11 equivalents discarded, 10 survived FAIL_TO_PASS,
+**6 also survived PASS_TO_PASS**.
+- **pallets__flask-5014:** UNEARNED. 17 distinguishable, 2 equivalent, 6 survived FAIL_TO_PASS, 5 of
+  those also survived PASS_TO_PASS.
+- **psf__requests-5414:** UNEARNED. 19 distinguishable, 7 equivalent, 4 survived FAIL_TO_PASS, 1 of
+  those also survived PASS_TO_PASS.
+- **psf__requests-6028:** EARNED. Only 2 of 30 mutants were usable.
+- **pytest-dev__pytest-7432:** EARNED. 4 of 30 were usable, and all 4 were killed. Canary exit 3, live.
+- **pytest-dev__pytest-7571:** EARNED. 25 of 25 killed, 2 equivalent discarded.
+
+**The six both-lists survivors.** They are reported as the rules define them, and annotated so their
+strength is visible. None was filtered after the fact.
+- **flask m19:** `if not name and url_prefix is None:` still accepts `''` when `url_prefix` is given.
+  An in-domain wrong fix.
+- **flask m5:** `len(name) - 1 <= 0` rejects every one-character name. An in-domain wrong fix.
+- **flask m13:** `not name.strip()` also rejects whitespace-only names. Distinguishable, but stricter
+  validation rather than clearly a bug.
+- **flask m12 and m14:** `len(name) < 1` and `len(name) == 0` differ only on `None` and `0`, outside
+  the declared `str` domain of a blueprint name. This is the README's domain-relative equivalence
+  limitation, live.
+- **requests m9:** `startswith((u'*', u'.', u'-'))` also rejects hosts beginning with `-`. That is
+  arguably more correct, and its witness depends on the gold patch failing a DNS lookup.
+
+## 2026-10-26: scaled run, every Verified instance in three repositories
+
+**What ran.** `scripts/run_scale.py` enumerated every SWE-bench Verified instance in pallets/flask,
+psf/requests and pytest-dev/pytest: 28, none hand-picked. Each got 50 mutants, because the
+30-mutant escalation had finished. Guards: a $10 global ceiling (ledger
+`runs/spend_ledger_scale.jsonl`, ending at $5.3077) and a $0.50 per-instance guard nested in it.
+Timeouts were 10x the measured gold-patch CPU time, floored at 15 s, and the canary ran per instance.
+
+**Re-runs (infrastructure only).** Local DNS outages broke the first attempt for many instances
+before any sandbox ran (`git fetch`, image lookup, Token Factory connection). Two bugs of mine
+mislabelled others:
+- **pytest 4.x summary:** old pytest prints "in 0.12 seconds", and the summary regex only accepted
+  "0.12s". Fixed, with a test.
+- **requests-6028:** a mutant fork's transport error was reported as "zero distinguishable".
+
+A third bug was in `checkout()`: it trusted half-initialised clones left by the DNS failure.
+
+Every instance that was never actually evaluated was re-run, up to three attempts in total, with each
+attempt kept under `previous_attempts`. Instances excluded by the per-instance ceiling were not
+retried, per Parth's rule. I also relabelled pytest-10356 after reading its evidence: I had called it
+an infrastructure failure, but its 5 mutant forks end with pytest exit 4, deterministically.
+
+**Result.** 10 of 28 included, 160 distinguishable mutants, 49 equivalents discarded, 13 survived
+FAIL_TO_PASS, 10 also survived PASS_TO_PASS. Draft B was selected, since there is at least one
+UNEARNED. Three of the 10 counterexamples are in-domain wrong fixes (flask m24, requests-6028 m4 and
+m11). Seven differ only on non-string blueprint names.
+
+**Pre-registered wording changed.** One sentence was edited because the data made it false as
+written. "PASS_TO_PASS caught every one of these" referred to the three listed survivors, and it
+now reads "each of the three above", because later survivors did clear PASS_TO_PASS.

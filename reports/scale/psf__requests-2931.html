@@ -1,0 +1,2737 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · psf__requests-2931</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>psf__requests-2931</h1>
+<p class="muted">Request with binary payload fails due to calling to_native_string Introduced with https://github.com/kennethreitz/requests/issues/2844 ``` import requests requests.put(&quot;http://httpbin.org/put&quot;, …</p><details><summary>Full issue</summary><pre>Request with binary payload fails due to calling to_native_string
+Introduced with https://github.com/kennethreitz/requests/issues/2844
+
+```
+import requests
+requests.put(&quot;http://httpbin.org/put&quot;, data=u&quot;ööö&quot;.encode(&quot;utf-8&quot;))
+```
+
+This works with 2.8.1, but not with 2.9.
+
+</pre></details>
+
+<div class="verdict EARNED">EARNED</div>
+
+<p>SWE-bench says <b>RESOLVED</b> · benchmark oracle: the repository's own FAIL_TO_PASS tests (1)</p>
+<p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 1 failed, 21 warnings in 0.27s; the canary&#x27;s AssertionError is in the log)</b></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed, 21 warnings in 0.27s) and passes on the patch (exit 0, 1 passed, 22 warnings in 0.23s); all 84 PASS_TO_PASS tests PASSED; the test killed 2 of 2 distinguishable mutants (2 equivalent discarded). Negative control: the canary failed the test (exit 1, 1 failed, 21 warnings in 0.27s; the canary&#x27;s AssertionError is in the log)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint d3dd188c-2a49-426a-a0df-3d2dae27780e ·
+12 forks · 3.02 CPU-s · $0.0321 · 2026-10-25T15:38:56+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">The guard `if isinstance(fragment, str)` only encodes string fragments, but fragment could be `bytes` too; changing to `if isinstance(fragment, (str, bytes))` misses the case where fragment is already `bytes` and needs no encoding, but the real bug is about `_encode_params` dropping `bytes` input; however, this mutant off-by-one targets the fragment range: using `range(len(fragment)-1)` would skip the last char, but here we only have an `if`. Instead, this mutant changes the condition from `if isinstance(fragment, str):` to `if isinstance(fragment, str) and len(fragment) &gt; 1:` which skips single-character strings, an off-by-one boundary on length.</span></div><div class="card"><b>m2</b> · silences-symptom<br><span class="status equivalent">equivalent, discarded</span><br><span class="muted">The correct patch removes `to_native_string` to fix the root cause, but this mutant catches the exception raised by `to_native_string` on binary data and returns the original data, silently ignoring the conversion error; it silences the symptom (the TypeError) without fixing the underlying issue of proper `bytes` handling.</span></div><div class="card"><b>m3</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">The correct patch adds `if isinstance(params, (str, bytes)): params = to_native_string(params)` before `_encode_params`, but this mutant places it after the call, changing `enc_params = self._encode_params(params)` to `enc_params = self._encode_params(params)` followed by `if isinstance(params, (str, bytes)): params = to_native_string(params)` which is too late; however, an off-by-one variant shifts the range by one: using `for i in range(len(params)-1)` but here we have an `if`. Instead, this mutant changes the condition to `if isinstance(params, (str, bytes)) and len(params) &gt; 0:` missing empty strings, an off-by-one on the length boundary.</span></div><div class="card"><b>m4</b> · off-by-one<br><span class="status equivalent">equivalent, discarded</span><br><span class="muted">The correct patch changes `if isinstance(data, (str, bytes)): return to_native_string(data)` to `return data`, but this mutant changes it to `if isinstance(data, (str, bytes)) and len(data) &gt; 0: return data` which adds a length guard that skips empty `str`/`bytes`, an off-by-one boundary where `len(data) &gt; 0` excludes empty strings; a `data=&quot;&quot;` would be passed through the `if` and fall to `elif hasattr(data, &#x27;read&#x27;)` which would fail, whereas the patch would return `data` (empty string) directly.</span></div></div>
+
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed, 21 warnings in 0.27s · 0.339 CPU-s · 0.61 s · $0.00358<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed, 22 warnings in 0.23s · 0.296 CPU-s · 0.54 s · $0.00314<br>
+patched + PASS_TO_PASS: <b>FAIL</b>: exit 1, 86 passed, 1 xfailed, 28 warnings, 81 errors in 1.13s · 0.440 CPU-s · 1.44 s · $0.00458<br>
+canary + test: <b>FAIL</b>: exit 1, 1 failed, 21 warnings in 0.27s · 0.327 CPU-s · 0.58 s · $0.00346</p>
+<details><summary>The canary mutant</summary><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -73,30 +73,7 @@ class RequestEncodingMixin(object):</span><span class="line"> </span><span class="line">     @staticmethod</span><span class="line">     def _encode_params(data):</span><span class="line del">-        &quot;&quot;&quot;Encode parameters in a piece of data.</span><span class="line del">-</span><span class="line del">-        Will successfully encode parameters when passed as a dict or a list of</span><span class="line del">-        2-tuples. Order is retained if data is a list of 2-tuples but arbitrary</span><span class="line del">-        if parameters are supplied as a dict.</span><span class="line del">-        &quot;&quot;&quot;</span><span class="line del">-</span><span class="line del">-        if isinstance(data, (str, bytes)):</span><span class="line del">-            return data</span><span class="line del">-        elif hasattr(data, &#x27;read&#x27;):</span><span class="line del">-            return data</span><span class="line del">-        elif hasattr(data, &#x27;__iter__&#x27;):</span><span class="line del">-            result = []</span><span class="line del">-            for k, vs in to_key_val_list(data):</span><span class="line del">-                if isinstance(vs, basestring) or not hasattr(vs, &#x27;__iter__&#x27;):</span><span class="line del">-                    vs = [vs]</span><span class="line del">-                for v in vs:</span><span class="line del">-                    if v is not None:</span><span class="line del">-                        result.append(</span><span class="line del">-                            (k.encode(&#x27;utf-8&#x27;) if isinstance(k, str) else k,</span><span class="line del">-                             v.encode(&#x27;utf-8&#x27;) if isinstance(v, str) else v))</span><span class="line del">-            return urlencode(result, doseq=True)</span><span class="line del">-        else:</span><span class="line del">-            return data</span><span class="line add">+        raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line">     @staticmethod</span><span class="line">     def _encode_files(files, data):</span></pre></details>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">diff --git a/requests/models.py b/requests/models.py</span><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -81,7 +81,7 @@ def _encode_params(data):</span><span class="line">         &quot;&quot;&quot;</span><span class="line"> </span><span class="line">         if isinstance(data, (str, bytes)):</span><span class="line del">-            return to_native_string(data)</span><span class="line add">+            return data</span><span class="line">         elif hasattr(data, &#x27;read&#x27;):</span><span class="line">             return data</span><span class="line">         elif hasattr(data, &#x27;__iter__&#x27;):</span><span class="line">@@ -385,6 +385,9 @@ def prepare_url(self, url, params):</span><span class="line">             if isinstance(fragment, str):</span><span class="line">                 fragment = fragment.encode(&#x27;utf-8&#x27;)</span><span class="line"> </span><span class="line add">+        if isinstance(params, (str, bytes)):</span><span class="line add">+            params = to_native_string(params)</span><span class="line add">+</span><span class="line">         enc_params = self._encode_params(params)</span><span class="line">         if enc_params:</span><span class="line">             if query:</span></pre></div>
+<div><h3>The test</h3><pre>#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+&quot;&quot;&quot;Tests for Requests.&quot;&quot;&quot;
+
+from __future__ import division
+import json
+import os
+import pickle
+import unittest
+import collections
+import contextlib
+
+import io
+import requests
+import pytest
+from requests.adapters import HTTPAdapter
+from requests.auth import HTTPDigestAuth, _basic_auth_str
+from requests.compat import (
+    Morsel, cookielib, getproxies, str, urljoin, urlparse, is_py3,
+    builtin_str, OrderedDict
+    )
+from requests.cookies import cookiejar_from_dict, morsel_to_cookie
+from requests.exceptions import (ConnectionError, ConnectTimeout,
+                                 InvalidSchema, InvalidURL, MissingSchema,
+                                 ReadTimeout, Timeout, RetryError)
+from requests.models import PreparedRequest
+from requests.structures import CaseInsensitiveDict
+from requests.sessions import SessionRedirectMixin
+from requests.models import urlencode
+from requests.hooks import default_hooks
+
+try:
+    import StringIO
+except ImportError:
+    import io as StringIO
+
+try:
+    from multiprocessing.pool import ThreadPool
+except ImportError:
+    ThreadPool = None
+
+if is_py3:
+    def u(s):
+        return s
+else:
+    def u(s):
+        return s.decode(&#x27;unicode-escape&#x27;)
+
+
+@pytest.fixture
+def httpbin(httpbin):
+    # Issue #1483: Make sure the URL always has a trailing slash
+    httpbin_url = httpbin.url.rstrip(&#x27;/&#x27;) + &#x27;/&#x27;
+
+    def inner(*suffix):
+        return urljoin(httpbin_url, &#x27;/&#x27;.join(suffix))
+
+    return inner
+
+
+@pytest.fixture
+def httpsbin_url(httpbin_secure):
+    # Issue #1483: Make sure the URL always has a trailing slash
+    httpbin_url = httpbin_secure.url.rstrip(&#x27;/&#x27;) + &#x27;/&#x27;
+
+    def inner(*suffix):
+        return urljoin(httpbin_url, &#x27;/&#x27;.join(suffix))
+
+    return inner
+
+
+# Requests to this URL should always fail with a connection timeout (nothing
+# listening on that port)
+TARPIT = &quot;http://10.255.255.1&quot;
+
+class TestRequests(object):
+
+    _multiprocess_can_split_ = True
+
+    def setUp(self):
+        &quot;&quot;&quot;Create simple data set with headers.&quot;&quot;&quot;
+        pass
+
+    def tearDown(self):
+        &quot;&quot;&quot;Teardown.&quot;&quot;&quot;
+        pass
+
+    def test_entry_points(self):
+
+        requests.session
+        requests.session().get
+        requests.session().head
+        requests.get
+        requests.head
+        requests.put
+        requests.patch
+        requests.post
+
+    def test_invalid_url(self):
+        with pytest.raises(MissingSchema):
+            requests.get(&#x27;hiwpefhipowhefopw&#x27;)
+        with pytest.raises(InvalidSchema):
+            requests.get(&#x27;localhost:3128&#x27;)
+        with pytest.raises(InvalidSchema):
+            requests.get(&#x27;localhost.localdomain:3128/&#x27;)
+        with pytest.raises(InvalidSchema):
+            requests.get(&#x27;10.122.1.1:3128/&#x27;)
+        with pytest.raises(InvalidURL):
+            requests.get(&#x27;http://&#x27;)
+
+    def test_basic_building(self):
+        req = requests.Request()
+        req.url = &#x27;http://kennethreitz.org/&#x27;
+        req.data = {&#x27;life&#x27;: &#x27;42&#x27;}
+
+        pr = req.prepare()
+        assert pr.url == req.url
+        assert pr.body == &#x27;life=42&#x27;
+
+    def test_no_content_length(self, httpbin):
+        get_req = requests.Request(&#x27;GET&#x27;, httpbin(&#x27;get&#x27;)).prepare()
+        assert &#x27;Content-Length&#x27; not in get_req.headers
+        head_req = requests.Request(&#x27;HEAD&#x27;, httpbin(&#x27;head&#x27;)).prepare()
+        assert &#x27;Content-Length&#x27; not in head_req.headers
+
+    def test_override_content_length(self, httpbin):
+        headers = {
+            &#x27;Content-Length&#x27;: &#x27;not zero&#x27;
+        }
+        r = requests.Request(&#x27;POST&#x27;, httpbin(&#x27;post&#x27;), headers=headers).prepare()
+        assert &#x27;Content-Length&#x27; in r.headers
+        assert r.headers[&#x27;Content-Length&#x27;] == &#x27;not zero&#x27;
+
+    def test_path_is_not_double_encoded(self):
+        request = requests.Request(&#x27;GET&#x27;, &quot;http://0.0.0.0/get/test case&quot;).prepare()
+
+        assert request.path_url == &#x27;/get/test%20case&#x27;
+
+    def test_params_are_added_before_fragment(self):
+        request = requests.Request(&#x27;GET&#x27;,
+            &quot;http://example.com/path#fragment&quot;, params={&quot;a&quot;: &quot;b&quot;}).prepare()
+        assert request.url == &quot;http://example.com/path?a=b#fragment&quot;
+        request = requests.Request(&#x27;GET&#x27;,
+            &quot;http://example.com/path?key=value#fragment&quot;, params={&quot;a&quot;: &quot;b&quot;}).prepare()
+        assert request.url == &quot;http://example.com/path?key=value&amp;a=b#fragment&quot;
+
+    def test_params_original_order_is_preserved_by_default(self):
+        param_ordered_dict = OrderedDict(((&#x27;z&#x27;, 1), (&#x27;a&#x27;, 1), (&#x27;k&#x27;, 1), (&#x27;d&#x27;, 1)))
+        session = requests.Session()
+        request = requests.Request(&#x27;GET&#x27;, &#x27;http://example.com/&#x27;, params=param_ordered_dict)
+        prep = session.prepare_request(request)
+        assert prep.url == &#x27;http://example.com/?z=1&amp;a=1&amp;k=1&amp;d=1&#x27;
+
+    def test_params_bytes_are_encoded(self):
+        request = requests.Request(&#x27;GET&#x27;, &#x27;http://example.com&#x27;,
+                                   params=b&#x27;test=foo&#x27;).prepare()
+        assert request.url == &#x27;http://example.com/?test=foo&#x27;
+
+    def test_binary_put(self):
+        request = requests.Request(&#x27;PUT&#x27;, &#x27;http://example.com&#x27;,
+                                   data=u&quot;ööö&quot;.encode(&quot;utf-8&quot;)).prepare()
+        assert isinstance(request.body, bytes)
+
+    def test_mixed_case_scheme_acceptable(self, httpbin):
+        s = requests.Session()
+        s.proxies = getproxies()
+        parts = urlparse(httpbin(&#x27;get&#x27;))
+        schemes = [&#x27;http://&#x27;, &#x27;HTTP://&#x27;, &#x27;hTTp://&#x27;, &#x27;HttP://&#x27;]
+        for scheme in schemes:
+            url = scheme + parts.netloc + parts.path
+            r = requests.Request(&#x27;GET&#x27;, url)
+            r = s.send(r.prepare())
+            assert r.status_code == 200, &#x27;failed for scheme {0}&#x27;.format(scheme)
+
+    def test_HTTP_200_OK_GET_ALTERNATIVE(self, httpbin):
+        r = requests.Request(&#x27;GET&#x27;, httpbin(&#x27;get&#x27;))
+        s = requests.Session()
+        s.proxies = getproxies()
+
+        r = s.send(r.prepare())
+
+        assert r.status_code == 200
+
+    def test_HTTP_302_ALLOW_REDIRECT_GET(self, httpbin):
+        r = requests.get(httpbin(&#x27;redirect&#x27;, &#x27;1&#x27;))
+        assert r.status_code == 200
+        assert r.history[0].status_code == 302
+        assert r.history[0].is_redirect
+
+    # def test_HTTP_302_ALLOW_REDIRECT_POST(self):
+    #     r = requests.post(httpbin(&#x27;status&#x27;, &#x27;302&#x27;), data={&#x27;some&#x27;: &#x27;data&#x27;})
+    #     self.assertEqual(r.status_code, 200)
+
+    def test_HTTP_200_OK_GET_WITH_PARAMS(self, httpbin):
+        heads = {&#x27;User-agent&#x27;: &#x27;Mozilla/5.0&#x27;}
+
+        r = requests.get(httpbin(&#x27;user-agent&#x27;), headers=heads)
+
+        assert heads[&#x27;User-agent&#x27;] in r.text
+        assert r.status_code == 200
+
+    def test_HTTP_200_OK_GET_WITH_MIXED_PARAMS(self, httpbin):
+        heads = {&#x27;User-agent&#x27;: &#x27;Mozilla/5.0&#x27;}
+
+        r = requests.get(httpbin(&#x27;get&#x27;) + &#x27;?test=true&#x27;, params={&#x27;q&#x27;: &#x27;test&#x27;}, headers=heads)
+        assert r.status_code == 200
+
+    def test_set_cookie_on_301(self, httpbin):
+        s = requests.session()
+        url = httpbin(&#x27;cookies/set?foo=bar&#x27;)
+        s.get(url)
+        assert s.cookies[&#x27;foo&#x27;] == &#x27;bar&#x27;
+
+    def test_cookie_sent_on_redirect(self, httpbin):
+        s = requests.session()
+        s.get(httpbin(&#x27;cookies/set?foo=bar&#x27;))
+        r = s.get(httpbin(&#x27;redirect/1&#x27;))  # redirects to httpbin(&#x27;get&#x27;)
+        assert &#x27;Cookie&#x27; in r.json()[&#x27;headers&#x27;]
+
+    def test_cookie_removed_on_expire(self, httpbin):
+        s = requests.session()
+        s.get(httpbin(&#x27;cookies/set?foo=bar&#x27;))
+        assert s.cookies[&#x27;foo&#x27;] == &#x27;bar&#x27;
+        s.get(
+            httpbin(&#x27;response-headers&#x27;),
+            params={
+                &#x27;Set-Cookie&#x27;:
+                    &#x27;foo=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT&#x27;
+            }
+        )
+        assert &#x27;foo&#x27; not in s.cookies
+
+    def test_cookie_quote_wrapped(self, httpbin):
+        s = requests.session()
+        s.get(httpbin(&#x27;cookies/set?foo=&quot;bar:baz&quot;&#x27;))
+        assert s.cookies[&#x27;foo&#x27;] == &#x27;&quot;bar:baz&quot;&#x27;
+
+    def test_cookie_persists_via_api(self, httpbin):
+        s = requests.session()
+        r = s.get(httpbin(&#x27;redirect/1&#x27;), cookies={&#x27;foo&#x27;: &#x27;bar&#x27;})
+        assert &#x27;foo&#x27; in r.request.headers[&#x27;Cookie&#x27;]
+        assert &#x27;foo&#x27; in r.history[0].request.headers[&#x27;Cookie&#x27;]
+
+    def test_request_cookie_overrides_session_cookie(self, httpbin):
+        s = requests.session()
+        s.cookies[&#x27;foo&#x27;] = &#x27;bar&#x27;
+        r = s.get(httpbin(&#x27;cookies&#x27;), cookies={&#x27;foo&#x27;: &#x27;baz&#x27;})
+        assert r.json()[&#x27;cookies&#x27;][&#x27;foo&#x27;] == &#x27;baz&#x27;
+        # Session cookie should not be modified
+        assert s.cookies[&#x27;foo&#x27;] == &#x27;bar&#x27;
+
+    def test_request_cookies_not_persisted(self, httpbin):
+        s = requests.session()
+        s.get(httpbin(&#x27;cookies&#x27;), cookies={&#x27;foo&#x27;: &#x27;baz&#x27;})
+        # Sending a request with cookies should not add cookies to the session
+        assert not s.cookies
+
+    def test_generic_cookiejar_works(self, httpbin):
+        cj = cookielib.CookieJar()
+        cookiejar_from_dict({&#x27;foo&#x27;: &#x27;bar&#x27;}, cj)
+        s = requests.session()
+        s.cookies = cj
+        r = s.get(httpbin(&#x27;cookies&#x27;))
+        # Make sure the cookie was sent
+        assert r.json()[&#x27;cookies&#x27;][&#x27;foo&#x27;] == &#x27;bar&#x27;
+        # Make sure the session cj is still the custom one
+        assert s.cookies is cj
+
+    def test_param_cookiejar_works(self, httpbin):
+        cj = cookielib.CookieJar()
+        cookiejar_from_dict({&#x27;foo&#x27;: &#x27;bar&#x27;}, cj)
+        s = requests.session()
+        r = s.get(httpbin(&#x27;cookies&#x27;), cookies=cj)
+        # Make sure the cookie was sent
+        assert r.json()[&#x27;cookies&#x27;][&#x27;foo&#x27;] == &#x27;bar&#x27;
+
+    def test_requests_in_history_are_not_overridden(self, httpbin):
+        resp = requests.get(httpbin(&#x27;redirect/3&#x27;))
+        urls = [r.url for r in resp.history]
+        req_urls = [r.request.url for r in resp.history]
+        assert urls == req_urls
+
+    def test_history_is_always_a_list(self, httpbin):
+        &quot;&quot;&quot;
+        Show that even with redirects, Response.history is always a list.
+        &quot;&quot;&quot;
+        resp = requests.get(httpbin(&#x27;get&#x27;))
+        assert isinstance(resp.history, list)
+        resp = requests.get(httpbin(&#x27;redirect/1&#x27;))
+        assert isinstance(resp.history, list)
+        assert not isinstance(resp.history, tuple)
+
+    def test_headers_on_session_with_None_are_not_sent(self, httpbin):
+        &quot;&quot;&quot;Do not send headers in Session.headers with None values.&quot;&quot;&quot;
+        ses = requests.Session()
+        ses.headers[&#x27;Accept-Encoding&#x27;] = None
+        req = requests.Request(&#x27;GET&#x27;, httpbin(&#x27;get&#x27;))
+        prep = ses.prepare_request(req)
+        assert &#x27;Accept-Encoding&#x27; not in prep.headers
+
+    def test_user_agent_transfers(self, httpbin):
+
+        heads = {
+            &#x27;User-agent&#x27;: &#x27;Mozilla/5.0 (github.com/kennethreitz/requests)&#x27;
+        }
+
+        r = requests.get(httpbin(&#x27;user-agent&#x27;), headers=heads)
+        assert heads[&#x27;User-agent&#x27;] in r.text
+
+        heads = {
+            &#x27;user-agent&#x27;: &#x27;Mozilla/5.0 (github.com/kennethreitz/requests)&#x27;
+        }
+
+        r = requests.get(httpbin(&#x27;user-agent&#x27;), headers=heads)
+        assert heads[&#x27;user-agent&#x27;] in r.text
+
+    def test_HTTP_200_OK_HEAD(self, httpbin):
+        r = requests.head(httpbin(&#x27;get&#x27;))
+        assert r.status_code == 200
+
+    def test_HTTP_200_OK_PUT(self, httpbin):
+        r = requests.put(httpbin(&#x27;put&#x27;))
+        assert r.status_code == 200
+
+    def test_BASICAUTH_TUPLE_HTTP_200_OK_GET(self, httpbin):
+        auth = (&#x27;user&#x27;, &#x27;pass&#x27;)
+        url = httpbin(&#x27;basic-auth&#x27;, &#x27;user&#x27;, &#x27;pass&#x27;)
+
+        r = requests.get(url, auth=auth)
+        assert r.status_code == 200
+
+        r = requests.get(url)
+        assert r.status_code == 401
+
+        s = requests.session()
+        s.auth = auth
+        r = s.get(url)
+        assert r.status_code == 200
+
+    def test_connection_error_invalid_domain(self):
+        &quot;&quot;&quot;Connecting to an unknown domain should raise a ConnectionError&quot;&quot;&quot;
+        with pytest.raises(ConnectionError):
+            requests.get(&quot;http://doesnotexist.google.com&quot;)
+
+    def test_connection_error_invalid_port(self):
+        &quot;&quot;&quot;Connecting to an invalid port should raise a ConnectionError&quot;&quot;&quot;
+        with pytest.raises(ConnectionError):
+            requests.get(&quot;http://localhost:1&quot;, timeout=1)
+
+    def test_LocationParseError(self):
+        &quot;&quot;&quot;Inputing a URL that cannot be parsed should raise an InvalidURL error&quot;&quot;&quot;
+        with pytest.raises(InvalidURL):
+            requests.get(&quot;http://fe80::5054:ff:fe5a:fc0&quot;)
+
+    def test_basicauth_with_netrc(self, httpbin):
+        auth = (&#x27;user&#x27;, &#x27;pass&#x27;)
+        wrong_auth = (&#x27;wronguser&#x27;, &#x27;wrongpass&#x27;)
+        url = httpbin(&#x27;basic-auth&#x27;, &#x27;user&#x27;, &#x27;pass&#x27;)
+
+        old_auth = requests.sessions.get_netrc_auth
+
+        try:
+            def get_netrc_auth_mock(url):
+                return auth
+            requests.sessions.get_netrc_auth = get_netrc_auth_mock
+
+            # Should use netrc and work.
+            r = requests.get(url)
+            assert r.status_code == 200
+
+            # Given auth should override and fail.
+            r = requests.get(url, auth=wrong_auth)
+            assert r.status_code == 401
+
+            s = requests.session()
+
+            # Should use netrc and work.
+            r = s.get(url)
+            assert r.status_code == 200
+
+            # Given auth should override and fail.
+            s.auth = wrong_auth
+            r = s.get(url)
+            assert r.status_code == 401
+        finally:
+            requests.sessions.get_netrc_auth = old_auth
+
+    def test_DIGEST_HTTP_200_OK_GET(self, httpbin):
+
+        auth = HTTPDigestAuth(&#x27;user&#x27;, &#x27;pass&#x27;)
+        url = httpbin(&#x27;digest-auth&#x27;, &#x27;auth&#x27;, &#x27;user&#x27;, &#x27;pass&#x27;)
+
+        r = requests.get(url, auth=auth)
+        assert r.status_code == 200
+
+        r = requests.get(url)
+        assert r.status_code == 401
+
+        s = requests.session()
+        s.auth = HTTPDigestAuth(&#x27;user&#x27;, &#x27;pass&#x27;)
+        r = s.get(url)
+        assert r.status_code == 200
+
+    def test_DIGEST_AUTH_RETURNS_COOKIE(self, httpbin):
+        url = httpbin(&#x27;digest-auth&#x27;, &#x27;auth&#x27;, &#x27;user&#x27;, &#x27;pass&#x27;)
+        auth = HTTPDigestAuth(&#x27;user&#x27;, &#x27;pass&#x27;)
+        r = requests.get(url)
+        assert r.cookies[&#x27;fake&#x27;] == &#x27;fake_value&#x27;
+
+        r = requests.get(url, auth=auth)
+        assert r.status_code == 200
+
+    def test_DIGEST_AUTH_SETS_SESSION_COOKIES(self, httpbin):
+        url = httpbin(&#x27;digest-auth&#x27;, &#x27;auth&#x27;, &#x27;user&#x27;, &#x27;pass&#x27;)
+        auth = HTTPDigestAuth(&#x27;user&#x27;, &#x27;pass&#x27;)
+        s = requests.Session()
+        s.get(url, auth=auth)
+        assert s.cookies[&#x27;fake&#x27;] == &#x27;fake_value&#x27;
+
+    def test_DIGEST_STREAM(self, httpbin):
+
+        auth = HTTPDigestAuth(&#x27;user&#x27;, &#x27;pass&#x27;)
+        url = httpbin(&#x27;digest-auth&#x27;, &#x27;auth&#x27;, &#x27;user&#x27;, &#x27;pass&#x27;)
+
+        r = requests.get(url, auth=auth, stream=True)
+        assert r.raw.read() != b&#x27;&#x27;
+
+        r = requests.get(url, auth=auth, stream=False)
+        assert r.raw.read() == b&#x27;&#x27;
+
+    def test_DIGESTAUTH_WRONG_HTTP_401_GET(self, httpbin):
+
+        auth = HTTPDigestAuth(&#x27;user&#x27;, &#x27;wrongpass&#x27;)
+        url = httpbin(&#x27;digest-auth&#x27;, &#x27;auth&#x27;, &#x27;user&#x27;, &#x27;pass&#x27;)
+
+        r = requests.get(url, auth=auth)
+        assert r.status_code == 401
+
+        r = requests.get(url)
+        assert r.status_code == 401
+
+        s = requests.session()
+        s.auth = auth
+        r = s.get(url)
+        assert r.status_code == 401
+
+    def test_DIGESTAUTH_QUOTES_QOP_VALUE(self, httpbin):
+
+        auth = HTTPDigestAuth(&#x27;user&#x27;, &#x27;pass&#x27;)
+        url = httpbin(&#x27;digest-auth&#x27;, &#x27;auth&#x27;, &#x27;user&#x27;, &#x27;pass&#x27;)
+
+        r = requests.get(url, auth=auth)
+        assert &#x27;&quot;auth&quot;&#x27; in r.request.headers[&#x27;Authorization&#x27;]
+
+    def test_POSTBIN_GET_POST_FILES(self, httpbin):
+
+        url = httpbin(&#x27;post&#x27;)
+        post1 = requests.post(url).raise_for_status()
+
+        post1 = requests.post(url, data={&#x27;some&#x27;: &#x27;data&#x27;})
+        assert post1.status_code == 200
+
+        with open(&#x27;requirements.txt&#x27;) as f:
+            post2 = requests.post(url, files={&#x27;some&#x27;: f})
+        assert post2.status_code == 200
+
+        post4 = requests.post(url, data=&#x27;[{&quot;some&quot;: &quot;json&quot;}]&#x27;)
+        assert post4.status_code == 200
+
+        with pytest.raises(ValueError):
+            requests.post(url, files=[&#x27;bad file data&#x27;])
+
+    def test_POSTBIN_GET_POST_FILES_WITH_DATA(self, httpbin):
+
+        url = httpbin(&#x27;post&#x27;)
+        post1 = requests.post(url).raise_for_status()
+
+        post1 = requests.post(url, data={&#x27;some&#x27;: &#x27;data&#x27;})
+        assert post1.status_code == 200
+
+        with open(&#x27;requirements.txt&#x27;) as f:
+            post2 = requests.post(url,
+                data={&#x27;some&#x27;: &#x27;data&#x27;}, files={&#x27;some&#x27;: f})
+        assert post2.status_code == 200
+
+        post4 = requests.post(url, data=&#x27;[{&quot;some&quot;: &quot;json&quot;}]&#x27;)
+        assert post4.status_code == 200
+
+        with pytest.raises(ValueError):
+            requests.post(url, files=[&#x27;bad file data&#x27;])
+
+    def test_conflicting_post_params(self, httpbin):
+        url = httpbin(&#x27;post&#x27;)
+        with open(&#x27;requirements.txt&#x27;) as f:
+            pytest.raises(ValueError, &quot;requests.post(url, data=&#x27;[{\&quot;some\&quot;: \&quot;data\&quot;}]&#x27;, files={&#x27;some&#x27;: f})&quot;)
+            pytest.raises(ValueError, &quot;requests.post(url, data=u(&#x27;[{\&quot;some\&quot;: \&quot;data\&quot;}]&#x27;), files={&#x27;some&#x27;: f})&quot;)
+
+    def test_request_ok_set(self, httpbin):
+        r = requests.get(httpbin(&#x27;status&#x27;, &#x27;404&#x27;))
+        assert not r.ok
+
+    def test_status_raising(self, httpbin):
+        r = requests.get(httpbin(&#x27;status&#x27;, &#x27;404&#x27;))
+        with pytest.raises(requests.exceptions.HTTPError):
+            r.raise_for_status()
+
+        r = requests.get(httpbin(&#x27;status&#x27;, &#x27;500&#x27;))
+        assert not r.ok
+
+    def test_decompress_gzip(self, httpbin):
+        r = requests.get(httpbin(&#x27;gzip&#x27;))
+        r.content.decode(&#x27;ascii&#x27;)
+
+    def test_unicode_get(self, httpbin):
+        url = httpbin(&#x27;/get&#x27;)
+        requests.get(url, params={&#x27;foo&#x27;: &#x27;føø&#x27;})
+        requests.get(url, params={&#x27;føø&#x27;: &#x27;føø&#x27;})
+        requests.get(url, params={&#x27;føø&#x27;: &#x27;føø&#x27;})
+        requests.get(url, params={&#x27;foo&#x27;: &#x27;foo&#x27;})
+        requests.get(httpbin(&#x27;ø&#x27;), params={&#x27;foo&#x27;: &#x27;foo&#x27;})
+
+    def test_unicode_header_name(self, httpbin):
+        requests.put(
+            httpbin(&#x27;put&#x27;),
+            headers={str(&#x27;Content-Type&#x27;): &#x27;application/octet-stream&#x27;},
+            data=&#x27;\xff&#x27;)  # compat.str is unicode.
+
+    def test_pyopenssl_redirect(self, httpsbin_url, httpbin_ca_bundle):
+        requests.get(httpsbin_url(&#x27;status&#x27;, &#x27;301&#x27;), verify=httpbin_ca_bundle)
+
+    def test_urlencoded_get_query_multivalued_param(self, httpbin):
+
+        r = requests.get(httpbin(&#x27;get&#x27;), params=dict(test=[&#x27;foo&#x27;, &#x27;baz&#x27;]))
+        assert r.status_code == 200
+        assert r.url == httpbin(&#x27;get?test=foo&amp;test=baz&#x27;)
+
+    def test_different_encodings_dont_break_post(self, httpbin):
+        r = requests.post(httpbin(&#x27;post&#x27;),
+            data={&#x27;stuff&#x27;: json.dumps({&#x27;a&#x27;: 123})},
+            params={&#x27;blah&#x27;: &#x27;asdf1234&#x27;},
+            files={&#x27;file&#x27;: (&#x27;test_requests.py&#x27;, open(__file__, &#x27;rb&#x27;))})
+        assert r.status_code == 200
+
+    def test_unicode_multipart_post(self, httpbin):
+        r = requests.post(httpbin(&#x27;post&#x27;),
+            data={&#x27;stuff&#x27;: u(&#x27;ëlïxr&#x27;)},
+            files={&#x27;file&#x27;: (&#x27;test_requests.py&#x27;, open(__file__, &#x27;rb&#x27;))})
+        assert r.status_code == 200
+
+        r = requests.post(httpbin(&#x27;post&#x27;),
+            data={&#x27;stuff&#x27;: u(&#x27;ëlïxr&#x27;).encode(&#x27;utf-8&#x27;)},
+            files={&#x27;file&#x27;: (&#x27;test_requests.py&#x27;, open(__file__, &#x27;rb&#x27;))})
+        assert r.status_code == 200
+
+        r = requests.post(httpbin(&#x27;post&#x27;),
+            data={&#x27;stuff&#x27;: &#x27;elixr&#x27;},
+            files={&#x27;file&#x27;: (&#x27;test_requests.py&#x27;, open(__file__, &#x27;rb&#x27;))})
+        assert r.status_code == 200
+
+        r = requests.post(httpbin(&#x27;post&#x27;),
+            data={&#x27;stuff&#x27;: &#x27;elixr&#x27;.encode(&#x27;utf-8&#x27;)},
+            files={&#x27;file&#x27;: (&#x27;test_requests.py&#x27;, open(__file__, &#x27;rb&#x27;))})
+        assert r.status_code == 200
+
+    def test_unicode_multipart_post_fieldnames(self, httpbin):
+        filename = os.path.splitext(__file__)[0] + &#x27;.py&#x27;
+        r = requests.Request(method=&#x27;POST&#x27;,
+                             url=httpbin(&#x27;post&#x27;),
+                             data={&#x27;stuff&#x27;.encode(&#x27;utf-8&#x27;): &#x27;elixr&#x27;},
+                             files={&#x27;file&#x27;: (&#x27;test_requests.py&#x27;,
+                                             open(filename, &#x27;rb&#x27;))})
+        prep = r.prepare()
+        assert b&#x27;name=&quot;stuff&quot;&#x27; in prep.body
+        assert b&#x27;name=&quot;b\&#x27;stuff\&#x27;&quot;&#x27; not in prep.body
+
+    def test_unicode_method_name(self, httpbin):
+        files = {&#x27;file&#x27;: open(&#x27;test_requests.py&#x27;, &#x27;rb&#x27;)}
+        r = requests.request(
+            method=u(&#x27;POST&#x27;), url=httpbin(&#x27;post&#x27;), files=files)
+        assert r.status_code == 200
+
+    def test_unicode_method_name_with_request_object(self, httpbin):
+        files = {&#x27;file&#x27;: open(&#x27;test_requests.py&#x27;, &#x27;rb&#x27;)}
+        s = requests.Session()
+        req = requests.Request(u(&quot;POST&quot;), httpbin(&#x27;post&#x27;), files=files)
+        prep = s.prepare_request(req)
+        assert isinstance(prep.method, builtin_str)
+        assert prep.method == &quot;POST&quot;
+
+        resp = s.send(prep)
+        assert resp.status_code == 200
+
+    def test_custom_content_type(self, httpbin):
+        r = requests.post(
+            httpbin(&#x27;post&#x27;),
+            data={&#x27;stuff&#x27;: json.dumps({&#x27;a&#x27;: 123})},
+            files={&#x27;file1&#x27;: (&#x27;test_requests.py&#x27;, open(__file__, &#x27;rb&#x27;)),
+                   &#x27;file2&#x27;: (&#x27;test_requests&#x27;, open(__file__, &#x27;rb&#x27;),
+                             &#x27;text/py-content-type&#x27;)})
+        assert r.status_code == 200
+        assert b&quot;text/py-content-type&quot; in r.request.body
+
+    def test_hook_receives_request_arguments(self, httpbin):
+        def hook(resp, **kwargs):
+            assert resp is not None
+            assert kwargs != {}
+
+        requests.Request(&#x27;GET&#x27;, httpbin(), hooks={&#x27;response&#x27;: hook})
+
+    def test_session_hooks_are_used_with_no_request_hooks(self, httpbin):
+        hook = lambda x, *args, **kwargs: x
+        s = requests.Session()
+        s.hooks[&#x27;response&#x27;].append(hook)
+        r = requests.Request(&#x27;GET&#x27;, httpbin())
+        prep = s.prepare_request(r)
+        assert prep.hooks[&#x27;response&#x27;] != []
+        assert prep.hooks[&#x27;response&#x27;] == [hook]
+
+    def test_session_hooks_are_overridden_by_request_hooks(self, httpbin):
+        hook1 = lambda x, *args, **kwargs: x
+        hook2 = lambda x, *args, **kwargs: x
+        assert hook1 is not hook2
+        s = requests.Session()
+        s.hooks[&#x27;response&#x27;].append(hook2)
+        r = requests.Request(&#x27;GET&#x27;, httpbin(), hooks={&#x27;response&#x27;: [hook1]})
+        prep = s.prepare_request(r)
+        assert prep.hooks[&#x27;response&#x27;] == [hook1]
+
+    def test_prepared_request_hook(self, httpbin):
+        def hook(resp, **kwargs):
+            resp.hook_working = True
+            return resp
+
+        req = requests.Request(&#x27;GET&#x27;, httpbin(), hooks={&#x27;response&#x27;: hook})
+        prep = req.prepare()
+
+        s = requests.Session()
+        s.proxies = getproxies()
+        resp = s.send(prep)
+
+        assert hasattr(resp, &#x27;hook_working&#x27;)
+
+    def test_prepared_from_session(self, httpbin):
+        class DummyAuth(requests.auth.AuthBase):
+            def __call__(self, r):
+                r.headers[&#x27;Dummy-Auth-Test&#x27;] = &#x27;dummy-auth-test-ok&#x27;
+                return r
+
+        req = requests.Request(&#x27;GET&#x27;, httpbin(&#x27;headers&#x27;))
+        assert not req.auth
+
+        s = requests.Session()
+        s.auth = DummyAuth()
+
+        prep = s.prepare_request(req)
+        resp = s.send(prep)
+
+        assert resp.json()[&#x27;headers&#x27;][
+            &#x27;Dummy-Auth-Test&#x27;] == &#x27;dummy-auth-test-ok&#x27;
+
+    def test_prepare_request_with_bytestring_url(self):
+        req = requests.Request(&#x27;GET&#x27;, b&#x27;https://httpbin.org/&#x27;)
+        s = requests.Session()
+        prep = s.prepare_request(req)
+        assert prep.url == &quot;https://httpbin.org/&quot;
+
+    def test_links(self):
+        r = requests.Response()
+        r.headers = {
+            &#x27;cache-control&#x27;: &#x27;public, max-age=60, s-maxage=60&#x27;,
+            &#x27;connection&#x27;: &#x27;keep-alive&#x27;,
+            &#x27;content-encoding&#x27;: &#x27;gzip&#x27;,
+            &#x27;content-type&#x27;: &#x27;application/json; charset=utf-8&#x27;,
+            &#x27;date&#x27;: &#x27;Sat, 26 Jan 2013 16:47:56 GMT&#x27;,
+            &#x27;etag&#x27;: &#x27;&quot;6ff6a73c0e446c1f61614769e3ceb778&quot;&#x27;,
+            &#x27;last-modified&#x27;: &#x27;Sat, 26 Jan 2013 16:22:39 GMT&#x27;,
+            &#x27;link&#x27;: (&#x27;&lt;https://api.github.com/users/kennethreitz/repos?&#x27;
+                     &#x27;page=2&amp;per_page=10&gt;; rel=&quot;next&quot;, &lt;https://api.github.&#x27;
+                     &#x27;com/users/kennethreitz/repos?page=7&amp;per_page=10&gt;; &#x27;
+                     &#x27; rel=&quot;last&quot;&#x27;),
+            &#x27;server&#x27;: &#x27;GitHub.com&#x27;,
+            &#x27;status&#x27;: &#x27;200 OK&#x27;,
+            &#x27;vary&#x27;: &#x27;Accept&#x27;,
+            &#x27;x-content-type-options&#x27;: &#x27;nosniff&#x27;,
+            &#x27;x-github-media-type&#x27;: &#x27;github.beta&#x27;,
+            &#x27;x-ratelimit-limit&#x27;: &#x27;60&#x27;,
+            &#x27;x-ratelimit-remaining&#x27;: &#x27;57&#x27;
+        }
+        assert r.links[&#x27;next&#x27;][&#x27;rel&#x27;] == &#x27;next&#x27;
+
+    def test_cookie_parameters(self):
+        key = &#x27;some_cookie&#x27;
+        value = &#x27;some_value&#x27;
+        secure = True
+        domain = &#x27;test.com&#x27;
+        rest = {&#x27;HttpOnly&#x27;: True}
+
+        jar = requests.cookies.RequestsCookieJar()
+        jar.set(key, value, secure=secure, domain=domain, rest=rest)
+
+        assert len(jar) == 1
+        assert &#x27;some_cookie&#x27; in jar
+
+        cookie = list(jar)[0]
+        assert cookie.secure == secure
+        assert cookie.domain == domain
+        assert cookie._rest[&#x27;HttpOnly&#x27;] == rest[&#x27;HttpOnly&#x27;]
+
+    def test_cookie_as_dict_keeps_len(self):
+        key = &#x27;some_cookie&#x27;
+        value = &#x27;some_value&#x27;
+
+        key1 = &#x27;some_cookie1&#x27;
+        value1 = &#x27;some_value1&#x27;
+
+        jar = requests.cookies.RequestsCookieJar()
+        jar.set(key, value)
+        jar.set(key1, value1)
+
+        d1 = dict(jar)
+        d2 = dict(jar.iteritems())
+        d3 = dict(jar.items())
+
+        assert len(jar) == 2
+        assert len(d1) == 2
+        assert len(d2) == 2
+        assert len(d3) == 2
+
+    def test_cookie_as_dict_keeps_items(self):
+        key = &#x27;some_cookie&#x27;
+        value = &#x27;some_value&#x27;
+
+        key1 = &#x27;some_cookie1&#x27;
+        value1 = &#x27;some_value1&#x27;
+
+        jar = requests.cookies.RequestsCookieJar()
+        jar.set(key, value)
+        jar.set(key1, value1)
+
+        d1 = dict(jar)
+        d2 = dict(jar.iteritems())
+        d3 = dict(jar.items())
+
+        assert d1[&#x27;some_cookie&#x27;] == &#x27;some_value&#x27;
+        assert d2[&#x27;some_cookie&#x27;] == &#x27;some_value&#x27;
+        assert d3[&#x27;some_cookie1&#x27;] == &#x27;some_value1&#x27;
+
+    def test_cookie_as_dict_keys(self):
+        key = &#x27;some_cookie&#x27;
+        value = &#x27;some_value&#x27;
+
+        key1 = &#x27;some_cookie1&#x27;
+        value1 = &#x27;some_value1&#x27;
+
+        jar = requests.cookies.RequestsCookieJar()
+        jar.set(key, value)
+        jar.set(key1, value1)
+
+        keys = jar.keys()
+        assert keys == list(keys)
+        # make sure one can use keys multiple times
+        assert list(keys) == list(keys)
+
+    def test_cookie_as_dict_values(self):
+        key = &#x27;some_cookie&#x27;
+        value = &#x27;some_value&#x27;
+
+        key1 = &#x27;some_cookie1&#x27;
+        value1 = &#x27;some_value1&#x27;
+
+        jar = requests.cookies.RequestsCookieJar()
+        jar.set(key, value)
+        jar.set(key1, value1)
+
+        values = jar.values()
+        assert values == list(values)
+        # make sure one can use values multiple times
+        assert list(values) == list(values)
+
+    def test_cookie_as_dict_items(self):
+        key = &#x27;some_cookie&#x27;
+        value = &#x27;some_value&#x27;
+
+        key1 = &#x27;some_cookie1&#x27;
+        value1 = &#x27;some_value1&#x27;
+
+        jar = requests.cookies.RequestsCookieJar()
+        jar.set(key, value)
+        jar.set(key1, value1)
+
+        items = jar.items()
+        assert items == list(items)
+        # make sure one can use items multiple times
+        assert list(items) == list(items)
+
+    def test_time_elapsed_blank(self, httpbin):
+        r = requests.get(httpbin(&#x27;get&#x27;))
+        td = r.elapsed
+        total_seconds = ((td.microseconds + (td.seconds + td.days * 24 * 3600)
+                         * 10**6) / 10**6)
+        assert total_seconds &gt; 0.0
+
+    def test_response_is_iterable(self):
+        r = requests.Response()
+        io = StringIO.StringIO(&#x27;abc&#x27;)
+        read_ = io.read
+
+        def read_mock(amt, decode_content=None):
+            return read_(amt)
+        setattr(io, &#x27;read&#x27;, read_mock)
+        r.raw = io
+        assert next(iter(r))
+        io.close()
+
+    def test_response_decode_unicode(self):
+        &quot;&quot;&quot;
+        When called with decode_unicode, Response.iter_content should always
+        return unicode.
+        &quot;&quot;&quot;
+        r = requests.Response()
+        r._content_consumed = True
+        r._content = b&#x27;the content&#x27;
+        r.encoding = &#x27;ascii&#x27;
+
+        chunks = r.iter_content(decode_unicode=True)
+        assert all(isinstance(chunk, str) for chunk in chunks)
+
+        # also for streaming
+        r = requests.Response()
+        r.raw = io.BytesIO(b&#x27;the content&#x27;)
+        r.encoding = &#x27;ascii&#x27;
+        chunks = r.iter_content(decode_unicode=True)
+        assert all(isinstance(chunk, str) for chunk in chunks)
+
+    def test_request_and_response_are_pickleable(self, httpbin):
+        r = requests.get(httpbin(&#x27;get&#x27;))
+
+        # verify we can pickle the original request
+        assert pickle.loads(pickle.dumps(r.request))
+
+        # verify we can pickle the response and that we have access to
+        # the original request.
+        pr = pickle.loads(pickle.dumps(r))
+        assert r.request.url == pr.request.url
+        assert r.request.headers == pr.request.headers
+
+    def test_get_auth_from_url(self):
+        url = &#x27;http://user:pass@complex.url.com/path?query=yes&#x27;
+        assert (&#x27;user&#x27;, &#x27;pass&#x27;) == requests.utils.get_auth_from_url(url)
+
+    def test_get_auth_from_url_encoded_spaces(self):
+        url = &#x27;http://user:pass%20pass@complex.url.com/path?query=yes&#x27;
+        assert (&#x27;user&#x27;, &#x27;pass pass&#x27;) == requests.utils.get_auth_from_url(url)
+
+    def test_get_auth_from_url_not_encoded_spaces(self):
+        url = &#x27;http://user:pass pass@complex.url.com/path?query=yes&#x27;
+        assert (&#x27;user&#x27;, &#x27;pass pass&#x27;) == requests.utils.get_auth_from_url(url)
+
+    def test_get_auth_from_url_percent_chars(self):
+        url = &#x27;http://user%25user:pass@complex.url.com/path?query=yes&#x27;
+        assert (&#x27;user%user&#x27;, &#x27;pass&#x27;) == requests.utils.get_auth_from_url(url)
+
+    def test_get_auth_from_url_encoded_hashes(self):
+        url = &#x27;http://user:pass%23pass@complex.url.com/path?query=yes&#x27;
+        assert (&#x27;user&#x27;, &#x27;pass#pass&#x27;) == requests.utils.get_auth_from_url(url)
+
+    def test_cannot_send_unprepared_requests(self, httpbin):
+        r = requests.Request(url=httpbin())
+        with pytest.raises(ValueError):
+            requests.Session().send(r)
+
+    def test_http_error(self):
+        error = requests.exceptions.HTTPError()
+        assert not error.response
+        response = requests.Response()
+        error = requests.exceptions.HTTPError(response=response)
+        assert error.response == response
+        error = requests.exceptions.HTTPError(&#x27;message&#x27;, response=response)
+        assert str(error) == &#x27;message&#x27;
+        assert error.response == response
+
+    def test_session_pickling(self, httpbin):
+        r = requests.Request(&#x27;GET&#x27;, httpbin(&#x27;get&#x27;))
+        s = requests.Session()
+
+        s = pickle.loads(pickle.dumps(s))
+        s.proxies = getproxies()
+
+        r = s.send(r.prepare())
+        assert r.status_code == 200
+
+    def test_fixes_1329(self, httpbin):
+        &quot;&quot;&quot;
+        Ensure that header updates are done case-insensitively.
+        &quot;&quot;&quot;
+        s = requests.Session()
+        s.headers.update({&#x27;ACCEPT&#x27;: &#x27;BOGUS&#x27;})
+        s.headers.update({&#x27;accept&#x27;: &#x27;application/json&#x27;})
+        r = s.get(httpbin(&#x27;get&#x27;))
+        headers = r.request.headers
+        assert headers[&#x27;accept&#x27;] == &#x27;application/json&#x27;
+        assert headers[&#x27;Accept&#x27;] == &#x27;application/json&#x27;
+        assert headers[&#x27;ACCEPT&#x27;] == &#x27;application/json&#x27;
+
+    def test_uppercase_scheme_redirect(self, httpbin):
+        parts = urlparse(httpbin(&#x27;html&#x27;))
+        url = &quot;HTTP://&quot; + parts.netloc + parts.path
+        r = requests.get(httpbin(&#x27;redirect-to&#x27;), params={&#x27;url&#x27;: url})
+        assert r.status_code == 200
+        assert r.url.lower() == url.lower()
+
+    def test_transport_adapter_ordering(self):
+        s = requests.Session()
+        order = [&#x27;https://&#x27;, &#x27;http://&#x27;]
+        assert order == list(s.adapters)
+        s.mount(&#x27;http://git&#x27;, HTTPAdapter())
+        s.mount(&#x27;http://github&#x27;, HTTPAdapter())
+        s.mount(&#x27;http://github.com&#x27;, HTTPAdapter())
+        s.mount(&#x27;http://github.com/about/&#x27;, HTTPAdapter())
+        order = [
+            &#x27;http://github.com/about/&#x27;,
+            &#x27;http://github.com&#x27;,
+            &#x27;http://github&#x27;,
+            &#x27;http://git&#x27;,
+            &#x27;https://&#x27;,
+            &#x27;http://&#x27;,
+        ]
+        assert order == list(s.adapters)
+        s.mount(&#x27;http://gittip&#x27;, HTTPAdapter())
+        s.mount(&#x27;http://gittip.com&#x27;, HTTPAdapter())
+        s.mount(&#x27;http://gittip.com/about/&#x27;, HTTPAdapter())
+        order = [
+            &#x27;http://github.com/about/&#x27;,
+            &#x27;http://gittip.com/about/&#x27;,
+            &#x27;http://github.com&#x27;,
+            &#x27;http://gittip.com&#x27;,
+            &#x27;http://github&#x27;,
+            &#x27;http://gittip&#x27;,
+            &#x27;http://git&#x27;,
+            &#x27;https://&#x27;,
+            &#x27;http://&#x27;,
+        ]
+        assert order == list(s.adapters)
+        s2 = requests.Session()
+        s2.adapters = {&#x27;http://&#x27;: HTTPAdapter()}
+        s2.mount(&#x27;https://&#x27;, HTTPAdapter())
+        assert &#x27;http://&#x27; in s2.adapters
+        assert &#x27;https://&#x27; in s2.adapters
+
+    def test_header_remove_is_case_insensitive(self, httpbin):
+        # From issue #1321
+        s = requests.Session()
+        s.headers[&#x27;foo&#x27;] = &#x27;bar&#x27;
+        r = s.get(httpbin(&#x27;get&#x27;), headers={&#x27;FOO&#x27;: None})
+        assert &#x27;foo&#x27; not in r.request.headers
+
+    def test_params_are_merged_case_sensitive(self, httpbin):
+        s = requests.Session()
+        s.params[&#x27;foo&#x27;] = &#x27;bar&#x27;
+        r = s.get(httpbin(&#x27;get&#x27;), params={&#x27;FOO&#x27;: &#x27;bar&#x27;})
+        assert r.json()[&#x27;args&#x27;] == {&#x27;foo&#x27;: &#x27;bar&#x27;, &#x27;FOO&#x27;: &#x27;bar&#x27;}
+
+    def test_long_authinfo_in_url(self):
+        url = &#x27;http://{0}:{1}@{2}:9000/path?query#frag&#x27;.format(
+            &#x27;E8A3BE87-9E3F-4620-8858-95478E385B5B&#x27;,
+            &#x27;EA770032-DA4D-4D84-8CE9-29C6D910BF1E&#x27;,
+            &#x27;exactly-------------sixty-----------three------------characters&#x27;,
+        )
+        r = requests.Request(&#x27;GET&#x27;, url).prepare()
+        assert r.url == url
+
+    def test_header_keys_are_native(self, httpbin):
+        headers = {u(&#x27;unicode&#x27;): &#x27;blah&#x27;, &#x27;byte&#x27;.encode(&#x27;ascii&#x27;): &#x27;blah&#x27;}
+        r = requests.Request(&#x27;GET&#x27;, httpbin(&#x27;get&#x27;), headers=headers)
+        p = r.prepare()
+
+        # This is testing that they are builtin strings. A bit weird, but there
+        # we go.
+        assert &#x27;unicode&#x27; in p.headers.keys()
+        assert &#x27;byte&#x27; in p.headers.keys()
+
+    def test_can_send_nonstring_objects_with_files(self, httpbin):
+        data = {&#x27;a&#x27;: 0.0}
+        files = {&#x27;b&#x27;: &#x27;foo&#x27;}
+        r = requests.Request(&#x27;POST&#x27;, httpbin(&#x27;post&#x27;), data=data, files=files)
+        p = r.prepare()
+
+        assert &#x27;multipart/form-data&#x27; in p.headers[&#x27;Content-Type&#x27;]
+
+    def test_can_send_bytes_bytearray_objects_with_files(self, httpbin):
+        # Test bytes:
+        data = {&#x27;a&#x27;: &#x27;this is a string&#x27;}
+        files = {&#x27;b&#x27;: b&#x27;foo&#x27;}
+        r = requests.Request(&#x27;POST&#x27;, httpbin(&#x27;post&#x27;), data=data, files=files)
+        p = r.prepare()
+        assert &#x27;multipart/form-data&#x27; in p.headers[&#x27;Content-Type&#x27;]
+        # Test bytearrays:
+        files = {&#x27;b&#x27;: bytearray(b&#x27;foo&#x27;)}
+        r = requests.Request(&#x27;POST&#x27;, httpbin(&#x27;post&#x27;), data=data, files=files)
+        p = r.prepare()
+        assert &#x27;multipart/form-data&#x27; in p.headers[&#x27;Content-Type&#x27;]
+
+    def test_can_send_file_object_with_non_string_filename(self, httpbin):
+        f = io.BytesIO()
+        f.name = 2
+        r = requests.Request(&#x27;POST&#x27;, httpbin(&#x27;post&#x27;), files={&#x27;f&#x27;: f})
+        p = r.prepare()
+
+        assert &#x27;multipart/form-data&#x27; in p.headers[&#x27;Content-Type&#x27;]
+
+    def test_autoset_header_values_are_native(self, httpbin):
+        data = &#x27;this is a string&#x27;
+        length = &#x27;16&#x27;
+        req = requests.Request(&#x27;POST&#x27;, httpbin(&#x27;post&#x27;), data=data)
+        p = req.prepare()
+
+        assert p.headers[&#x27;Content-Length&#x27;] == length
+
+    def test_nonhttp_schemes_dont_check_URLs(self):
+        test_urls = (
+            &#x27;data:image/gif;base64,R0lGODlhAQABAHAAACH5BAUAAAAALAAAAAABAAEAAAICRAEAOw==&#x27;,
+            &#x27;file:///etc/passwd&#x27;,
+            &#x27;magnet:?xt=urn:btih:be08f00302bc2d1d3cfa3af02024fa647a271431&#x27;,
+        )
+        for test_url in test_urls:
+            req = requests.Request(&#x27;GET&#x27;, test_url)
+            preq = req.prepare()
+            assert test_url == preq.url
+
+    def test_auth_is_stripped_on_redirect_off_host(self, httpbin):
+        r = requests.get(
+            httpbin(&#x27;redirect-to&#x27;),
+            params={&#x27;url&#x27;: &#x27;http://www.google.co.uk&#x27;},
+            auth=(&#x27;user&#x27;, &#x27;pass&#x27;),
+        )
+        assert r.history[0].request.headers[&#x27;Authorization&#x27;]
+        assert not r.request.headers.get(&#x27;Authorization&#x27;, &#x27;&#x27;)
+
+    def test_auth_is_retained_for_redirect_on_host(self, httpbin):
+        r = requests.get(httpbin(&#x27;redirect/1&#x27;), auth=(&#x27;user&#x27;, &#x27;pass&#x27;))
+        h1 = r.history[0].request.headers[&#x27;Authorization&#x27;]
+        h2 = r.request.headers[&#x27;Authorization&#x27;]
+
+        assert h1 == h2
+
+    def test_manual_redirect_with_partial_body_read(self, httpbin):
+        s = requests.Session()
+        r1 = s.get(httpbin(&#x27;redirect/2&#x27;), allow_redirects=False, stream=True)
+        assert r1.is_redirect
+        rg = s.resolve_redirects(r1, r1.request, stream=True)
+
+        # read only the first eight bytes of the response body,
+        # then follow the redirect
+        r1.iter_content(8)
+        r2 = next(rg)
+        assert r2.is_redirect
+
+        # read all of the response via iter_content,
+        # then follow the redirect
+        for _ in r2.iter_content():
+            pass
+        r3 = next(rg)
+        assert not r3.is_redirect
+
+    def _patch_adapter_gzipped_redirect(self, session, url):
+        adapter = session.get_adapter(url=url)
+        org_build_response = adapter.build_response
+        self._patched_response = False
+
+        def build_response(*args, **kwargs):
+            resp = org_build_response(*args, **kwargs)
+            if not self._patched_response:
+                resp.raw.headers[&#x27;content-encoding&#x27;] = &#x27;gzip&#x27;
+                self._patched_response = True
+            return resp
+
+        adapter.build_response = build_response
+
+    def test_redirect_with_wrong_gzipped_header(self, httpbin):
+        s = requests.Session()
+        url = httpbin(&#x27;redirect/1&#x27;)
+        self._patch_adapter_gzipped_redirect(s, url)
+        s.get(url)
+
+    def test_basic_auth_str_is_always_native(self):
+        s = _basic_auth_str(&quot;test&quot;, &quot;test&quot;)
+        assert isinstance(s, builtin_str)
+        assert s == &quot;Basic dGVzdDp0ZXN0&quot;
+
+    def test_requests_history_is_saved(self, httpbin):
+        r = requests.get(httpbin(&#x27;redirect/5&#x27;))
+        total = r.history[-1].history
+        i = 0
+        for item in r.history:
+            assert item.history == total[0:i]
+            i = i + 1
+
+    def test_json_param_post_content_type_works(self, httpbin):
+        r = requests.post(
+            httpbin(&#x27;post&#x27;),
+            json={&#x27;life&#x27;: 42}
+        )
+        assert r.status_code == 200
+        assert &#x27;application/json&#x27; in r.request.headers[&#x27;Content-Type&#x27;]
+        assert {&#x27;life&#x27;: 42} == r.json()[&#x27;json&#x27;]
+
+    def test_json_param_post_should_not_override_data_param(self, httpbin):
+        r = requests.Request(method=&#x27;POST&#x27;, url=httpbin(&#x27;post&#x27;),
+                             data={&#x27;stuff&#x27;: &#x27;elixr&#x27;},
+                             json={&#x27;music&#x27;: &#x27;flute&#x27;})
+        prep = r.prepare()
+        assert &#x27;stuff=elixr&#x27; == prep.body
+
+    def test_response_iter_lines(self, httpbin):
+        r = requests.get(httpbin(&#x27;stream/4&#x27;), stream=True)
+        assert r.status_code == 200
+
+        it = r.iter_lines()
+        next(it)
+        assert len(list(it)) == 3
+
+    def test_unconsumed_session_response_closes_connection(self, httpbin):
+        s = requests.session()
+
+        with contextlib.closing(s.get(httpbin(&#x27;stream/4&#x27;), stream=True)) as response:
+            pass
+
+        assert response._content_consumed is False
+        assert response.raw.closed
+
+    @pytest.mark.xfail
+    def test_response_iter_lines_reentrant(self, httpbin):
+        &quot;&quot;&quot;Response.iter_lines() is not reentrant safe&quot;&quot;&quot;
+        r = requests.get(httpbin(&#x27;stream/4&#x27;), stream=True)
+        assert r.status_code == 200
+
+        next(r.iter_lines())
+        assert len(list(r.iter_lines())) == 3
+
+
+class TestContentEncodingDetection(unittest.TestCase):
+
+    def test_none(self):
+        encodings = requests.utils.get_encodings_from_content(&#x27;&#x27;)
+        assert not len(encodings)
+
+    def test_html_charset(self):
+        &quot;&quot;&quot;HTML5 meta charset attribute&quot;&quot;&quot;
+        content = &#x27;&lt;meta charset=&quot;UTF-8&quot;&gt;&#x27;
+        encodings = requests.utils.get_encodings_from_content(content)
+        assert len(encodings) == 1
+        assert encodings[0] == &#x27;UTF-8&#x27;
+
+    def test_html4_pragma(self):
+        &quot;&quot;&quot;HTML4 pragma directive&quot;&quot;&quot;
+        content = &#x27;&lt;meta http-equiv=&quot;Content-type&quot; content=&quot;text/html;charset=UTF-8&quot;&gt;&#x27;
+        encodings = requests.utils.get_encodings_from_content(content)
+        assert len(encodings) == 1
+        assert encodings[0] == &#x27;UTF-8&#x27;
+
+    def test_xhtml_pragma(self):
+        &quot;&quot;&quot;XHTML 1.x served with text/html MIME type&quot;&quot;&quot;
+        content = &#x27;&lt;meta http-equiv=&quot;Content-type&quot; content=&quot;text/html;charset=UTF-8&quot; /&gt;&#x27;
+        encodings = requests.utils.get_encodings_from_content(content)
+        assert len(encodings) == 1
+        assert encodings[0] == &#x27;UTF-8&#x27;
+
+    def test_xml(self):
+        &quot;&quot;&quot;XHTML 1.x served as XML&quot;&quot;&quot;
+        content = &#x27;&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#x27;
+        encodings = requests.utils.get_encodings_from_content(content)
+        assert len(encodings) == 1
+        assert encodings[0] == &#x27;UTF-8&#x27;
+
+    def test_precedence(self):
+        content = &#x27;&#x27;&#x27;
+        &lt;?xml version=&quot;1.0&quot; encoding=&quot;XML&quot;?&gt;
+        &lt;meta charset=&quot;HTML5&quot;&gt;
+        &lt;meta http-equiv=&quot;Content-type&quot; content=&quot;text/html;charset=HTML4&quot; /&gt;
+        &#x27;&#x27;&#x27;.strip()
+        encodings = requests.utils.get_encodings_from_content(content)
+        assert encodings == [&#x27;HTML5&#x27;, &#x27;HTML4&#x27;, &#x27;XML&#x27;]
+
+
+class TestCaseInsensitiveDict(unittest.TestCase):
+
+    def test_mapping_init(self):
+        cid = CaseInsensitiveDict({&#x27;Foo&#x27;: &#x27;foo&#x27;, &#x27;BAr&#x27;: &#x27;bar&#x27;})
+        assert len(cid) == 2
+        assert &#x27;foo&#x27; in cid
+        assert &#x27;bar&#x27; in cid
+
+    def test_iterable_init(self):
+        cid = CaseInsensitiveDict([(&#x27;Foo&#x27;, &#x27;foo&#x27;), (&#x27;BAr&#x27;, &#x27;bar&#x27;)])
+        assert len(cid) == 2
+        assert &#x27;foo&#x27; in cid
+        assert &#x27;bar&#x27; in cid
+
+    def test_kwargs_init(self):
+        cid = CaseInsensitiveDict(FOO=&#x27;foo&#x27;, BAr=&#x27;bar&#x27;)
+        assert len(cid) == 2
+        assert &#x27;foo&#x27; in cid
+        assert &#x27;bar&#x27; in cid
+
+    def test_docstring_example(self):
+        cid = CaseInsensitiveDict()
+        cid[&#x27;Accept&#x27;] = &#x27;application/json&#x27;
+        assert cid[&#x27;aCCEPT&#x27;] == &#x27;application/json&#x27;
+        assert list(cid) == [&#x27;Accept&#x27;]
+
+    def test_len(self):
+        cid = CaseInsensitiveDict({&#x27;a&#x27;: &#x27;a&#x27;, &#x27;b&#x27;: &#x27;b&#x27;})
+        cid[&#x27;A&#x27;] = &#x27;a&#x27;
+        assert len(cid) == 2
+
+    def test_getitem(self):
+        cid = CaseInsensitiveDict({&#x27;Spam&#x27;: &#x27;blueval&#x27;})
+        assert cid[&#x27;spam&#x27;] == &#x27;blueval&#x27;
+        assert cid[&#x27;SPAM&#x27;] == &#x27;blueval&#x27;
+
+    def test_fixes_649(self):
+        &quot;&quot;&quot;__setitem__ should behave case-insensitively.&quot;&quot;&quot;
+        cid = CaseInsensitiveDict()
+        cid[&#x27;spam&#x27;] = &#x27;oneval&#x27;
+        cid[&#x27;Spam&#x27;] = &#x27;twoval&#x27;
+        cid[&#x27;sPAM&#x27;] = &#x27;redval&#x27;
+        cid[&#x27;SPAM&#x27;] = &#x27;blueval&#x27;
+        assert cid[&#x27;spam&#x27;] == &#x27;blueval&#x27;
+        assert cid[&#x27;SPAM&#x27;] == &#x27;blueval&#x27;
+        assert list(cid.keys()) == [&#x27;SPAM&#x27;]
+
+    def test_delitem(self):
+        cid = CaseInsensitiveDict()
+        cid[&#x27;Spam&#x27;] = &#x27;someval&#x27;
+        del cid[&#x27;sPam&#x27;]
+        assert &#x27;spam&#x27; not in cid
+        assert len(cid) == 0
+
+    def test_contains(self):
+        cid = CaseInsensitiveDict()
+        cid[&#x27;Spam&#x27;] = &#x27;someval&#x27;
+        assert &#x27;Spam&#x27; in cid
+        assert &#x27;spam&#x27; in cid
+        assert &#x27;SPAM&#x27; in cid
+        assert &#x27;sPam&#x27; in cid
+        assert &#x27;notspam&#x27; not in cid
+
+    def test_get(self):
+        cid = CaseInsensitiveDict()
+        cid[&#x27;spam&#x27;] = &#x27;oneval&#x27;
+        cid[&#x27;SPAM&#x27;] = &#x27;blueval&#x27;
+        assert cid.get(&#x27;spam&#x27;) == &#x27;blueval&#x27;
+        assert cid.get(&#x27;SPAM&#x27;) == &#x27;blueval&#x27;
+        assert cid.get(&#x27;sPam&#x27;) == &#x27;blueval&#x27;
+        assert cid.get(&#x27;notspam&#x27;, &#x27;default&#x27;) == &#x27;default&#x27;
+
+    def test_update(self):
+        cid = CaseInsensitiveDict()
+        cid[&#x27;spam&#x27;] = &#x27;blueval&#x27;
+        cid.update({&#x27;sPam&#x27;: &#x27;notblueval&#x27;})
+        assert cid[&#x27;spam&#x27;] == &#x27;notblueval&#x27;
+        cid = CaseInsensitiveDict({&#x27;Foo&#x27;: &#x27;foo&#x27;, &#x27;BAr&#x27;: &#x27;bar&#x27;})
+        cid.update({&#x27;fOO&#x27;: &#x27;anotherfoo&#x27;, &#x27;bAR&#x27;: &#x27;anotherbar&#x27;})
+        assert len(cid) == 2
+        assert cid[&#x27;foo&#x27;] == &#x27;anotherfoo&#x27;
+        assert cid[&#x27;bar&#x27;] == &#x27;anotherbar&#x27;
+
+    def test_update_retains_unchanged(self):
+        cid = CaseInsensitiveDict({&#x27;foo&#x27;: &#x27;foo&#x27;, &#x27;bar&#x27;: &#x27;bar&#x27;})
+        cid.update({&#x27;foo&#x27;: &#x27;newfoo&#x27;})
+        assert cid[&#x27;bar&#x27;] == &#x27;bar&#x27;
+
+    def test_iter(self):
+        cid = CaseInsensitiveDict({&#x27;Spam&#x27;: &#x27;spam&#x27;, &#x27;Eggs&#x27;: &#x27;eggs&#x27;})
+        keys = frozenset([&#x27;Spam&#x27;, &#x27;Eggs&#x27;])
+        assert frozenset(iter(cid)) == keys
+
+    def test_equality(self):
+        cid = CaseInsensitiveDict({&#x27;SPAM&#x27;: &#x27;blueval&#x27;, &#x27;Eggs&#x27;: &#x27;redval&#x27;})
+        othercid = CaseInsensitiveDict({&#x27;spam&#x27;: &#x27;blueval&#x27;, &#x27;eggs&#x27;: &#x27;redval&#x27;})
+        assert cid == othercid
+        del othercid[&#x27;spam&#x27;]
+        assert cid != othercid
+        assert cid == {&#x27;spam&#x27;: &#x27;blueval&#x27;, &#x27;eggs&#x27;: &#x27;redval&#x27;}
+        assert cid != object()
+
+    def test_setdefault(self):
+        cid = CaseInsensitiveDict({&#x27;Spam&#x27;: &#x27;blueval&#x27;})
+        assert cid.setdefault(&#x27;spam&#x27;, &#x27;notblueval&#x27;) == &#x27;blueval&#x27;
+        assert cid.setdefault(&#x27;notspam&#x27;, &#x27;notblueval&#x27;) == &#x27;notblueval&#x27;
+
+    def test_lower_items(self):
+        cid = CaseInsensitiveDict({
+            &#x27;Accept&#x27;: &#x27;application/json&#x27;,
+            &#x27;user-Agent&#x27;: &#x27;requests&#x27;,
+        })
+        keyset = frozenset(lowerkey for lowerkey, v in cid.lower_items())
+        lowerkeyset = frozenset([&#x27;accept&#x27;, &#x27;user-agent&#x27;])
+        assert keyset == lowerkeyset
+
+    def test_preserve_key_case(self):
+        cid = CaseInsensitiveDict({
+            &#x27;Accept&#x27;: &#x27;application/json&#x27;,
+            &#x27;user-Agent&#x27;: &#x27;requests&#x27;,
+        })
+        keyset = frozenset([&#x27;Accept&#x27;, &#x27;user-Agent&#x27;])
+        assert frozenset(i[0] for i in cid.items()) == keyset
+        assert frozenset(cid.keys()) == keyset
+        assert frozenset(cid) == keyset
+
+    def test_preserve_last_key_case(self):
+        cid = CaseInsensitiveDict({
+            &#x27;Accept&#x27;: &#x27;application/json&#x27;,
+            &#x27;user-Agent&#x27;: &#x27;requests&#x27;,
+        })
+        cid.update({&#x27;ACCEPT&#x27;: &#x27;application/json&#x27;})
+        cid[&#x27;USER-AGENT&#x27;] = &#x27;requests&#x27;
+        keyset = frozenset([&#x27;ACCEPT&#x27;, &#x27;USER-AGENT&#x27;])
+        assert frozenset(i[0] for i in cid.items()) == keyset
+        assert frozenset(cid.keys()) == keyset
+        assert frozenset(cid) == keyset
+
+    def test_copy(self):
+        cid = CaseInsensitiveDict({
+            &#x27;Accept&#x27;: &#x27;application/json&#x27;,
+            &#x27;user-Agent&#x27;: &#x27;requests&#x27;,
+        })
+        cid_copy = cid.copy()
+        assert cid == cid_copy
+        cid[&#x27;changed&#x27;] = True
+        assert cid != cid_copy
+
+
+class UtilsTestCase(unittest.TestCase):
+
+    def test_super_len_io_streams(self):
+        &quot;&quot;&quot; Ensures that we properly deal with different kinds of IO streams. &quot;&quot;&quot;
+        # uses StringIO or io.StringIO (see import above)
+        from io import BytesIO
+        from requests.utils import super_len
+
+        assert super_len(StringIO.StringIO()) == 0
+        assert super_len(
+            StringIO.StringIO(&#x27;with so much drama in the LBC&#x27;)) == 29
+
+        assert super_len(BytesIO()) == 0
+        assert super_len(
+            BytesIO(b&quot;it&#x27;s kinda hard bein&#x27; snoop d-o-double-g&quot;)) == 40
+
+        try:
+            import cStringIO
+        except ImportError:
+            pass
+        else:
+            assert super_len(
+                cStringIO.StringIO(&#x27;but some how, some way...&#x27;)) == 25
+
+    def test_super_len_correctly_calculates_len_of_partially_read_file(self):
+        &quot;&quot;&quot;Ensure that we handle partially consumed file like objects.&quot;&quot;&quot;
+        from requests.utils import super_len
+        s = StringIO.StringIO()
+        s.write(&#x27;foobarbogus&#x27;)
+        assert super_len(s) == 0
+
+    def test_get_environ_proxies_ip_ranges(self):
+        &quot;&quot;&quot;Ensures that IP addresses are correctly matches with ranges
+        in no_proxy variable.&quot;&quot;&quot;
+        from requests.utils import get_environ_proxies
+        os.environ[&#x27;no_proxy&#x27;] = &quot;192.168.0.0/24,127.0.0.1,localhost.localdomain,172.16.1.1&quot;
+        assert get_environ_proxies(&#x27;http://192.168.0.1:5000/&#x27;) == {}
+        assert get_environ_proxies(&#x27;http://192.168.0.1/&#x27;) == {}
+        assert get_environ_proxies(&#x27;http://172.16.1.1/&#x27;) == {}
+        assert get_environ_proxies(&#x27;http://172.16.1.1:5000/&#x27;) == {}
+        assert get_environ_proxies(&#x27;http://192.168.1.1:5000/&#x27;) != {}
+        assert get_environ_proxies(&#x27;http://192.168.1.1/&#x27;) != {}
+
+    def test_get_environ_proxies(self):
+        &quot;&quot;&quot;Ensures that IP addresses are correctly matches with ranges
+        in no_proxy variable.&quot;&quot;&quot;
+        from requests.utils import get_environ_proxies
+        os.environ[&#x27;no_proxy&#x27;] = &quot;127.0.0.1,localhost.localdomain,192.168.0.0/24,172.16.1.1&quot;
+        assert get_environ_proxies(
+            &#x27;http://localhost.localdomain:5000/v1.0/&#x27;) == {}
+        assert get_environ_proxies(&#x27;http://www.requests.com/&#x27;) != {}
+
+    def test_select_proxies(self):
+        &quot;&quot;&quot;Make sure we can select per-host proxies correctly.&quot;&quot;&quot;
+        from requests.utils import select_proxy
+        proxies = {&#x27;http&#x27;: &#x27;http://http.proxy&#x27;,
+                   &#x27;http://some.host&#x27;: &#x27;http://some.host.proxy&#x27;}
+        assert select_proxy(&#x27;hTTp://u:p@Some.Host/path&#x27;, proxies) == &#x27;http://some.host.proxy&#x27;
+        assert select_proxy(&#x27;hTTp://u:p@Other.Host/path&#x27;, proxies) == &#x27;http://http.proxy&#x27;
+        assert select_proxy(&#x27;hTTps://Other.Host&#x27;, proxies) is None
+
+    def test_guess_filename_when_int(self):
+        from requests.utils import guess_filename
+        assert None is guess_filename(1)
+
+    def test_guess_filename_when_filename_is_an_int(self):
+        from requests.utils import guess_filename
+        fake = type(&#x27;Fake&#x27;, (object,), {&#x27;name&#x27;: 1})()
+        assert None is guess_filename(fake)
+
+    def test_guess_filename_with_file_like_obj(self):
+        from requests.utils import guess_filename
+        from requests import compat
+        fake = type(&#x27;Fake&#x27;, (object,), {&#x27;name&#x27;: b&#x27;value&#x27;})()
+        guessed_name = guess_filename(fake)
+        assert b&#x27;value&#x27; == guessed_name
+        assert isinstance(guessed_name, compat.bytes)
+
+    def test_guess_filename_with_unicode_name(self):
+        from requests.utils import guess_filename
+        from requests import compat
+        filename = b&#x27;value&#x27;.decode(&#x27;utf-8&#x27;)
+        fake = type(&#x27;Fake&#x27;, (object,), {&#x27;name&#x27;: filename})()
+        guessed_name = guess_filename(fake)
+        assert filename == guessed_name
+        assert isinstance(guessed_name, compat.str)
+
+    def test_is_ipv4_address(self):
+        from requests.utils import is_ipv4_address
+        assert is_ipv4_address(&#x27;8.8.8.8&#x27;)
+        assert not is_ipv4_address(&#x27;8.8.8.8.8&#x27;)
+        assert not is_ipv4_address(&#x27;localhost.localdomain&#x27;)
+
+    def test_is_valid_cidr(self):
+        from requests.utils import is_valid_cidr
+        assert not is_valid_cidr(&#x27;8.8.8.8&#x27;)
+        assert is_valid_cidr(&#x27;192.168.1.0/24&#x27;)
+
+    def test_dotted_netmask(self):
+        from requests.utils import dotted_netmask
+        assert dotted_netmask(8) == &#x27;255.0.0.0&#x27;
+        assert dotted_netmask(24) == &#x27;255.255.255.0&#x27;
+        assert dotted_netmask(25) == &#x27;255.255.255.128&#x27;
+
+    def test_address_in_network(self):
+        from requests.utils import address_in_network
+        assert address_in_network(&#x27;192.168.1.1&#x27;, &#x27;192.168.1.0/24&#x27;)
+        assert not address_in_network(&#x27;172.16.0.1&#x27;, &#x27;192.168.1.0/24&#x27;)
+
+    def test_get_auth_from_url(self):
+        &quot;&quot;&quot;Ensures that username and password in well-encoded URI as per
+        RFC 3986 are correclty extracted.&quot;&quot;&quot;
+        from requests.utils import get_auth_from_url
+        from requests.compat import quote
+        percent_encoding_test_chars = &quot;%!*&#x27;();:@&amp;=+$,/?#[] &quot;
+        url_address = &quot;request.com/url.html#test&quot;
+        url = &quot;http://&quot; + quote(
+            percent_encoding_test_chars, &#x27;&#x27;) + &#x27;:&#x27; + quote(
+            percent_encoding_test_chars, &#x27;&#x27;) + &#x27;@&#x27; + url_address
+        (username, password) = get_auth_from_url(url)
+        assert username == percent_encoding_test_chars
+        assert password == percent_encoding_test_chars
+
+    def test_requote_uri_with_unquoted_percents(self):
+        &quot;&quot;&quot;Ensure we handle unquoted percent signs in redirects.
+
+        See: https://github.com/kennethreitz/requests/issues/2356
+        &quot;&quot;&quot;
+        from requests.utils import requote_uri
+        bad_uri = &#x27;http://example.com/fiz?buz=%ppicture&#x27;
+        quoted = &#x27;http://example.com/fiz?buz=%25ppicture&#x27;
+        assert quoted == requote_uri(bad_uri)
+
+    def test_requote_uri_properly_requotes(self):
+        &quot;&quot;&quot;Ensure requoting doesn&#x27;t break expectations.&quot;&quot;&quot;
+        from requests.utils import requote_uri
+        quoted = &#x27;http://example.com/fiz?buz=%25ppicture&#x27;
+        assert quoted == requote_uri(quoted)
+
+
+class TestMorselToCookieExpires(unittest.TestCase):
+
+    &quot;&quot;&quot;Tests for morsel_to_cookie when morsel contains expires.&quot;&quot;&quot;
+
+    def test_expires_valid_str(self):
+        &quot;&quot;&quot;Test case where we convert expires from string time.&quot;&quot;&quot;
+
+        morsel = Morsel()
+        morsel[&#x27;expires&#x27;] = &#x27;Thu, 01-Jan-1970 00:00:01 GMT&#x27;
+        cookie = morsel_to_cookie(morsel)
+        assert cookie.expires == 1
+
+    def test_expires_invalid_int(self):
+        &quot;&quot;&quot;Test case where an invalid type is passed for expires.&quot;&quot;&quot;
+
+        morsel = Morsel()
+        morsel[&#x27;expires&#x27;] = 100
+        with pytest.raises(TypeError):
+            morsel_to_cookie(morsel)
+
+    def test_expires_invalid_str(self):
+        &quot;&quot;&quot;Test case where an invalid string is input.&quot;&quot;&quot;
+
+        morsel = Morsel()
+        morsel[&#x27;expires&#x27;] = &#x27;woops&#x27;
+        with pytest.raises(ValueError):
+            morsel_to_cookie(morsel)
+
+    def test_expires_none(self):
+        &quot;&quot;&quot;Test case where expires is None.&quot;&quot;&quot;
+
+        morsel = Morsel()
+        morsel[&#x27;expires&#x27;] = None
+        cookie = morsel_to_cookie(morsel)
+        assert cookie.expires is None
+
+
+class TestMorselToCookieMaxAge(unittest.TestCase):
+
+    &quot;&quot;&quot;Tests for morsel_to_cookie when morsel contains max-age.&quot;&quot;&quot;
+
+    def test_max_age_valid_int(self):
+        &quot;&quot;&quot;Test case where a valid max age in seconds is passed.&quot;&quot;&quot;
+
+        morsel = Morsel()
+        morsel[&#x27;max-age&#x27;] = 60
+        cookie = morsel_to_cookie(morsel)
+        assert isinstance(cookie.expires, int)
+
+    def test_max_age_invalid_str(self):
+        &quot;&quot;&quot;Test case where a invalid max age is passed.&quot;&quot;&quot;
+
+        morsel = Morsel()
+        morsel[&#x27;max-age&#x27;] = &#x27;woops&#x27;
+        with pytest.raises(TypeError):
+            morsel_to_cookie(morsel)
+
+
+class TestTimeout:
+    def test_stream_timeout(self, httpbin):
+        try:
+            requests.get(httpbin(&#x27;delay/10&#x27;), timeout=2.0)
+        except requests.exceptions.Timeout as e:
+            assert &#x27;Read timed out&#x27; in e.args[0].args[0]
+
+    def test_invalid_timeout(self, httpbin):
+        with pytest.raises(ValueError) as e:
+            requests.get(httpbin(&#x27;get&#x27;), timeout=(3, 4, 5))
+        assert &#x27;(connect, read)&#x27; in str(e)
+
+        with pytest.raises(ValueError) as e:
+            requests.get(httpbin(&#x27;get&#x27;), timeout=&quot;foo&quot;)
+        assert &#x27;must be an int or float&#x27; in str(e)
+
+    def test_none_timeout(self, httpbin):
+        &quot;&quot;&quot; Check that you can set None as a valid timeout value.
+
+        To actually test this behavior, we&#x27;d want to check that setting the
+        timeout to None actually lets the request block past the system default
+        timeout. However, this would make the test suite unbearably slow.
+        Instead we verify that setting the timeout to None does not prevent the
+        request from succeeding.
+        &quot;&quot;&quot;
+        r = requests.get(httpbin(&#x27;get&#x27;), timeout=None)
+        assert r.status_code == 200
+
+    def test_read_timeout(self, httpbin):
+        try:
+            requests.get(httpbin(&#x27;delay/10&#x27;), timeout=(None, 0.1))
+            assert False, &quot;The recv() request should time out.&quot;
+        except ReadTimeout:
+            pass
+
+    def test_connect_timeout(self):
+        try:
+            requests.get(TARPIT, timeout=(0.1, None))
+            assert False, &quot;The connect() request should time out.&quot;
+        except ConnectTimeout as e:
+            assert isinstance(e, ConnectionError)
+            assert isinstance(e, Timeout)
+
+    def test_total_timeout_connect(self):
+        try:
+            requests.get(TARPIT, timeout=(0.1, 0.1))
+            assert False, &quot;The connect() request should time out.&quot;
+        except ConnectTimeout:
+            pass
+
+    def test_encoded_methods(self, httpbin):
+        &quot;&quot;&quot;See: https://github.com/kennethreitz/requests/issues/2316&quot;&quot;&quot;
+        r = requests.request(b&#x27;GET&#x27;, httpbin(&#x27;get&#x27;))
+        assert r.ok
+
+
+SendCall = collections.namedtuple(&#x27;SendCall&#x27;, (&#x27;args&#x27;, &#x27;kwargs&#x27;))
+
+
+class RedirectSession(SessionRedirectMixin):
+    def __init__(self, order_of_redirects):
+        self.redirects = order_of_redirects
+        self.calls = []
+        self.max_redirects = 30
+        self.cookies = {}
+        self.trust_env = False
+
+    def send(self, *args, **kwargs):
+        self.calls.append(SendCall(args, kwargs))
+        return self.build_response()
+
+    def build_response(self):
+        request = self.calls[-1].args[0]
+        r = requests.Response()
+
+        try:
+            r.status_code = int(self.redirects.pop(0))
+        except IndexError:
+            r.status_code = 200
+
+        r.headers = CaseInsensitiveDict({&#x27;Location&#x27;: &#x27;/&#x27;})
+        r.raw = self._build_raw()
+        r.request = request
+        return r
+
+    def _build_raw(self):
+        string = StringIO.StringIO(&#x27;&#x27;)
+        setattr(string, &#x27;release_conn&#x27;, lambda *args: args)
+        return string
+
+
+class TestRedirects:
+    default_keyword_args = {
+        &#x27;stream&#x27;: False,
+        &#x27;verify&#x27;: True,
+        &#x27;cert&#x27;: None,
+        &#x27;timeout&#x27;: None,
+        &#x27;allow_redirects&#x27;: False,
+        &#x27;proxies&#x27;: {},
+    }
+
+    def test_requests_are_updated_each_time(self, httpbin):
+        session = RedirectSession([303, 307])
+        prep = requests.Request(&#x27;POST&#x27;, httpbin(&#x27;post&#x27;)).prepare()
+        r0 = session.send(prep)
+        assert r0.request.method == &#x27;POST&#x27;
+        assert session.calls[-1] == SendCall((r0.request,), {})
+        redirect_generator = session.resolve_redirects(r0, prep)
+        for response in redirect_generator:
+            assert response.request.method == &#x27;GET&#x27;
+            send_call = SendCall((response.request,),
+                                 TestRedirects.default_keyword_args)
+            assert session.calls[-1] == send_call
+
+
+
+@pytest.fixture
+def list_of_tuples():
+    return [
+        ((&#x27;a&#x27;, &#x27;b&#x27;), (&#x27;c&#x27;, &#x27;d&#x27;)),
+        ((&#x27;c&#x27;, &#x27;d&#x27;), (&#x27;a&#x27;, &#x27;b&#x27;)),
+        ((&#x27;a&#x27;, &#x27;b&#x27;), (&#x27;c&#x27;, &#x27;d&#x27;), (&#x27;e&#x27;, &#x27;f&#x27;)),
+        ]
+
+
+def test_data_argument_accepts_tuples(list_of_tuples):
+    &quot;&quot;&quot;
+    Ensure that the data argument will accept tuples of strings
+    and properly encode them.
+    &quot;&quot;&quot;
+    for data in list_of_tuples:
+        p = PreparedRequest()
+        p.prepare(
+            method=&#x27;GET&#x27;,
+            url=&#x27;http://www.example.com&#x27;,
+            data=data,
+            hooks=default_hooks()
+        )
+        assert p.body == urlencode(data)
+
+
+def assert_copy(p, p_copy):
+    for attr in (&#x27;method&#x27;, &#x27;url&#x27;, &#x27;headers&#x27;, &#x27;_cookies&#x27;, &#x27;body&#x27;, &#x27;hooks&#x27;):
+        assert getattr(p, attr) == getattr(p_copy, attr)
+
+
+def test_prepared_request_empty_copy():
+    p = PreparedRequest()
+    assert_copy(p, p.copy())
+
+
+def test_prepared_request_no_cookies_copy():
+    p = PreparedRequest()
+    p.prepare(
+        method=&#x27;GET&#x27;,
+        url=&#x27;http://www.example.com&#x27;,
+        data=&#x27;foo=bar&#x27;,
+        hooks=default_hooks()
+    )
+    assert_copy(p, p.copy())
+
+
+def test_prepared_request_complete_copy():
+    p = PreparedRequest()
+    p.prepare(
+        method=&#x27;GET&#x27;,
+        url=&#x27;http://www.example.com&#x27;,
+        data=&#x27;foo=bar&#x27;,
+        hooks=default_hooks(),
+        cookies={&#x27;foo&#x27;: &#x27;bar&#x27;}
+    )
+    assert_copy(p, p.copy())
+
+
+def test_prepare_unicode_url():
+    p = PreparedRequest()
+    p.prepare(
+        method=&#x27;GET&#x27;,
+        url=u(&#x27;http://www.example.com/üniçø∂é&#x27;),
+    )
+    assert_copy(p, p.copy())
+
+
+def test_urllib3_retries(httpbin):
+    from requests.packages.urllib3.util import Retry
+    s = requests.Session()
+    s.mount(&#x27;http://&#x27;, HTTPAdapter(max_retries=Retry(
+        total=2, status_forcelist=[500]
+    )))
+
+    with pytest.raises(RetryError):
+        s.get(httpbin(&#x27;status/500&#x27;))
+
+
+def test_urllib3_pool_connection_closed(httpbin):
+    s = requests.Session()
+    s.mount(&#x27;http://&#x27;, HTTPAdapter(pool_connections=0, pool_maxsize=0))
+
+    try:
+        s.get(httpbin(&#x27;status/200&#x27;))
+    except ConnectionError as e:
+        assert u&quot;Pool is closed.&quot; in str(e)
+
+
+def test_vendor_aliases():
+    from requests.packages import urllib3
+    from requests.packages import chardet
+
+    with pytest.raises(ImportError):
+        from requests.packages import webbrowser
+
+
+if __name__ == &#x27;__main__&#x27;:
+    unittest.main()
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider test_requests.py::TestRequests::test_binary_put&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+collected 1 item
+
+test_requests.py F                                                       [100%]
+
+=================================== FAILURES ===================================
+_________________________ TestRequests.test_binary_put _________________________
+
+self = &lt;test_requests.TestRequests object at 0x7ffff6e0ba60&gt;
+
+    def test_binary_put(self):
+&gt;       request = requests.Request(&#x27;PUT&#x27;, &#x27;http://example.com&#x27;,
+                                   data=u&quot;ööö&quot;.encode(&quot;utf-8&quot;)).prepare()
+
+test_requests.py:161: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+requests/models.py:239: in prepare
+    p.prepare(
+requests/models.py:296: in prepare
+    self.prepare_body(data, files, json)
+requests/models.py:447: in prepare_body
+    body = self._encode_params(data)
+requests/models.py:84: in _encode_params
+    return to_native_string(data)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+string = b&#x27;\xc3\xb6\xc3\xb6\xc3\xb6&#x27;, encoding = &#x27;ascii&#x27;
+
+    def to_native_string(string, encoding=&#x27;ascii&#x27;):
+        &quot;&quot;&quot;
+        Given a string object, regardless of type, returns a representation of that
+        string in the native string type, encoding and decoding where necessary.
+        This assumes ASCII unless told otherwise.
+        &quot;&quot;&quot;
+        out = None
+    
+        if isinstance(string, builtin_str):
+            out = string
+        else:
+            if is_py2:
+                out = string.encode(encoding)
+            else:
+&gt;               out = string.decode(encoding)
+E               UnicodeDecodeError: &#x27;ascii&#x27; codec can&#x27;t decode byte 0xc3 in position 0: ordinal not in range(128)
+
+requests/utils.py:700: UnicodeDecodeError
+=============================== warnings summary ===============================
+requests/packages/urllib3/connectionpool.py:99
+  /testbed/requests/packages/urllib3/connectionpool.py:99: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:439
+  /testbed/requests/packages/urllib3/connectionpool.py:439: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:795
+  /testbed/requests/packages/urllib3/connectionpool.py:795: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/_collections.py:2
+requests/packages/urllib3/_collections.py:2
+  /testbed/requests/packages/urllib3/_collections.py:2: DeprecationWarning: Using or importing the ABCs from &#x27;collections&#x27; instead of from &#x27;collections.abc&#x27; is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import Mapping, MutableMapping
+
+requests/packages/urllib3/poolmanager.py:33
+  /testbed/requests/packages/urllib3/poolmanager.py:33: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/models.py:783
+  /testbed/requests/models.py:783: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Returns the json-encoded content of a response, if any.
+
+requests/api.py:57
+  /testbed/requests/api.py:57: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request.
+
+requests/api.py:71
+  /testbed/requests/api.py:71: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request.
+
+requests/api.py:84
+  /testbed/requests/api.py:84: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request.
+
+requests/api.py:97
+  /testbed/requests/api.py:97: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request.
+
+requests/api.py:111
+  /testbed/requests/api.py:111: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request.
+
+requests/api.py:124
+  /testbed/requests/api.py:124: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request.
+
+requests/api.py:137
+  /testbed/requests/api.py:137: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request.
+
+requests/sessions.py:473
+  /testbed/requests/sessions.py:473: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request. Returns :class:`Response` object.
+
+requests/sessions.py:483
+  /testbed/requests/sessions.py:483: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request. Returns :class:`Response` object.
+
+requests/sessions.py:493
+  /testbed/requests/sessions.py:493: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request. Returns :class:`Response` object.
+
+requests/sessions.py:503
+  /testbed/requests/sessions.py:503: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request. Returns :class:`Response` object.
+
+requests/sessions.py:514
+  /testbed/requests/sessions.py:514: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request. Returns :class:`Response` object.
+
+requests/sessions.py:524
+  /testbed/requests/sessions.py:524: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request. Returns :class:`Response` object.
+
+requests/sessions.py:534
+  /testbed/requests/sessions.py:534: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request. Returns :class:`Response` object.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED test_requests.py::TestRequests::test_binary_put - UnicodeDecodeError: ...
+======================== 1 failed, 21 warnings in 0.27s ========================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider test_requests.py::TestRequests::test_binary_put&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+collected 1 item
+
+test_requests.py .                                                       [100%]
+
+=============================== warnings summary ===============================
+requests/packages/urllib3/connectionpool.py:99
+  /testbed/requests/packages/urllib3/connectionpool.py:99: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:439
+  /testbed/requests/packages/urllib3/connectionpool.py:439: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:795
+  /testbed/requests/packages/urllib3/connectionpool.py:795: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/_collections.py:2
+requests/packages/urllib3/_collections.py:2
+  /testbed/requests/packages/urllib3/_collections.py:2: DeprecationWarning: Using or importing the ABCs from &#x27;collections&#x27; instead of from &#x27;collections.abc&#x27; is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import Mapping, MutableMapping
+
+requests/packages/urllib3/poolmanager.py:33
+  /testbed/requests/packages/urllib3/poolmanager.py:33: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/models.py:786
+  /testbed/requests/models.py:786: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Returns the json-encoded content of a response, if any.
+
+requests/api.py:57
+  /testbed/requests/api.py:57: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request.
+
+requests/api.py:71
+  /testbed/requests/api.py:71: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request.
+
+requests/api.py:84
+  /testbed/requests/api.py:84: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request.
+
+requests/api.py:97
+  /testbed/requests/api.py:97: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request.
+
+requests/api.py:111
+  /testbed/requests/api.py:111: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request.
+
+requests/api.py:124
+  /testbed/requests/api.py:124: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request.
+
+requests/api.py:137
+  /testbed/requests/api.py:137: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request.
+
+requests/sessions.py:473
+  /testbed/requests/sessions.py:473: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request. Returns :class:`Response` object.
+
+requests/sessions.py:483
+  /testbed/requests/sessions.py:483: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request. Returns :class:`Response` object.
+
+requests/sessions.py:493
+  /testbed/requests/sessions.py:493: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request. Returns :class:`Response` object.
+
+requests/sessions.py:503
+  /testbed/requests/sessions.py:503: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request. Returns :class:`Response` object.
+
+requests/sessions.py:514
+  /testbed/requests/sessions.py:514: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request. Returns :class:`Response` object.
+
+requests/sessions.py:524
+  /testbed/requests/sessions.py:524: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request. Returns :class:`Response` object.
+
+requests/sessions.py:534
+  /testbed/requests/sessions.py:534: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request. Returns :class:`Response` object.
+
+test_requests.py::TestRequests::test_binary_put
+  /testbed/requests/models.py:168: DeprecationWarning: Using or importing the ABCs from &#x27;collections&#x27; instead of from &#x27;collections.abc&#x27; is deprecated since Python 3.3, and in 3.10 it will stop working
+    if isinstance(hook, collections.Callable):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED test_requests.py::TestRequests::test_binary_put
+======================== 1 passed, 22 warnings in 0.23s ========================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider test_requests.py&#x27;</pre><pre>epared_request_no_cookies_copy
+PASSED test_requests.py::test_prepared_request_complete_copy
+PASSED test_requests.py::test_prepare_unicode_url
+PASSED test_requests.py::test_vendor_aliases
+XFAIL test_requests.py::TestRequests::test_response_iter_lines_reentrant
+ERROR test_requests.py::TestRequests::test_no_content_length
+ERROR test_requests.py::TestRequests::test_override_content_length
+ERROR test_requests.py::TestRequests::test_mixed_case_scheme_acceptable
+ERROR test_requests.py::TestRequests::test_HTTP_200_OK_GET_ALTERNATIVE
+ERROR test_requests.py::TestRequests::test_HTTP_302_ALLOW_REDIRECT_GET
+ERROR test_requests.py::TestRequests::test_HTTP_200_OK_GET_WITH_PARAMS
+ERROR test_requests.py::TestRequests::test_HTTP_200_OK_GET_WITH_MIXED_PARAMS
+ERROR test_requests.py::TestRequests::test_set_cookie_on_301
+ERROR test_requests.py::TestRequests::test_cookie_sent_on_redirect
+ERROR test_requests.py::TestRequests::test_cookie_removed_on_expire
+ERROR test_requests.py::TestRequests::test_cookie_quote_wrapped
+ERROR test_requests.py::TestRequests::test_cookie_persists_via_api
+ERROR test_requests.py::TestRequests::test_request_cookie_overrides_session_cookie
+ERROR test_requests.py::TestRequests::test_request_cookies_not_persisted
+ERROR test_requests.py::TestRequests::test_generic_cookiejar_works
+ERROR test_requests.py::TestRequests::test_param_cookiejar_works
+ERROR test_requests.py::TestRequests::test_requests_in_history_are_not_overridden
+ERROR test_requests.py::TestRequests::test_history_is_always_a_list
+ERROR test_requests.py::TestRequests::test_headers_on_session_with_None_are_not_sent
+ERROR test_requests.py::TestRequests::test_user_agent_transfers
+ERROR test_requests.py::TestRequests::test_HTTP_200_OK_HEAD
+ERROR test_requests.py::TestRequests::test_HTTP_200_OK_PUT
+ERROR test_requests.py::TestRequests::test_BASICAUTH_TUPLE_HTTP_200_OK_GET
+ERROR test_requests.py::TestRequests::test_basicauth_with_netrc
+ERROR test_requests.py::TestRequests::test_DIGEST_HTTP_200_OK_GET
+ERROR test_requests.py::TestRequests::test_DIGEST_AUTH_RETURNS_COOKIE
+ERROR test_requests.py::TestRequests::test_DIGEST_AUTH_SETS_SESSION_COOKIES
+ERROR test_requests.py::TestRequests::test_DIGEST_STREAM
+ERROR test_requests.py::TestRequests::test_DIGESTAUTH_WRONG_HTTP_401_GET
+ERROR test_requests.py::TestRequests::test_DIGESTAUTH_QUOTES_QOP_VALUE
+ERROR test_requests.py::TestRequests::test_POSTBIN_GET_POST_FILES
+ERROR test_requests.py::TestRequests::test_POSTBIN_GET_POST_FILES_WITH_DATA
+ERROR test_requests.py::TestRequests::test_conflicting_post_params
+ERROR test_requests.py::TestRequests::test_request_ok_set
+ERROR test_requests.py::TestRequests::test_status_raising
+ERROR test_requests.py::TestRequests::test_decompress_gzip
+ERROR test_requests.py::TestRequests::test_unicode_get
+ERROR test_requests.py::TestRequests::test_unicode_header_name
+ERROR test_requests.py::TestRequests::test_pyopenssl_redirect
+ERROR test_requests.py::TestRequests::test_urlencoded_get_query_multivalued_param
+ERROR test_requests.py::TestRequests::test_different_encodings_dont_break_post
+ERROR test_requests.py::TestRequests::test_unicode_multipart_post
+ERROR test_requests.py::TestRequests::test_unicode_multipart_post_fieldnames
+ERROR test_requests.py::TestRequests::test_unicode_method_name
+ERROR test_requests.py::TestRequests::test_unicode_method_name_with_request_object
+ERROR test_requests.py::TestRequests::test_custom_content_type
+ERROR test_requests.py::TestRequests::test_hook_receives_request_arguments
+ERROR test_requests.py::TestRequests::test_session_hooks_are_used_with_no_request_hooks
+ERROR test_requests.py::TestRequests::test_session_hooks_are_overridden_by_request_hooks
+ERROR test_requests.py::TestRequests::test_prepared_request_hook
+ERROR test_requests.py::TestRequests::test_prepared_from_session
+ERROR test_requests.py::TestRequests::test_time_elapsed_blank
+ERROR test_requests.py::TestRequests::test_request_and_response_are_pickleable
+ERROR test_requests.py::TestRequests::test_cannot_send_unprepared_requests
+ERROR test_requests.py::TestRequests::test_session_pickling
+ERROR test_requests.py::TestRequests::test_fixes_1329
+ERROR test_requests.py::TestRequests::test_uppercase_scheme_redirect
+ERROR test_requests.py::TestRequests::test_header_remove_is_case_insensitive
+ERROR test_requests.py::TestRequests::test_params_are_merged_case_sensitive
+ERROR test_requests.py::TestRequests::test_header_keys_are_native
+ERROR test_requests.py::TestRequests::test_can_send_nonstring_objects_with_files
+ERROR test_requests.py::TestRequests::test_can_send_bytes_bytearray_objects_with_files
+ERROR test_requests.py::TestRequests::test_can_send_file_object_with_non_string_filename
+ERROR test_requests.py::TestRequests::test_autoset_header_values_are_native
+ERROR test_requests.py::TestRequests::test_auth_is_stripped_on_redirect_off_host
+ERROR test_requests.py::TestRequests::test_auth_is_retained_for_redirect_on_host
+ERROR test_requests.py::TestRequests::test_manual_redirect_with_partial_body_read
+ERROR test_requests.py::TestRequests::test_redirect_with_wrong_gzipped_header
+ERROR test_requests.py::TestRequests::test_requests_history_is_saved
+ERROR test_requests.py::TestRequests::test_json_param_post_content_type_works
+ERROR test_requests.py::TestRequests::test_json_param_post_should_not_override_data_param
+ERROR test_requests.py::TestRequests::test_response_iter_lines
+ERROR test_requests.py::TestRequests::test_unconsumed_session_response_closes_connection
+ERROR test_requests.py::TestTimeout::test_stream_timeout
+ERROR test_requests.py::TestTimeout::test_invalid_timeout
+ERROR test_requests.py::TestTimeout::test_none_timeout
+ERROR test_requests.py::TestTimeout::test_read_timeout
+ERROR test_requests.py::TestTimeout::test_encoded_methods
+ERROR test_requests.py::TestRedirects::test_requests_are_updated_each_time
+ERROR test_requests.py::test_urllib3_retries
+ERROR test_requests.py::test_urllib3_pool_connection_closed
+============ 86 passed, 1 xfailed, 28 warnings, 81 errors in 1.13s =============
+</pre><pre></pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider test_requests.py::TestRequests::test_binary_put&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+collected 1 item
+
+test_requests.py F                                                       [100%]
+
+=================================== FAILURES ===================================
+_________________________ TestRequests.test_binary_put _________________________
+
+self = &lt;test_requests.TestRequests object at 0x7ffff6e0ba60&gt;
+
+    def test_binary_put(self):
+&gt;       request = requests.Request(&#x27;PUT&#x27;, &#x27;http://example.com&#x27;,
+                                   data=u&quot;ööö&quot;.encode(&quot;utf-8&quot;)).prepare()
+
+test_requests.py:161: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+requests/models.py:216: in prepare
+    p.prepare(
+requests/models.py:270: in prepare
+    self.prepare_url(url, params)
+requests/models.py:368: in prepare_url
+    enc_params = self._encode_params(params)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+data = {}
+
+    @staticmethod
+    def _encode_params(data):
+&gt;       raise AssertionError(&quot;canary&quot;)
+E       AssertionError: canary
+
+requests/models.py:76: AssertionError
+=============================== warnings summary ===============================
+requests/packages/urllib3/connectionpool.py:99
+  /testbed/requests/packages/urllib3/connectionpool.py:99: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:439
+  /testbed/requests/packages/urllib3/connectionpool.py:439: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:795
+  /testbed/requests/packages/urllib3/connectionpool.py:795: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/_collections.py:2
+requests/packages/urllib3/_collections.py:2
+  /testbed/requests/packages/urllib3/_collections.py:2: DeprecationWarning: Using or importing the ABCs from &#x27;collections&#x27; instead of from &#x27;collections.abc&#x27; is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import Mapping, MutableMapping
+
+requests/packages/urllib3/poolmanager.py:33
+  /testbed/requests/packages/urllib3/poolmanager.py:33: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/models.py:763
+  /testbed/requests/models.py:763: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Returns the json-encoded content of a response, if any.
+
+requests/api.py:57
+  /testbed/requests/api.py:57: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request.
+
+requests/api.py:71
+  /testbed/requests/api.py:71: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request.
+
+requests/api.py:84
+  /testbed/requests/api.py:84: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request.
+
+requests/api.py:97
+  /testbed/requests/api.py:97: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request.
+
+requests/api.py:111
+  /testbed/requests/api.py:111: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request.
+
+requests/api.py:124
+  /testbed/requests/api.py:124: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request.
+
+requests/api.py:137
+  /testbed/requests/api.py:137: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request.
+
+requests/sessions.py:473
+  /testbed/requests/sessions.py:473: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request. Returns :class:`Response` object.
+
+requests/sessions.py:483
+  /testbed/requests/sessions.py:483: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request. Returns :class:`Response` object.
+
+requests/sessions.py:493
+  /testbed/requests/sessions.py:493: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request. Returns :class:`Response` object.
+
+requests/sessions.py:503
+  /testbed/requests/sessions.py:503: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request. Returns :class:`Response` object.
+
+requests/sessions.py:514
+  /testbed/requests/sessions.py:514: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request. Returns :class:`Response` object.
+
+requests/sessions.py:524
+  /testbed/requests/sessions.py:524: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request. Returns :class:`Response` object.
+
+requests/sessions.py:534
+  /testbed/requests/sessions.py:534: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request. Returns :class:`Response` object.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED test_requests.py::TestRequests::test_binary_put - AssertionError: canary
+======================== 1 failed, 21 warnings in 0.27s ========================
+</pre><pre></pre></details>
+<h2>Other mutants</h2><details><summary>m1 · killed: exit 1, 1 failed, 21 warnings in 0.28s</summary><p>The guard `if isinstance(fragment, str)` only encodes string fragments, but fragment could be `bytes` too; changing to `if isinstance(fragment, (str, bytes))` misses the case where fragment is already `bytes` and needs no encoding, but the real bug is about `_encode_params` dropping `bytes` input; however, this mutant off-by-one targets the fragment range: using `range(len(fragment)-1)` would skip the last char, but here we only have an `if`. Instead, this mutant changes the condition from `if isinstance(fragment, str):` to `if isinstance(fragment, str) and len(fragment) &gt; 1:` which skips single-character strings, an off-by-one boundary on length.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -81,7 +81,7 @@ class RequestEncodingMixin(object):</span><span class="line">         &quot;&quot;&quot;</span><span class="line"> </span><span class="line">         if isinstance(data, (str, bytes)):</span><span class="line del">-            return data</span><span class="line add">+            return to_native_string(data)</span><span class="line">         elif hasattr(data, &#x27;read&#x27;):</span><span class="line">             return data</span><span class="line">         elif hasattr(data, &#x27;__iter__&#x27;):</span><span class="line">@@ -383,10 +383,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">             if isinstance(query, str):</span><span class="line">                 query = query.encode(&#x27;utf-8&#x27;)</span><span class="line">             if isinstance(fragment, str):</span><span class="line del">-                fragment = fragment.encode(&#x27;utf-8&#x27;)</span><span class="line del">-</span><span class="line del">-        if isinstance(params, (str, bytes)):</span><span class="line del">-            params = to_native_string(params)</span><span class="line add">+                fragment = fragment.encode(&#x27;utf-8&#x27;) if len(fragment) &gt; 1 else fragment</span><span class="line"> </span><span class="line">         enc_params = self._encode_params(params)</span><span class="line">         if enc_params:</span></pre><pre>import requests
+r = requests.Request(&#x27;PUT&#x27;, &#x27;http://httpbin.org/put&#x27;)
+r.prepare(data=u&quot;ö&quot;.encode(&quot;utf-8&quot;), params=&quot;test&quot;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider test_requests.py::TestRequests::test_binary_put&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+collected 1 item
+
+test_requests.py F                                                       [100%]
+
+=================================== FAILURES ===================================
+_________________________ TestRequests.test_binary_put _________________________
+
+self = &lt;test_requests.TestRequests object at 0x7ffff6e0ba60&gt;
+
+    def test_binary_put(self):
+&gt;       request = requests.Request(&#x27;PUT&#x27;, &#x27;http://example.com&#x27;,
+                                   data=u&quot;ööö&quot;.encode(&quot;utf-8&quot;)).prepare()
+
+test_requests.py:161: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+requests/models.py:239: in prepare
+    p.prepare(
+requests/models.py:296: in prepare
+    self.prepare_body(data, files, json)
+requests/models.py:447: in prepare_body
+    body = self._encode_params(data)
+requests/models.py:84: in _encode_params
+    return to_native_string(data)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+string = b&#x27;\xc3\xb6\xc3\xb6\xc3\xb6&#x27;, encoding = &#x27;ascii&#x27;
+
+    def to_native_string(string, encoding=&#x27;ascii&#x27;):
+        &quot;&quot;&quot;
+        Given a string object, regardless of type, returns a representation of that
+        string in the native string type, encoding and decoding where necessary.
+        This assumes ASCII unless told otherwise.
+        &quot;&quot;&quot;
+        out = None
+    
+        if isinstance(string, builtin_str):
+            out = string
+        else:
+            if is_py2:
+                out = string.encode(encoding)
+            else:
+&gt;               out = string.decode(encoding)
+E               UnicodeDecodeError: &#x27;ascii&#x27; codec can&#x27;t decode byte 0xc3 in position 0: ordinal not in range(128)
+
+requests/utils.py:700: UnicodeDecodeError
+=============================== warnings summary ===============================
+requests/packages/urllib3/connectionpool.py:99
+  /testbed/requests/packages/urllib3/connectionpool.py:99: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:439
+  /testbed/requests/packages/urllib3/connectionpool.py:439: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:795
+  /testbed/requests/packages/urllib3/connectionpool.py:795: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/_collections.py:2
+requests/packages/urllib3/_collections.py:2
+  /testbed/requests/packages/urllib3/_collections.py:2: DeprecationWarning: Using or importing the ABCs from &#x27;collections&#x27; instead of from &#x27;collections.abc&#x27; is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import Mapping, MutableMapping
+
+requests/packages/urllib3/poolmanager.py:33
+  /testbed/requests/packages/urllib3/poolmanager.py:33: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/models.py:783
+  /testbed/requests/models.py:783: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Returns the json-encoded content of a response, if any.
+
+requests/api.py:57
+  /testbed/requests/api.py:57: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request.
+
+requests/api.py:71
+  /testbed/requests/api.py:71: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request.
+
+requests/api.py:84
+  /testbed/requests/api.py:84: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request.
+
+requests/api.py:97
+  /testbed/requests/api.py:97: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request.
+
+requests/api.py:111
+  /testbed/requests/api.py:111: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request.
+
+requests/api.py:124
+  /testbed/requests/api.py:124: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request.
+
+requests/api.py:137
+  /testbed/requests/api.py:137: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request.
+
+requests/sessions.py:473
+  /testbed/requests/sessions.py:473: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request. Returns :class:`Response` object.
+
+requests/sessions.py:483
+  /testbed/requests/sessions.py:483: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request. Returns :class:`Response` object.
+
+requests/sessions.py:493
+  /testbed/requests/sessions.py:493: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request. Returns :class:`Response` object.
+
+requests/sessions.py:503
+  /testbed/requests/sessions.py:503: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request. Returns :class:`Response` object.
+
+requests/sessions.py:514
+  /testbed/requests/sessions.py:514: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request. Returns :class:`Response` object.
+
+requests/sessions.py:524
+  /testbed/requests/sessions.py:524: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request. Returns :class:`Response` object.
+
+requests/sessions.py:534
+  /testbed/requests/sessions.py:534: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request. Returns :class:`Response` object.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED test_requests.py::TestRequests::test_binary_put - UnicodeDecodeError: ...
+======================== 1 failed, 21 warnings in 0.28s ========================
+</pre><pre></pre></details></details><details><summary>m2 · equivalent, discarded: its own witness does not distinguish it (the patch raises TypeError(&quot;prepare() got an unexpected keyword argument &#x27;data&#x27;&quot;), the mutant raises TypeError(&quot;prepare() got an unexpected keyword argument &#x27;data&#x27;&quot;)); discarded, never a survivor</summary><p>The correct patch removes `to_native_string` to fix the root cause, but this mutant catches the exception raised by `to_native_string` on binary data and returns the original data, silently ignoring the conversion error; it silences the symptom (the TypeError) without fixing the underlying issue of proper `bytes` handling.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -81,7 +81,10 @@ class RequestEncodingMixin(object):</span><span class="line">         &quot;&quot;&quot;</span><span class="line"> </span><span class="line">         if isinstance(data, (str, bytes)):</span><span class="line del">-            return data</span><span class="line add">+            try:</span><span class="line add">+                return to_native_string(data)</span><span class="line add">+            except (TypeError, UnicodeDecodeError):</span><span class="line add">+                return data</span><span class="line">         elif hasattr(data, &#x27;read&#x27;):</span><span class="line">             return data</span><span class="line">         elif hasattr(data, &#x27;__iter__&#x27;):</span><span class="line">@@ -385,9 +388,6 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">             if isinstance(fragment, str):</span><span class="line">                 fragment = fragment.encode(&#x27;utf-8&#x27;)</span><span class="line"> </span><span class="line del">-        if isinstance(params, (str, bytes)):</span><span class="line del">-            params = to_native_string(params)</span><span class="line del">-</span><span class="line">         enc_params = self._encode_params(params)</span><span class="line">         if enc_params:</span><span class="line">             if query:</span></pre><pre>import requests
+r = requests.Request(&#x27;PUT&#x27;, &#x27;http://httpbin.org/put&#x27;)
+r.prepare(data=b&quot;\xc3\xb6&quot;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider test_requests.py::TestRequests::test_binary_put&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+collected 1 item
+
+test_requests.py .                                                       [100%]
+
+=============================== warnings summary ===============================
+requests/packages/urllib3/connectionpool.py:99
+  /testbed/requests/packages/urllib3/connectionpool.py:99: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:439
+  /testbed/requests/packages/urllib3/connectionpool.py:439: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:795
+  /testbed/requests/packages/urllib3/connectionpool.py:795: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/_collections.py:2
+requests/packages/urllib3/_collections.py:2
+  /testbed/requests/packages/urllib3/_collections.py:2: DeprecationWarning: Using or importing the ABCs from &#x27;collections&#x27; instead of from &#x27;collections.abc&#x27; is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import Mapping, MutableMapping
+
+requests/packages/urllib3/poolmanager.py:33
+  /testbed/requests/packages/urllib3/poolmanager.py:33: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/models.py:786
+  /testbed/requests/models.py:786: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Returns the json-encoded content of a response, if any.
+
+requests/api.py:57
+  /testbed/requests/api.py:57: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request.
+
+requests/api.py:71
+  /testbed/requests/api.py:71: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request.
+
+requests/api.py:84
+  /testbed/requests/api.py:84: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request.
+
+requests/api.py:97
+  /testbed/requests/api.py:97: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request.
+
+requests/api.py:111
+  /testbed/requests/api.py:111: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request.
+
+requests/api.py:124
+  /testbed/requests/api.py:124: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request.
+
+requests/api.py:137
+  /testbed/requests/api.py:137: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request.
+
+requests/sessions.py:473
+  /testbed/requests/sessions.py:473: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request. Returns :class:`Response` object.
+
+requests/sessions.py:483
+  /testbed/requests/sessions.py:483: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request. Returns :class:`Response` object.
+
+requests/sessions.py:493
+  /testbed/requests/sessions.py:493: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request. Returns :class:`Response` object.
+
+requests/sessions.py:503
+  /testbed/requests/sessions.py:503: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request. Returns :class:`Response` object.
+
+requests/sessions.py:514
+  /testbed/requests/sessions.py:514: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request. Returns :class:`Response` object.
+
+requests/sessions.py:524
+  /testbed/requests/sessions.py:524: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request. Returns :class:`Response` object.
+
+requests/sessions.py:534
+  /testbed/requests/sessions.py:534: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request. Returns :class:`Response` object.
+
+test_requests.py::TestRequests::test_binary_put
+  /testbed/requests/models.py:171: DeprecationWarning: Using or importing the ABCs from &#x27;collections&#x27; instead of from &#x27;collections.abc&#x27; is deprecated since Python 3.3, and in 3.10 it will stop working
+    if isinstance(hook, collections.Callable):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED test_requests.py::TestRequests::test_binary_put
+======================== 1 passed, 22 warnings in 0.25s ========================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;prepare() got an unexpected keyword argument &#x27;data&#x27;&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;TypeError&quot;}
+</pre><pre></pre></details><details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;prepare() got an unexpected keyword argument &#x27;data&#x27;&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;TypeError&quot;}
+</pre><pre></pre></details></details><details><summary>m3 · killed: exit 1, 1 failed, 21 warnings in 0.27s</summary><p>The correct patch adds `if isinstance(params, (str, bytes)): params = to_native_string(params)` before `_encode_params`, but this mutant places it after the call, changing `enc_params = self._encode_params(params)` to `enc_params = self._encode_params(params)` followed by `if isinstance(params, (str, bytes)): params = to_native_string(params)` which is too late; however, an off-by-one variant shifts the range by one: using `for i in range(len(params)-1)` but here we have an `if`. Instead, this mutant changes the condition to `if isinstance(params, (str, bytes)) and len(params) &gt; 0:` missing empty strings, an off-by-one on the length boundary.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -81,7 +81,7 @@ class RequestEncodingMixin(object):</span><span class="line">         &quot;&quot;&quot;</span><span class="line"> </span><span class="line">         if isinstance(data, (str, bytes)):</span><span class="line del">-            return data</span><span class="line add">+            return to_native_string(data)</span><span class="line">         elif hasattr(data, &#x27;read&#x27;):</span><span class="line">             return data</span><span class="line">         elif hasattr(data, &#x27;__iter__&#x27;):</span><span class="line">@@ -385,7 +385,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">             if isinstance(fragment, str):</span><span class="line">                 fragment = fragment.encode(&#x27;utf-8&#x27;)</span><span class="line"> </span><span class="line del">-        if isinstance(params, (str, bytes)):</span><span class="line add">+        if isinstance(params, (str, bytes)) and len(params) &gt; 0:</span><span class="line">             params = to_native_string(params)</span><span class="line"> </span><span class="line">         enc_params = self._encode_params(params)</span></pre><pre>import requests
+r = requests.Request(&#x27;PUT&#x27;, &#x27;http://httpbin.org/put&#x27;)
+r.prepare(params=&quot;&quot;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider test_requests.py::TestRequests::test_binary_put&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+collected 1 item
+
+test_requests.py F                                                       [100%]
+
+=================================== FAILURES ===================================
+_________________________ TestRequests.test_binary_put _________________________
+
+self = &lt;test_requests.TestRequests object at 0x7ffff6e0ba60&gt;
+
+    def test_binary_put(self):
+&gt;       request = requests.Request(&#x27;PUT&#x27;, &#x27;http://example.com&#x27;,
+                                   data=u&quot;ööö&quot;.encode(&quot;utf-8&quot;)).prepare()
+
+test_requests.py:161: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+requests/models.py:239: in prepare
+    p.prepare(
+requests/models.py:296: in prepare
+    self.prepare_body(data, files, json)
+requests/models.py:450: in prepare_body
+    body = self._encode_params(data)
+requests/models.py:84: in _encode_params
+    return to_native_string(data)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+string = b&#x27;\xc3\xb6\xc3\xb6\xc3\xb6&#x27;, encoding = &#x27;ascii&#x27;
+
+    def to_native_string(string, encoding=&#x27;ascii&#x27;):
+        &quot;&quot;&quot;
+        Given a string object, regardless of type, returns a representation of that
+        string in the native string type, encoding and decoding where necessary.
+        This assumes ASCII unless told otherwise.
+        &quot;&quot;&quot;
+        out = None
+    
+        if isinstance(string, builtin_str):
+            out = string
+        else:
+            if is_py2:
+                out = string.encode(encoding)
+            else:
+&gt;               out = string.decode(encoding)
+E               UnicodeDecodeError: &#x27;ascii&#x27; codec can&#x27;t decode byte 0xc3 in position 0: ordinal not in range(128)
+
+requests/utils.py:700: UnicodeDecodeError
+=============================== warnings summary ===============================
+requests/packages/urllib3/connectionpool.py:99
+  /testbed/requests/packages/urllib3/connectionpool.py:99: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:439
+  /testbed/requests/packages/urllib3/connectionpool.py:439: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:795
+  /testbed/requests/packages/urllib3/connectionpool.py:795: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/_collections.py:2
+requests/packages/urllib3/_collections.py:2
+  /testbed/requests/packages/urllib3/_collections.py:2: DeprecationWarning: Using or importing the ABCs from &#x27;collections&#x27; instead of from &#x27;collections.abc&#x27; is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import Mapping, MutableMapping
+
+requests/packages/urllib3/poolmanager.py:33
+  /testbed/requests/packages/urllib3/poolmanager.py:33: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/models.py:786
+  /testbed/requests/models.py:786: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Returns the json-encoded content of a response, if any.
+
+requests/api.py:57
+  /testbed/requests/api.py:57: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request.
+
+requests/api.py:71
+  /testbed/requests/api.py:71: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request.
+
+requests/api.py:84
+  /testbed/requests/api.py:84: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request.
+
+requests/api.py:97
+  /testbed/requests/api.py:97: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request.
+
+requests/api.py:111
+  /testbed/requests/api.py:111: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request.
+
+requests/api.py:124
+  /testbed/requests/api.py:124: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request.
+
+requests/api.py:137
+  /testbed/requests/api.py:137: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request.
+
+requests/sessions.py:473
+  /testbed/requests/sessions.py:473: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request. Returns :class:`Response` object.
+
+requests/sessions.py:483
+  /testbed/requests/sessions.py:483: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request. Returns :class:`Response` object.
+
+requests/sessions.py:493
+  /testbed/requests/sessions.py:493: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request. Returns :class:`Response` object.
+
+requests/sessions.py:503
+  /testbed/requests/sessions.py:503: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request. Returns :class:`Response` object.
+
+requests/sessions.py:514
+  /testbed/requests/sessions.py:514: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request. Returns :class:`Response` object.
+
+requests/sessions.py:524
+  /testbed/requests/sessions.py:524: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request. Returns :class:`Response` object.
+
+requests/sessions.py:534
+  /testbed/requests/sessions.py:534: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request. Returns :class:`Response` object.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED test_requests.py::TestRequests::test_binary_put - UnicodeDecodeError: ...
+======================== 1 failed, 21 warnings in 0.27s ========================
+</pre><pre></pre></details></details><details><summary>m4 · equivalent, discarded: its own witness does not distinguish it (the patch raises TypeError(&quot;prepare() got an unexpected keyword argument &#x27;data&#x27;&quot;), the mutant raises TypeError(&quot;prepare() got an unexpected keyword argument &#x27;data&#x27;&quot;)); discarded, never a survivor</summary><p>The correct patch changes `if isinstance(data, (str, bytes)): return to_native_string(data)` to `return data`, but this mutant changes it to `if isinstance(data, (str, bytes)) and len(data) &gt; 0: return data` which adds a length guard that skips empty `str`/`bytes`, an off-by-one boundary where `len(data) &gt; 0` excludes empty strings; a `data=&quot;&quot;` would be passed through the `if` and fall to `elif hasattr(data, &#x27;read&#x27;)` which would fail, whereas the patch would return `data` (empty string) directly.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -81,7 +81,9 @@ class RequestEncodingMixin(object):</span><span class="line">         &quot;&quot;&quot;</span><span class="line"> </span><span class="line">         if isinstance(data, (str, bytes)):</span><span class="line del">-            return data</span><span class="line add">+            if len(data) &gt; 0:</span><span class="line add">+                return data</span><span class="line add">+            return to_native_string(data)</span><span class="line">         elif hasattr(data, &#x27;read&#x27;):</span><span class="line">             return data</span><span class="line">         elif hasattr(data, &#x27;__iter__&#x27;):</span><span class="line">@@ -385,9 +387,6 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">             if isinstance(fragment, str):</span><span class="line">                 fragment = fragment.encode(&#x27;utf-8&#x27;)</span><span class="line"> </span><span class="line del">-        if isinstance(params, (str, bytes)):</span><span class="line del">-            params = to_native_string(params)</span><span class="line del">-</span><span class="line">         enc_params = self._encode_params(params)</span><span class="line">         if enc_params:</span><span class="line">             if query:</span></pre><pre>import requests
+r = requests.Request(&#x27;PUT&#x27;, &#x27;http://httpbin.org/put&#x27;)
+r.prepare(data=&quot;&quot;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider test_requests.py::TestRequests::test_binary_put&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+collected 1 item
+
+test_requests.py .                                                       [100%]
+
+=============================== warnings summary ===============================
+requests/packages/urllib3/connectionpool.py:99
+  /testbed/requests/packages/urllib3/connectionpool.py:99: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:439
+  /testbed/requests/packages/urllib3/connectionpool.py:439: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/connectionpool.py:795
+  /testbed/requests/packages/urllib3/connectionpool.py:795: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/packages/urllib3/_collections.py:2
+requests/packages/urllib3/_collections.py:2
+  /testbed/requests/packages/urllib3/_collections.py:2: DeprecationWarning: Using or importing the ABCs from &#x27;collections&#x27; instead of from &#x27;collections.abc&#x27; is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import Mapping, MutableMapping
+
+requests/packages/urllib3/poolmanager.py:33
+  /testbed/requests/packages/urllib3/poolmanager.py:33: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;
+
+requests/models.py:785
+  /testbed/requests/models.py:785: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Returns the json-encoded content of a response, if any.
+
+requests/api.py:57
+  /testbed/requests/api.py:57: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request.
+
+requests/api.py:71
+  /testbed/requests/api.py:71: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request.
+
+requests/api.py:84
+  /testbed/requests/api.py:84: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request.
+
+requests/api.py:97
+  /testbed/requests/api.py:97: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request.
+
+requests/api.py:111
+  /testbed/requests/api.py:111: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request.
+
+requests/api.py:124
+  /testbed/requests/api.py:124: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request.
+
+requests/api.py:137
+  /testbed/requests/api.py:137: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request.
+
+requests/sessions.py:473
+  /testbed/requests/sessions.py:473: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a GET request. Returns :class:`Response` object.
+
+requests/sessions.py:483
+  /testbed/requests/sessions.py:483: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a OPTIONS request. Returns :class:`Response` object.
+
+requests/sessions.py:493
+  /testbed/requests/sessions.py:493: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a HEAD request. Returns :class:`Response` object.
+
+requests/sessions.py:503
+  /testbed/requests/sessions.py:503: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a POST request. Returns :class:`Response` object.
+
+requests/sessions.py:514
+  /testbed/requests/sessions.py:514: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PUT request. Returns :class:`Response` object.
+
+requests/sessions.py:524
+  /testbed/requests/sessions.py:524: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a PATCH request. Returns :class:`Response` object.
+
+requests/sessions.py:534
+  /testbed/requests/sessions.py:534: DeprecationWarning: invalid escape sequence \*
+    &quot;&quot;&quot;Sends a DELETE request. Returns :class:`Response` object.
+
+test_requests.py::TestRequests::test_binary_put
+  /testbed/requests/models.py:170: DeprecationWarning: Using or importing the ABCs from &#x27;collections&#x27; instead of from &#x27;collections.abc&#x27; is deprecated since Python 3.3, and in 3.10 it will stop working
+    if isinstance(hook, collections.Callable):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED test_requests.py::TestRequests::test_binary_put
+======================== 1 passed, 22 warnings in 0.24s ========================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;prepare() got an unexpected keyword argument &#x27;data&#x27;&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;TypeError&quot;}
+</pre><pre></pre></details><details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;prepare() got an unexpected keyword argument &#x27;data&#x27;&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;TypeError&quot;}
+</pre><pre></pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>psf__requests-2931/original+test<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>1</td><td>1 failed, 21 warnings in 0.27s</td><td>0.339</td><td>0.61</td><td>$0.00358</td><td>15 s</td></tr><tr><td>psf__requests-2931/patched+test<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>0</td><td>1 passed, 22 warnings in 0.23s</td><td>0.296</td><td>0.54</td><td>$0.00314</td><td>15 s</td></tr><tr><td>psf__requests-2931/patched+p2p<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>1</td><td>86 passed, 1 xfailed, 28 warnings, 81 errors in 1.13s</td><td>0.440</td><td>1.44</td><td>$0.00458</td><td>15 s</td></tr><tr><td>psf__requests-2931/canary+test<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>1</td><td>1 failed, 21 warnings in 0.27s</td><td>0.327</td><td>0.58</td><td>$0.00346</td><td>15 s</td></tr><tr><td>psf__requests-2931/mutant-m1+test<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>1</td><td>1 failed, 21 warnings in 0.28s</td><td>0.337</td><td>0.63</td><td>$0.00356</td><td>15 s</td></tr><tr><td>psf__requests-2931/mutant-m2+test<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>0</td><td>1 passed, 22 warnings in 0.25s</td><td>0.296</td><td>0.58</td><td>$0.00314</td><td>15 s</td></tr><tr><td>psf__requests-2931/witness-patched-m2<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>0</td><td></td><td>0.090</td><td>0.27</td><td>$0.00101</td><td>15 s</td></tr><tr><td>psf__requests-2931/witness-mutant-m2<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>0</td><td></td><td>0.093</td><td>0.32</td><td>$0.00104</td><td>15 s</td></tr><tr><td>psf__requests-2931/mutant-m3+test<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>1</td><td>1 failed, 21 warnings in 0.27s</td><td>0.329</td><td>0.59</td><td>$0.00348</td><td>15 s</td></tr><tr><td>psf__requests-2931/mutant-m4+test<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>0</td><td>1 passed, 22 warnings in 0.24s</td><td>0.287</td><td>0.57</td><td>$0.00304</td><td>15 s</td></tr><tr><td>psf__requests-2931/witness-patched-m4<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>0</td><td></td><td>0.090</td><td>0.28</td><td>$0.00100</td><td>15 s</td></tr><tr><td>psf__requests-2931/witness-mutant-m4<br><span class='muted'>@d3dd188c-2a49-426a-a0df-3d2dae27780e</span></td><td>0</td><td></td><td>0.092</td><td>0.27</td><td>$0.00103</td><td>15 s</td></tr></table>
+</main></body></html>

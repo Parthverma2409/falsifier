@@ -1,0 +1,278 @@
+{
+  "asked": 50,
+  "returned": 5,
+  "usd": 0.0,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 10,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 8,
+      "accepted": 4,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/mark/structures.py:362\nerror: src/_pytest/mark/structures.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/mark/structures.py: 0 matches"
+        },
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unterminated triple-quoted string literal (detected at line 636) (structures.py, line 537)"
+        },
+        {
+          "mutant": 3,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unterminated triple-quoted string literal (detected at line 636) (structures.py, line 537)"
+        },
+        {
+          "mutant": 5,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unterminated triple-quoted string literal (detected at line 636) (structures.py, line 537)"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/mark/structures.py:385\nerror: src/_pytest/mark/structures.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/mark/structures.py: 0 matches"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unterminated triple-quoted string literal (detected at line 636) (structures.py, line 537)"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 46,
+      "parsed": 22,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 21,
+      "accepted": 5,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unterminated triple-quoted string literal (detected at line 636) (structures.py, line 537)"
+        },
+        {
+          "mutant": 3,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 4,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 377)"
+        },
+        {
+          "mutant": 5,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 381)"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unterminated triple-quoted string literal (detected at line 636) (structures.py, line 537)"
+        },
+        {
+          "mutant": 10,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unterminated triple-quoted string literal (detected at line 640) (structures.py, line 541)"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unterminated triple-quoted string literal (detected at line 636) (structures.py, line 537)"
+        },
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 377)"
+        },
+        {
+          "mutant": 13,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 14,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 381)"
+        },
+        {
+          "mutant": 15,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 381)"
+        },
+        {
+          "mutant": 16,
+          "kind": "off-by-one",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unterminated triple-quoted string literal (detected at line 637) (structures.py, line 538)"
+        },
+        {
+          "mutant": 17,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 379)"
+        },
+        {
+          "mutant": 18,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unterminated triple-quoted string literal (detected at line 636) (structures.py, line 537)"
+        },
+        {
+          "mutant": 19,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 20,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 21,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unterminated triple-quoted string literal (detected at line 636) (structures.py, line 537)"
+        },
+        {
+          "mutant": 22,
+          "kind": "silences-symptom",
+          "reason": "no WITNESS ```python block"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 2,
+      "asked": 45,
+      "parsed": 20,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 19,
+      "accepted": 5,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 2,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 377)"
+        },
+        {
+          "mutant": 3,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 379)"
+        },
+        {
+          "mutant": 4,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 5,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 383)"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 381)"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 9,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 378)"
+        },
+        {
+          "mutant": 10,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 11,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 381)"
+        },
+        {
+          "mutant": 12,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 13,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 14,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 377)"
+        },
+        {
+          "mutant": 15,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 381)"
+        },
+        {
+          "mutant": 16,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 17,
+          "kind": "silences-symptom",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 381)"
+        },
+        {
+          "mutant": 18,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 374)"
+        },
+        {
+          "mutant": 19,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/mark/structures.py does not parse after the diff: unexpected indent (structures.py, line 380)"
+        },
+        {
+          "mutant": 20,
+          "kind": "silences-symptom",
+          "reason": "no ```diff block"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,318 @@
+{
+  "asked": 50,
+  "returned": 0,
+  "usd": 0.01006668,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 5,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/python.py:429\nerror: src/_pytest/python.py: patch does not apply; re-anchoring failed: re-anchored hunks overlap in src/_pytest/python.py"
+        },
+        {
+          "mutant": 2,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 3,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 4,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 5,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 50,
+      "parsed": 33,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/python.py:429\nerror: src/_pytest/python.py: patch does not apply; re-anchoring failed: re-anchored hunks overlap in src/_pytest/python.py"
+        },
+        {
+          "mutant": 2,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 3,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 4,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 5,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 6,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 7,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 8,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 9,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 10,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 11,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 12,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 13,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 14,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 15,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 16,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 17,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 18,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 19,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 20,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 21,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 22,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 23,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 24,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 25,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 26,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 27,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 28,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 29,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 30,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 31,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 32,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 33,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 2,
+      "asked": 50,
+      "parsed": 17,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 3,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 4,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 5,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 10,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 13,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 14,
+          "kind": "wrong-condition",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 15,
+          "kind": "too-narrow",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 16,
+          "kind": "silences-symptom",
+          "reason": "WITNESS is empty"
+        },
+        {
+          "mutant": 17,
+          "kind": "off-by-one",
+          "reason": "WITNESS is empty"
+        }
+      ]
+    }
+  ]
+}

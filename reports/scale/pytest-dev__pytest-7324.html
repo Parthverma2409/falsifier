@@ -1,0 +1,1406 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · pytest-dev__pytest-7324</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>pytest-dev__pytest-7324</h1>
+<p class="muted">Pytest crashes the interpreter on debug build for 3.8+ Short reproducer ```py &gt;&gt;&gt; Expression.compile(&quot;False&quot;) python: Python/compile.c:3559: compiler_nameop: Assertion …</p><details><summary>Full issue</summary><pre>Pytest crashes the interpreter on debug build for 3.8+
+Short reproducer
+```py
+&gt;&gt;&gt; Expression.compile(&quot;False&quot;)
+python: Python/compile.c:3559: compiler_nameop: Assertion `!_PyUnicode_EqualToASCIIString(name, &quot;None&quot;) &amp;&amp; !_PyUnicode_EqualToASCIIString(name, &quot;True&quot;) &amp;&amp; !_PyUnicode_EqualToASCIIString(name, &quot;False&quot;)&#x27; failed.
+[1]    29440 abort (core dumped)  python
+```
+
+Related issue for improvement of this behavior: [bpo-40870](https://bugs.python.org/issue40870)
+</pre></details>
+
+<div class="verdict EARNED">EARNED</div>
+
+<p>SWE-bench says <b>RESOLVED</b> · benchmark oracle: the repository's own FAIL_TO_PASS tests (3)</p>
+<p><b>Negative control (canary): exit 3 · <span class="ok">live</span> · the canary failed the test (exit 3, no tests ran in 0.01s; the canary&#x27;s AssertionError is in the log)</b></p>
+<p class="reason">the test fails on the original (exit 1, 3 failed in 0.03s) and passes on the patch (exit 0, 3 passed in 0.01s); all 58 PASS_TO_PASS tests PASSED; the test killed 5 of 5 distinguishable mutants (1 equivalent discarded). Negative control: the canary failed the test (exit 3, no tests ran in 0.01s; the canary&#x27;s AssertionError is in the log)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint e03a2ff4-5ad0-4574-808e-36c0fa52e6f6 ·
+12 forks · 2.63 CPU-s · $0.0278 · 2026-10-25T18:59:27+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Uses `len(IDENT_PREFIX)-1` instead of `len(IDENT_PREFIX)`, stripping one character too few from the key when looking up identifiers.</span></div><div class="card"><b>m2</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Uses `len(IDENT_PREFIX)+1` instead of `len(IDENT_PREFIX)`, stripping one character too many from the key when looking up identifiers.</span></div><div class="card"><b>m3</b> · off-by-one<br><span class="status equivalent">equivalent, discarded</span><br><span class="muted">Slices `key[1:]` instead of `key[len(IDENT_PREFIX):]`, which only works for the single-character prefix `$` and fails for longer prefixes or when the prefix contains characters beyond the first.</span></div><div class="card"><b>m4</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Uses `key[len(IDENT_PREFIX):len(IDENT_PREFIX)+1]` which only keeps one character of the identifier after the prefix, so `$True` gives `T` instead of `True`.</span></div><div class="card"><b>m5</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Uses `key[len(IDENT_PREFIX):-2]` which strips the prefix and the last two characters of the identifier, so `$True` gives empty string `&#x27;&#x27;` instead of `True`.</span></div><div class="card"><b>m6</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Uses `key[len(IDENT_PREFIX):len(IDENT_PREFIX)+len(IDENT_PREFIX)+1]` which for prefix length 1 gives `key[1:3]` — two characters `Tr` from `$True` instead of the full `True`.</span></div></div>
+
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 3 failed in 0.03s · 0.242 CPU-s · 0.47 s · $0.00254<br>
+patched + test: <b>PASS</b>: exit 0, 3 passed in 0.01s · 0.226 CPU-s · 0.45 s · $0.00239<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 83 passed in 0.12s · 0.279 CPU-s · 0.54 s · $0.00292<br>
+canary + test: <b>ERROR</b>: exit 3, no tests ran in 0.01s · 0.226 CPU-s · 0.44 s · $0.00238</p>
+<details><summary>The canary mutant</summary><pre><span class="line">--- a/src/_pytest/mark/expression.py</span><span class="line">+++ b/src/_pytest/mark/expression.py</span><span class="line">@@ -178,7 +178,7 @@ class MatcherAdapter(Mapping[str, bool]):</span><span class="line">         self.matcher = matcher</span><span class="line"> </span><span class="line">     def __getitem__(self, key: str) -&gt; bool:</span><span class="line del">-        return self.matcher(key[len(IDENT_PREFIX) :])</span><span class="line add">+        raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line">     def __iter__(self) -&gt; Iterator[str]:</span><span class="line">         raise NotImplementedError()</span></pre></details>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">diff --git a/src/_pytest/mark/expression.py b/src/_pytest/mark/expression.py</span><span class="line">--- a/src/_pytest/mark/expression.py</span><span class="line">+++ b/src/_pytest/mark/expression.py</span><span class="line">@@ -127,6 +127,12 @@ def reject(self, expected: Sequence[TokenType]) -&gt; &quot;NoReturn&quot;:</span><span class="line">         )</span><span class="line"> </span><span class="line"> </span><span class="line add">+# True, False and None are legal match expression identifiers,</span><span class="line add">+# but illegal as Python identifiers. To fix this, this prefix</span><span class="line add">+# is added to identifiers in the conversion to Python AST.</span><span class="line add">+IDENT_PREFIX = &quot;$&quot;</span><span class="line add">+</span><span class="line add">+</span><span class="line"> def expression(s: Scanner) -&gt; ast.Expression:</span><span class="line">     if s.accept(TokenType.EOF):</span><span class="line">         ret = ast.NameConstant(False)  # type: ast.expr</span><span class="line">@@ -161,7 +167,7 @@ def not_expr(s: Scanner) -&gt; ast.expr:</span><span class="line">         return ret</span><span class="line">     ident = s.accept(TokenType.IDENT)</span><span class="line">     if ident:</span><span class="line del">-        return ast.Name(ident.value, ast.Load())</span><span class="line add">+        return ast.Name(IDENT_PREFIX + ident.value, ast.Load())</span><span class="line">     s.reject((TokenType.NOT, TokenType.LPAREN, TokenType.IDENT))</span><span class="line"> </span><span class="line"> </span><span class="line">@@ -172,7 +178,7 @@ def __init__(self, matcher: Callable[[str], bool]) -&gt; None:</span><span class="line">         self.matcher = matcher</span><span class="line"> </span><span class="line">     def __getitem__(self, key: str) -&gt; bool:</span><span class="line del">-        return self.matcher(key)</span><span class="line add">+        return self.matcher(key[len(IDENT_PREFIX) :])</span><span class="line"> </span><span class="line">     def __iter__(self) -&gt; Iterator[str]:</span><span class="line">         raise NotImplementedError()</span></pre></div>
+<div><h3>The test</h3><pre>from typing import Callable
+
+import pytest
+from _pytest.mark.expression import Expression
+from _pytest.mark.expression import ParseError
+
+
+def evaluate(input: str, matcher: Callable[[str], bool]) -&gt; bool:
+    return Expression.compile(input).evaluate(matcher)
+
+
+def test_empty_is_false() -&gt; None:
+    assert not evaluate(&quot;&quot;, lambda ident: False)
+    assert not evaluate(&quot;&quot;, lambda ident: True)
+    assert not evaluate(&quot;   &quot;, lambda ident: False)
+    assert not evaluate(&quot;\t&quot;, lambda ident: False)
+
+
+@pytest.mark.parametrize(
+    (&quot;expr&quot;, &quot;expected&quot;),
+    (
+        (&quot;true&quot;, True),
+        (&quot;true&quot;, True),
+        (&quot;false&quot;, False),
+        (&quot;not true&quot;, False),
+        (&quot;not false&quot;, True),
+        (&quot;not not true&quot;, True),
+        (&quot;not not false&quot;, False),
+        (&quot;true and true&quot;, True),
+        (&quot;true and false&quot;, False),
+        (&quot;false and true&quot;, False),
+        (&quot;true and true and true&quot;, True),
+        (&quot;true and true and false&quot;, False),
+        (&quot;true and true and not true&quot;, False),
+        (&quot;false or false&quot;, False),
+        (&quot;false or true&quot;, True),
+        (&quot;true or true&quot;, True),
+        (&quot;true or true or false&quot;, True),
+        (&quot;true and true or false&quot;, True),
+        (&quot;not true or true&quot;, True),
+        (&quot;(not true) or true&quot;, True),
+        (&quot;not (true or true)&quot;, False),
+        (&quot;true and true or false and false&quot;, True),
+        (&quot;true and (true or false) and false&quot;, False),
+        (&quot;true and (true or (not (not false))) and false&quot;, False),
+    ),
+)
+def test_basic(expr: str, expected: bool) -&gt; None:
+    matcher = {&quot;true&quot;: True, &quot;false&quot;: False}.__getitem__
+    assert evaluate(expr, matcher) is expected
+
+
+@pytest.mark.parametrize(
+    (&quot;expr&quot;, &quot;expected&quot;),
+    (
+        (&quot;               true           &quot;, True),
+        (&quot;               ((((((true))))))           &quot;, True),
+        (&quot;     (         ((\t  (((true)))))  \t   \t)&quot;, True),
+        (&quot;(     true     and   (((false))))&quot;, False),
+        (&quot;not not not not true&quot;, True),
+        (&quot;not not not not not true&quot;, False),
+    ),
+)
+def test_syntax_oddeties(expr: str, expected: bool) -&gt; None:
+    matcher = {&quot;true&quot;: True, &quot;false&quot;: False}.__getitem__
+    assert evaluate(expr, matcher) is expected
+
+
+@pytest.mark.parametrize(
+    (&quot;expr&quot;, &quot;column&quot;, &quot;message&quot;),
+    (
+        (&quot;(&quot;, 2, &quot;expected not OR left parenthesis OR identifier; got end of input&quot;),
+        (&quot; (&quot;, 3, &quot;expected not OR left parenthesis OR identifier; got end of input&quot;,),
+        (
+            &quot;)&quot;,
+            1,
+            &quot;expected not OR left parenthesis OR identifier; got right parenthesis&quot;,
+        ),
+        (
+            &quot;) &quot;,
+            1,
+            &quot;expected not OR left parenthesis OR identifier; got right parenthesis&quot;,
+        ),
+        (&quot;not&quot;, 4, &quot;expected not OR left parenthesis OR identifier; got end of input&quot;,),
+        (
+            &quot;not not&quot;,
+            8,
+            &quot;expected not OR left parenthesis OR identifier; got end of input&quot;,
+        ),
+        (
+            &quot;(not)&quot;,
+            5,
+            &quot;expected not OR left parenthesis OR identifier; got right parenthesis&quot;,
+        ),
+        (&quot;and&quot;, 1, &quot;expected not OR left parenthesis OR identifier; got and&quot;),
+        (
+            &quot;ident and&quot;,
+            10,
+            &quot;expected not OR left parenthesis OR identifier; got end of input&quot;,
+        ),
+        (&quot;ident and or&quot;, 11, &quot;expected not OR left parenthesis OR identifier; got or&quot;,),
+        (&quot;ident ident&quot;, 7, &quot;expected end of input; got identifier&quot;),
+    ),
+)
+def test_syntax_errors(expr: str, column: int, message: str) -&gt; None:
+    with pytest.raises(ParseError) as excinfo:
+        evaluate(expr, lambda ident: True)
+    assert excinfo.value.column == column
+    assert excinfo.value.message == message
+
+
+@pytest.mark.parametrize(
+    &quot;ident&quot;,
+    (
+        &quot;.&quot;,
+        &quot;...&quot;,
+        &quot;:::&quot;,
+        &quot;a:::c&quot;,
+        &quot;a+-b&quot;,
+        &quot;אבגד&quot;,
+        &quot;aaאבגדcc&quot;,
+        &quot;a[bcd]&quot;,
+        &quot;1234&quot;,
+        &quot;1234abcd&quot;,
+        &quot;1234and&quot;,
+        &quot;notandor&quot;,
+        &quot;not_and_or&quot;,
+        &quot;not[and]or&quot;,
+        &quot;1234+5678&quot;,
+        &quot;123.232&quot;,
+        &quot;True&quot;,
+        &quot;False&quot;,
+        &quot;None&quot;,
+        &quot;if&quot;,
+        &quot;else&quot;,
+        &quot;while&quot;,
+    ),
+)
+def test_valid_idents(ident: str) -&gt; None:
+    assert evaluate(ident, {ident: True}.__getitem__)
+
+
+@pytest.mark.parametrize(
+    &quot;ident&quot;,
+    (
+        &quot;/&quot;,
+        &quot;\\&quot;,
+        &quot;^&quot;,
+        &quot;*&quot;,
+        &quot;=&quot;,
+        &quot;&amp;&quot;,
+        &quot;%&quot;,
+        &quot;$&quot;,
+        &quot;#&quot;,
+        &quot;@&quot;,
+        &quot;!&quot;,
+        &quot;~&quot;,
+        &quot;{&quot;,
+        &quot;}&quot;,
+        &#x27;&quot;&#x27;,
+        &quot;&#x27;&quot;,
+        &quot;|&quot;,
+        &quot;;&quot;,
+        &quot;←&quot;,
+    ),
+)
+def test_invalid_idents(ident: str) -&gt; None:
+    with pytest.raises(ParseError):
+        evaluate(ident, lambda ident: True)
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[True]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[False]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[None]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev458+g84f32b43b, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 3 items
+
+testing/test_mark_expression.py FFF                                      [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_valid_idents[True] ____________________________
+
+ident = &#x27;True&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;class &#x27;_pytest.mark.expression.Expression&#x27;&gt;, input = &#x27;True&#x27;
+
+    @classmethod
+    def compile(self, input: str) -&gt; &quot;Expression&quot;:
+        &quot;&quot;&quot;Compile a match expression.
+    
+        :param input: The input expression - one line.
+        &quot;&quot;&quot;
+        astexpr = expression(Scanner(input))
+&gt;       code = compile(
+            astexpr, filename=&quot;&lt;pytest match expression&gt;&quot;, mode=&quot;eval&quot;,
+        )  # type: types.CodeType
+E       ValueError: Name node can&#x27;t be used with &#x27;True&#x27; constant
+
+src/_pytest/mark/expression.py:202: ValueError
+___________________________ test_valid_idents[False] ___________________________
+
+ident = &#x27;False&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;class &#x27;_pytest.mark.expression.Expression&#x27;&gt;, input = &#x27;False&#x27;
+
+    @classmethod
+    def compile(self, input: str) -&gt; &quot;Expression&quot;:
+        &quot;&quot;&quot;Compile a match expression.
+    
+        :param input: The input expression - one line.
+        &quot;&quot;&quot;
+        astexpr = expression(Scanner(input))
+&gt;       code = compile(
+            astexpr, filename=&quot;&lt;pytest match expression&gt;&quot;, mode=&quot;eval&quot;,
+        )  # type: types.CodeType
+E       ValueError: Name node can&#x27;t be used with &#x27;False&#x27; constant
+
+src/_pytest/mark/expression.py:202: ValueError
+___________________________ test_valid_idents[None] ____________________________
+
+ident = &#x27;None&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;class &#x27;_pytest.mark.expression.Expression&#x27;&gt;, input = &#x27;None&#x27;
+
+    @classmethod
+    def compile(self, input: str) -&gt; &quot;Expression&quot;:
+        &quot;&quot;&quot;Compile a match expression.
+    
+        :param input: The input expression - one line.
+        &quot;&quot;&quot;
+        astexpr = expression(Scanner(input))
+&gt;       code = compile(
+            astexpr, filename=&quot;&lt;pytest match expression&gt;&quot;, mode=&quot;eval&quot;,
+        )  # type: types.CodeType
+E       ValueError: Name node can&#x27;t be used with &#x27;None&#x27; constant
+
+src/_pytest/mark/expression.py:202: ValueError
+=========================== short test summary info ============================
+FAILED testing/test_mark_expression.py::test_valid_idents[True] - ValueError:...
+FAILED testing/test_mark_expression.py::test_valid_idents[False] - ValueError...
+FAILED testing/test_mark_expression.py::test_valid_idents[None] - ValueError:...
+============================== 3 failed in 0.03s ===============================
+</pre><pre>WARNING: Unknown config ini key: rsyncdirs
+</pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[True]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[False]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[None]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev458+g84f32b43b, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 3 items
+
+testing/test_mark_expression.py ...                                      [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED testing/test_mark_expression.py::test_valid_idents[True]
+PASSED testing/test_mark_expression.py::test_valid_idents[False]
+PASSED testing/test_mark_expression.py::test_valid_idents[None]
+============================== 3 passed in 0.01s ===============================
+</pre><pre>WARNING: Unknown config ini key: rsyncdirs
+</pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/test_mark_expression.py&#x27;</pre><pre>ting/test_mark_expression.py::test_basic[false and true-False]
+PASSED testing/test_mark_expression.py::test_basic[true and true and true-True]
+PASSED testing/test_mark_expression.py::test_basic[true and true and false-False]
+PASSED testing/test_mark_expression.py::test_basic[true and true and not true-False]
+PASSED testing/test_mark_expression.py::test_basic[false or false-False]
+PASSED testing/test_mark_expression.py::test_basic[false or true-True]
+PASSED testing/test_mark_expression.py::test_basic[true or true-True]
+PASSED testing/test_mark_expression.py::test_basic[true or true or false-True]
+PASSED testing/test_mark_expression.py::test_basic[true and true or false-True]
+PASSED testing/test_mark_expression.py::test_basic[not true or true-True]
+PASSED testing/test_mark_expression.py::test_basic[(not true) or true-True]
+PASSED testing/test_mark_expression.py::test_basic[not (true or true)-False]
+PASSED testing/test_mark_expression.py::test_basic[true and true or false and false-True]
+PASSED testing/test_mark_expression.py::test_basic[true and (true or false) and false-False]
+PASSED testing/test_mark_expression.py::test_basic[true and (true or (not (not false))) and false-False]
+PASSED testing/test_mark_expression.py::test_syntax_oddeties[               true           -True]
+PASSED testing/test_mark_expression.py::test_syntax_oddeties[               ((((((true))))))           -True]
+PASSED testing/test_mark_expression.py::test_syntax_oddeties[     (         ((\t  (((true)))))  \t   \t)-True]
+PASSED testing/test_mark_expression.py::test_syntax_oddeties[(     true     and   (((false))))-False]
+PASSED testing/test_mark_expression.py::test_syntax_oddeties[not not not not true-True]
+PASSED testing/test_mark_expression.py::test_syntax_oddeties[not not not not not true-False]
+PASSED testing/test_mark_expression.py::test_syntax_errors[(-2-expected not OR left parenthesis OR identifier; got end of input]
+PASSED testing/test_mark_expression.py::test_syntax_errors[ (-3-expected not OR left parenthesis OR identifier; got end of input]
+PASSED testing/test_mark_expression.py::test_syntax_errors[)-1-expected not OR left parenthesis OR identifier; got right parenthesis]
+PASSED testing/test_mark_expression.py::test_syntax_errors[) -1-expected not OR left parenthesis OR identifier; got right parenthesis]
+PASSED testing/test_mark_expression.py::test_syntax_errors[not-4-expected not OR left parenthesis OR identifier; got end of input]
+PASSED testing/test_mark_expression.py::test_syntax_errors[not not-8-expected not OR left parenthesis OR identifier; got end of input]
+PASSED testing/test_mark_expression.py::test_syntax_errors[(not)-5-expected not OR left parenthesis OR identifier; got right parenthesis]
+PASSED testing/test_mark_expression.py::test_syntax_errors[and-1-expected not OR left parenthesis OR identifier; got and]
+PASSED testing/test_mark_expression.py::test_syntax_errors[ident and-10-expected not OR left parenthesis OR identifier; got end of input]
+PASSED testing/test_mark_expression.py::test_syntax_errors[ident and or-11-expected not OR left parenthesis OR identifier; got or]
+PASSED testing/test_mark_expression.py::test_syntax_errors[ident ident-7-expected end of input; got identifier]
+PASSED testing/test_mark_expression.py::test_valid_idents[.]
+PASSED testing/test_mark_expression.py::test_valid_idents[...]
+PASSED testing/test_mark_expression.py::test_valid_idents[:::]
+PASSED testing/test_mark_expression.py::test_valid_idents[a:::c]
+PASSED testing/test_mark_expression.py::test_valid_idents[a+-b]
+PASSED testing/test_mark_expression.py::test_valid_idents[\u05d0\u05d1\u05d2\u05d3]
+PASSED testing/test_mark_expression.py::test_valid_idents[aa\u05d0\u05d1\u05d2\u05d3cc]
+PASSED testing/test_mark_expression.py::test_valid_idents[a[bcd]]
+PASSED testing/test_mark_expression.py::test_valid_idents[1234]
+PASSED testing/test_mark_expression.py::test_valid_idents[1234abcd]
+PASSED testing/test_mark_expression.py::test_valid_idents[1234and]
+PASSED testing/test_mark_expression.py::test_valid_idents[notandor]
+PASSED testing/test_mark_expression.py::test_valid_idents[not_and_or]
+PASSED testing/test_mark_expression.py::test_valid_idents[not[and]or]
+PASSED testing/test_mark_expression.py::test_valid_idents[1234+5678]
+PASSED testing/test_mark_expression.py::test_valid_idents[123.232]
+PASSED testing/test_mark_expression.py::test_valid_idents[True]
+PASSED testing/test_mark_expression.py::test_valid_idents[False]
+PASSED testing/test_mark_expression.py::test_valid_idents[None]
+PASSED testing/test_mark_expression.py::test_valid_idents[if]
+PASSED testing/test_mark_expression.py::test_valid_idents[else]
+PASSED testing/test_mark_expression.py::test_valid_idents[while]
+PASSED testing/test_mark_expression.py::test_invalid_idents[/]
+PASSED testing/test_mark_expression.py::test_invalid_idents[\\]
+PASSED testing/test_mark_expression.py::test_invalid_idents[^]
+PASSED testing/test_mark_expression.py::test_invalid_idents[*]
+PASSED testing/test_mark_expression.py::test_invalid_idents[=]
+PASSED testing/test_mark_expression.py::test_invalid_idents[&amp;]
+PASSED testing/test_mark_expression.py::test_invalid_idents[%]
+PASSED testing/test_mark_expression.py::test_invalid_idents[$]
+PASSED testing/test_mark_expression.py::test_invalid_idents[#]
+PASSED testing/test_mark_expression.py::test_invalid_idents[@]
+PASSED testing/test_mark_expression.py::test_invalid_idents[!]
+PASSED testing/test_mark_expression.py::test_invalid_idents[~]
+PASSED testing/test_mark_expression.py::test_invalid_idents[{]
+PASSED testing/test_mark_expression.py::test_invalid_idents[}]
+PASSED testing/test_mark_expression.py::test_invalid_idents[&quot;]
+PASSED testing/test_mark_expression.py::test_invalid_idents[&#x27;]
+PASSED testing/test_mark_expression.py::test_invalid_idents[|]
+PASSED testing/test_mark_expression.py::test_invalid_idents[;]
+PASSED testing/test_mark_expression.py::test_invalid_idents[\u2190]
+============================== 83 passed in 0.12s ==============================
+</pre><pre>WARNING: Unknown config ini key: rsyncdirs
+</pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[True]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[False]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[None]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>OR&gt;   File &quot;/testbed/src/_pytest/main.py&quot;, line 257, in _main
+INTERNALERROR&gt;     config.hook.pytest_runtestloop(session=session)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/hooks.py&quot;, line 286, in __call__
+INTERNALERROR&gt;     return self._hookexec(self, self.get_hookimpls(), kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 93, in _hookexec
+INTERNALERROR&gt;     return self._inner_hookexec(hook, methods, kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 84, in &lt;lambda&gt;
+INTERNALERROR&gt;     self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 208, in _multicall
+INTERNALERROR&gt;     return outcome.get_result()
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 80, in get_result
+INTERNALERROR&gt;     raise ex[1].with_traceback(ex[2])
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 187, in _multicall
+INTERNALERROR&gt;     res = hook_impl.function(*args)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/main.py&quot;, line 282, in pytest_runtestloop
+INTERNALERROR&gt;     item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/hooks.py&quot;, line 286, in __call__
+INTERNALERROR&gt;     return self._hookexec(self, self.get_hookimpls(), kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 93, in _hookexec
+INTERNALERROR&gt;     return self._inner_hookexec(hook, methods, kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 84, in &lt;lambda&gt;
+INTERNALERROR&gt;     self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 208, in _multicall
+INTERNALERROR&gt;     return outcome.get_result()
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 80, in get_result
+INTERNALERROR&gt;     raise ex[1].with_traceback(ex[2])
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 187, in _multicall
+INTERNALERROR&gt;     res = hook_impl.function(*args)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/runner.py&quot;, line 99, in pytest_runtest_protocol
+INTERNALERROR&gt;     runtestprotocol(item, nextitem=nextitem)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/runner.py&quot;, line 116, in runtestprotocol
+INTERNALERROR&gt;     reports.append(call_and_report(item, &quot;call&quot;, log))
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/runner.py&quot;, line 208, in call_and_report
+INTERNALERROR&gt;     report = hook.pytest_runtest_makereport(item=item, call=call)  # type: TestReport
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/hooks.py&quot;, line 286, in __call__
+INTERNALERROR&gt;     return self._hookexec(self, self.get_hookimpls(), kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 93, in _hookexec
+INTERNALERROR&gt;     return self._inner_hookexec(hook, methods, kwargs)
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py&quot;, line 84, in &lt;lambda&gt;
+INTERNALERROR&gt;     self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 203, in _multicall
+INTERNALERROR&gt;     gen.send(outcome)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/skipping.py&quot;, line 138, in pytest_runtest_makereport
+INTERNALERROR&gt;     rep = outcome.get_result()
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 80, in get_result
+INTERNALERROR&gt;     raise ex[1].with_traceback(ex[2])
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/callers.py&quot;, line 187, in _multicall
+INTERNALERROR&gt;     res = hook_impl.function(*args)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/runner.py&quot;, line 312, in pytest_runtest_makereport
+INTERNALERROR&gt;     return TestReport.from_item_and_call(item, call)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/reports.py&quot;, line 317, in from_item_and_call
+INTERNALERROR&gt;     longrepr = item.repr_failure(excinfo)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/python.py&quot;, line 1603, in repr_failure
+INTERNALERROR&gt;     return self._repr_failure_py(excinfo, style=style)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/nodes.py&quot;, line 372, in _repr_failure_py
+INTERNALERROR&gt;     self._prunetraceback(excinfo)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/python.py&quot;, line 1587, in _prunetraceback
+INTERNALERROR&gt;     excinfo.traceback = ntraceback.filter()
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/_code/code.py&quot;, line 371, in filter
+INTERNALERROR&gt;     return Traceback(filter(fn, self), self._excinfo)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/_code/code.py&quot;, line 309, in __init__
+INTERNALERROR&gt;     super().__init__(tb)
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/_code/code.py&quot;, line 360, in &lt;lambda&gt;
+INTERNALERROR&gt;     self, fn: Callable[[TracebackEntry], bool] = lambda x: not x.ishidden()
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/_code/code.py&quot;, line 264, in ishidden
+INTERNALERROR&gt;     tbh = f.f_locals.get(
+INTERNALERROR&gt;   File &quot;/opt/miniconda3/envs/testbed/lib/python3.9/_collections_abc.py&quot;, line 763, in get
+INTERNALERROR&gt;     return self[key]
+INTERNALERROR&gt;   File &quot;/testbed/src/_pytest/mark/expression.py&quot;, line 181, in __getitem__
+INTERNALERROR&gt;     raise AssertionError(&quot;canary&quot;)
+INTERNALERROR&gt; AssertionError: canary
+
+============================ no tests ran in 0.01s =============================
+</pre><pre>WARNING: Unknown config ini key: rsyncdirs
+</pre></details>
+<h2>Other mutants</h2><details><summary>m1 · killed: exit 1, 3 failed in 0.03s</summary><p>Uses `len(IDENT_PREFIX)-1` instead of `len(IDENT_PREFIX)`, stripping one character too few from the key when looking up identifiers.</p><pre><span class="line">--- a/src/_pytest/mark/expression.py</span><span class="line">+++ b/src/_pytest/mark/expression.py</span><span class="line">@@ -178,7 +178,7 @@ class MatcherAdapter(Mapping[str, bool]):</span><span class="line">         self.matcher = matcher</span><span class="line"> </span><span class="line">     def __getitem__(self, key: str) -&gt; bool:</span><span class="line del">-        return self.matcher(key[len(IDENT_PREFIX) :])</span><span class="line add">+        return self.matcher(key[len(IDENT_PREFIX)-1:])</span><span class="line"> </span><span class="line">     def __iter__(self) -&gt; Iterator[str]:</span><span class="line">         raise NotImplementedError()</span></pre><pre>from _pytest.mark.expression import Expression
+# The identifier &#x27;True&#x27; should be rejected; with the mutant it is stripped to &#x27;rue&#x27; which is not &#x27;True&#x27;
+# but the adapter returns False instead of crashing; however the prefix removal is incomplete
+e = Expression.compile(&#x27;True&#x27;)
+try:
+    result = e.evaluate(lambda x: x == &#x27;True&#x27;)
+    print(&#x27;result:&#x27;, result)
+except Exception as exc:
+    print(&#x27;exception:&#x27;, exc)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[True]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[False]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[None]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev458+g84f32b43b, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 3 items
+
+testing/test_mark_expression.py FFF                                      [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_valid_idents[True] ____________________________
+
+ident = &#x27;True&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$True&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+___________________________ test_valid_idents[False] ___________________________
+
+ident = &#x27;False&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$False&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+___________________________ test_valid_idents[None] ____________________________
+
+ident = &#x27;None&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$None&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+=========================== short test summary info ============================
+FAILED testing/test_mark_expression.py::test_valid_idents[True] - NameError: ...
+FAILED testing/test_mark_expression.py::test_valid_idents[False] - NameError:...
+FAILED testing/test_mark_expression.py::test_valid_idents[None] - NameError: ...
+============================== 3 failed in 0.03s ===============================
+</pre><pre>WARNING: Unknown config ini key: rsyncdirs
+</pre></details></details><details><summary>m2 · killed: exit 1, 3 failed in 0.03s</summary><p>Uses `len(IDENT_PREFIX)+1` instead of `len(IDENT_PREFIX)`, stripping one character too many from the key when looking up identifiers.</p><pre><span class="line">--- a/src/_pytest/mark/expression.py</span><span class="line">+++ b/src/_pytest/mark/expression.py</span><span class="line">@@ -178,7 +178,7 @@ class MatcherAdapter(Mapping[str, bool]):</span><span class="line">         self.matcher = matcher</span><span class="line"> </span><span class="line">     def __getitem__(self, key: str) -&gt; bool:</span><span class="line del">-        return self.matcher(key[len(IDENT_PREFIX) :])</span><span class="line add">+        return self.matcher(key[len(IDENT_PREFIX)+1:])</span><span class="line"> </span><span class="line">     def __iter__(self) -&gt; Iterator[str]:</span><span class="line">         raise NotImplementedError()</span></pre><pre>from _pytest.mark.expression import Expression
+# Identifier &#x27;True&#x27; stripped to &#x27;ue&#x27; + prefix char; lookup fails to find match
+e = Expression.compile(&#x27;True&#x27;)
+try:
+    result = e.evaluate(lambda x: x == &#x27;True&#x27;)
+    print(&#x27;result:&#x27;, result)
+except Exception as exc:
+    print(&#x27;exception:&#x27;, exc)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[True]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[False]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[None]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev458+g84f32b43b, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 3 items
+
+testing/test_mark_expression.py FFF                                      [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_valid_idents[True] ____________________________
+
+ident = &#x27;True&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$True&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+___________________________ test_valid_idents[False] ___________________________
+
+ident = &#x27;False&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$False&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+___________________________ test_valid_idents[None] ____________________________
+
+ident = &#x27;None&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$None&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+=========================== short test summary info ============================
+FAILED testing/test_mark_expression.py::test_valid_idents[True] - NameError: ...
+FAILED testing/test_mark_expression.py::test_valid_idents[False] - NameError:...
+FAILED testing/test_mark_expression.py::test_valid_idents[None] - NameError: ...
+============================== 3 failed in 0.03s ===============================
+</pre><pre>WARNING: Unknown config ini key: rsyncdirs
+</pre></details></details><details><summary>m3 · equivalent, discarded: its own witness does not distinguish it (the patch returns None, prints &#x27;result: True&#x27;, the mutant returns None, prints &#x27;result: True&#x27;); discarded, never a survivor</summary><p>Slices `key[1:]` instead of `key[len(IDENT_PREFIX):]`, which only works for the single-character prefix `$` and fails for longer prefixes or when the prefix contains characters beyond the first.</p><pre><span class="line">--- a/src/_pytest/mark/expression.py</span><span class="line">+++ b/src/_pytest/mark/expression.py</span><span class="line">@@ -178,7 +178,7 @@ class MatcherAdapter(Mapping[str, bool]):</span><span class="line">         self.matcher = matcher</span><span class="line"> </span><span class="line">     def __getitem__(self, key: str) -&gt; bool:</span><span class="line del">-        return self.matcher(key[len(IDENT_PREFIX) :])</span><span class="line add">+        return self.matcher(key[1:])</span><span class="line"> </span><span class="line">     def __iter__(self) -&gt; Iterator[str]:</span><span class="line">         raise NotImplementedError()</span></pre><pre>from _pytest.mark.expression import Expression
+# Using the mutant with the default prefix &#x27;$&#x27; works for &#x27;True&#x27; but the fix relies on the
+# constant prefix length; if the prefix were longer this would strip wrong amount
+e = Expression.compile(&#x27;True&#x27;)
+try:
+    result = e.evaluate(lambda x: x == &#x27;True&#x27;)
+    print(&#x27;result:&#x27;, result)
+except Exception as exc:
+    print(&#x27;exception:&#x27;, exc)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[True]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[False]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[None]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev458+g84f32b43b, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 3 items
+
+testing/test_mark_expression.py ...                                      [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED testing/test_mark_expression.py::test_valid_idents[True]
+PASSED testing/test_mark_expression.py::test_valid_idents[False]
+PASSED testing/test_mark_expression.py::test_valid_idents[None]
+============================== 3 passed in 0.01s ===============================
+</pre><pre>WARNING: Unknown config ini key: rsyncdirs
+</pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;None&quot;, &quot;stdout&quot;: &quot;result: True\n&quot;}
+</pre><pre></pre></details><details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;None&quot;, &quot;stdout&quot;: &quot;result: True\n&quot;}
+</pre><pre></pre></details></details><details><summary>m4 · killed: exit 1, 3 failed in 0.03s</summary><p>Uses `key[len(IDENT_PREFIX):len(IDENT_PREFIX)+1]` which only keeps one character of the identifier after the prefix, so `$True` gives `T` instead of `True`.</p><pre><span class="line">--- a/src/_pytest/mark/expression.py</span><span class="line">+++ b/src/_pytest/mark/expression.py</span><span class="line">@@ -178,7 +178,7 @@ class MatcherAdapter(Mapping[str, bool]):</span><span class="line">         self.matcher = matcher</span><span class="line"> </span><span class="line">     def __getitem__(self, key: str) -&gt; bool:</span><span class="line del">-        return self.matcher(key[len(IDENT_PREFIX) :])</span><span class="line add">+        return self.matcher(key[len(IDENT_PREFIX):len(IDENT_PREFIX)+1])</span><span class="line"> </span><span class="line">     def __iter__(self) -&gt; Iterator[str]:</span><span class="line">         raise NotImplementedError()</span></pre><pre>from _pytest.mark.expression import Expression
+# &#x27;$True&#x27; slice [1:2] gives &#x27;T&#x27;; lookup fails to find full match
+e = Expression.compile(&#x27;True&#x27;)
+try:
+    result = e.evaluate(lambda x: True)
+    print(&#x27;result:&#x27;, result)
+except Exception as exc:
+    print(&#x27;exception:&#x27;, exc)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[True]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[False]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[None]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev458+g84f32b43b, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 3 items
+
+testing/test_mark_expression.py FFF                                      [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_valid_idents[True] ____________________________
+
+ident = &#x27;True&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$True&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+___________________________ test_valid_idents[False] ___________________________
+
+ident = &#x27;False&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$False&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+___________________________ test_valid_idents[None] ____________________________
+
+ident = &#x27;None&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$None&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+=========================== short test summary info ============================
+FAILED testing/test_mark_expression.py::test_valid_idents[True] - NameError: ...
+FAILED testing/test_mark_expression.py::test_valid_idents[False] - NameError:...
+FAILED testing/test_mark_expression.py::test_valid_idents[None] - NameError: ...
+============================== 3 failed in 0.03s ===============================
+</pre><pre>WARNING: Unknown config ini key: rsyncdirs
+</pre></details></details><details><summary>m5 · killed: exit 1, 3 failed in 0.04s</summary><p>Uses `key[len(IDENT_PREFIX):-2]` which strips the prefix and the last two characters of the identifier, so `$True` gives empty string `&#x27;&#x27;` instead of `True`.</p><pre><span class="line">--- a/src/_pytest/mark/expression.py</span><span class="line">+++ b/src/_pytest/mark/expression.py</span><span class="line">@@ -178,7 +178,7 @@ class MatcherAdapter(Mapping[str, bool]):</span><span class="line">         self.matcher = matcher</span><span class="line"> </span><span class="line">     def __getitem__(self, key: str) -&gt; bool:</span><span class="line del">-        return self.matcher(key[len(IDENT_PREFIX) :])</span><span class="line add">+        return self.matcher(key[len(IDENT_PREFIX):-2])</span><span class="line"> </span><span class="line">     def __iter__(self) -&gt; Iterator[str]:</span><span class="line">         raise NotImplementedError()</span></pre><pre>from _pytest.mark.expression import Expression
+# &#x27;$True&#x27; slice [1:-2] gives &#x27;&#x27;; lookup gets empty string
+e = Expression.compile(&#x27;True&#x27;)
+try:
+    result = e.evaluate(lambda x: True)
+    print(&#x27;result:&#x27;, result)
+except Exception as exc:
+    print(&#x27;exception:&#x27;, exc)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[True]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[False]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[None]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev458+g84f32b43b, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 3 items
+
+testing/test_mark_expression.py FFF                                      [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_valid_idents[True] ____________________________
+
+ident = &#x27;True&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$True&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+___________________________ test_valid_idents[False] ___________________________
+
+ident = &#x27;False&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$False&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+___________________________ test_valid_idents[None] ____________________________
+
+ident = &#x27;None&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$None&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+=========================== short test summary info ============================
+FAILED testing/test_mark_expression.py::test_valid_idents[True] - NameError: ...
+FAILED testing/test_mark_expression.py::test_valid_idents[False] - NameError:...
+FAILED testing/test_mark_expression.py::test_valid_idents[None] - NameError: ...
+============================== 3 failed in 0.04s ===============================
+</pre><pre>WARNING: Unknown config ini key: rsyncdirs
+</pre></details></details><details><summary>m6 · killed: exit 1, 3 failed in 0.03s</summary><p>Uses `key[len(IDENT_PREFIX):len(IDENT_PREFIX)+len(IDENT_PREFIX)+1]` which for prefix length 1 gives `key[1:3]` — two characters `Tr` from `$True` instead of the full `True`.</p><pre><span class="line">--- a/src/_pytest/mark/expression.py</span><span class="line">+++ b/src/_pytest/mark/expression.py</span><span class="line">@@ -178,7 +178,7 @@ class MatcherAdapter(Mapping[str, bool]):</span><span class="line">         self.matcher = matcher</span><span class="line"> </span><span class="line">     def __getitem__(self, key: str) -&gt; bool:</span><span class="line del">-        return self.matcher(key[len(IDENT_PREFIX) :])</span><span class="line add">+        return self.matcher(key[len(IDENT_PREFIX):len(IDENT_PREFIX)+len(IDENT_PREFIX)+1])</span><span class="line"> </span><span class="line">     def __iter__(self) -&gt; Iterator[str]:</span><span class="line">         raise NotImplementedError()</span></pre><pre>from _pytest.mark.expression import Expression
+# &#x27;$True&#x27; slice [1:3] gives &#x27;Tr&#x27;; lookup fails to find match
+e = Expression.compile(&#x27;True&#x27;)
+try:
+    result = e.evaluate(lambda x: True)
+    print(&#x27;result:&#x27;, result)
+except Exception as exc:
+    print(&#x27;exception:&#x27;, exc)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[True]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[False]&#x27;&quot;&#x27;&quot;&#x27; &#x27;&quot;&#x27;&quot;&#x27;testing/test_mark_expression.py::test_valid_idents[None]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.4.1.dev458+g84f32b43b, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 3 items
+
+testing/test_mark_expression.py FFF                                      [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_valid_idents[True] ____________________________
+
+ident = &#x27;True&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$True&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+___________________________ test_valid_idents[False] ___________________________
+
+ident = &#x27;False&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$False&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+___________________________ test_valid_idents[None] ____________________________
+
+ident = &#x27;None&#x27;
+
+    @pytest.mark.parametrize(
+        &quot;ident&quot;,
+        (
+            &quot;.&quot;,
+            &quot;...&quot;,
+            &quot;:::&quot;,
+            &quot;a:::c&quot;,
+            &quot;a+-b&quot;,
+            &quot;אבגד&quot;,
+            &quot;aaאבגדcc&quot;,
+            &quot;a[bcd]&quot;,
+            &quot;1234&quot;,
+            &quot;1234abcd&quot;,
+            &quot;1234and&quot;,
+            &quot;notandor&quot;,
+            &quot;not_and_or&quot;,
+            &quot;not[and]or&quot;,
+            &quot;1234+5678&quot;,
+            &quot;123.232&quot;,
+            &quot;True&quot;,
+            &quot;False&quot;,
+            &quot;None&quot;,
+            &quot;if&quot;,
+            &quot;else&quot;,
+            &quot;while&quot;,
+        ),
+    )
+    def test_valid_idents(ident: str) -&gt; None:
+&gt;       assert evaluate(ident, {ident: True}.__getitem__)
+
+testing/test_mark_expression.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+testing/test_mark_expression.py:9: in evaluate
+    return Expression.compile(input).evaluate(matcher)
+src/_pytest/mark/expression.py:221: in evaluate
+    ret = eval(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+&gt;   ???
+E   NameError: name &#x27;$None&#x27; is not defined
+
+&lt;pytest match expression&gt;:1: NameError
+=========================== short test summary info ============================
+FAILED testing/test_mark_expression.py::test_valid_idents[True] - NameError: ...
+FAILED testing/test_mark_expression.py::test_valid_idents[False] - NameError:...
+FAILED testing/test_mark_expression.py::test_valid_idents[None] - NameError: ...
+============================== 3 failed in 0.03s ===============================
+</pre><pre>WARNING: Unknown config ini key: rsyncdirs
+</pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>pytest-dev__pytest-7324/original+test<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>1</td><td>3 failed in 0.03s</td><td>0.242</td><td>0.47</td><td>$0.00254</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7324/patched+test<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>0</td><td>3 passed in 0.01s</td><td>0.226</td><td>0.45</td><td>$0.00239</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7324/patched+p2p<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>0</td><td>83 passed in 0.12s</td><td>0.279</td><td>0.54</td><td>$0.00292</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7324/canary+test<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>3</td><td>no tests ran in 0.01s</td><td>0.226</td><td>0.44</td><td>$0.00238</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7324/mutant-m1+test<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>1</td><td>3 failed in 0.03s</td><td>0.243</td><td>0.45</td><td>$0.00256</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7324/mutant-m2+test<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>1</td><td>3 failed in 0.03s</td><td>0.245</td><td>0.46</td><td>$0.00258</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7324/mutant-m3+test<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>0</td><td>3 passed in 0.01s</td><td>0.227</td><td>0.43</td><td>$0.00239</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7324/witness-patched-m3<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>0</td><td></td><td>0.106</td><td>0.27</td><td>$0.00116</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7324/witness-mutant-m3<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>0</td><td></td><td>0.106</td><td>0.28</td><td>$0.00116</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7324/mutant-m4+test<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>1</td><td>3 failed in 0.03s</td><td>0.243</td><td>0.45</td><td>$0.00256</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7324/mutant-m5+test<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>1</td><td>3 failed in 0.04s</td><td>0.246</td><td>0.45</td><td>$0.00259</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7324/mutant-m6+test<br><span class='muted'>@e03a2ff4-5ad0-4574-808e-36c0fa52e6f6</span></td><td>1</td><td>3 failed in 0.03s</td><td>0.245</td><td>0.46</td><td>$0.00258</td><td>15 s</td></tr></table>
+</main></body></html>

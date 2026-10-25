@@ -1,0 +1,906 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · pytest-dev__pytest-5631</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>pytest-dev__pytest-5631</h1>
+<p class="muted">ValueError when collecting tests that patch an array &lt;!-- Thanks for submitting an issue! Here&#x27;s a quick checklist for what to provide: --&gt; I&#x27;m trying to run pytest with a test file that contains …</p><details><summary>Full issue</summary><pre>ValueError when collecting tests that patch an array 
+&lt;!--
+Thanks for submitting an issue!
+
+Here&#x27;s a quick checklist for what to provide:
+--&gt;
+
+I&#x27;m trying to run pytest with a test file that contains patch where &quot;new&quot; is an array, for example:
+from unittest.mock import patch
+@patch(target=&#x27;XXXXXX&#x27;, new=np.array([-5.5, 3.0]))
+...
+
+This works fine with pytest 3.1.3, but when using pytest 3.6.0 the following error is received upon collection: 
+
+```
+ERROR collecting XXXXXXXXXXXXXXXXXXXX
+ /usr/local/lib/python3.6/dist-packages/pluggy/__init__.py:617: in __call__
+     return self._hookexec(self, self._nonwrappers + self._wrappers, kwargs)
+ /usr/local/lib/python3.6/dist-packages/pluggy/__init__.py:222: in _hookexec
+     return self._inner_hookexec(hook, methods, kwargs)
+ /usr/local/lib/python3.6/dist-packages/pluggy/__init__.py:216: in &lt;lambda&gt;
+     firstresult=hook.spec_opts.get(&#x27;firstresult&#x27;),
+ /usr/local/lib/python3.6/dist-packages/_pytest/python.py:197: in pytest_pycollect_makeitem
+     res = list(collector._genfunctions(name, obj))
+ /usr/local/lib/python3.6/dist-packages/_pytest/python.py:376: in _genfunctions
+     callobj=funcobj,
+ /usr/local/lib/python3.6/dist-packages/_pytest/python.py:1159: in __init__
+     funcargs=not self._isyieldedfunction())
+ /usr/local/lib/python3.6/dist-packages/_pytest/fixtures.py:988: in getfixtureinfo
+     argnames = getfuncargnames(func, cls=cls)
+ /usr/local/lib/python3.6/dist-packages/_pytest/compat.py:134: in getfuncargnames
+     arg_names = arg_names[num_mock_patch_args(function):]
+ /usr/local/lib/python3.6/dist-packages/_pytest/compat.py:93: in num_mock_patch_args
+     return len([p for p in patchings
+**/usr/local/lib/python3.6/dist-packages/_pytest/compat.py:94: in &lt;listcomp&gt;
+      if not p.attribute_name and p.new in sentinels])
+ E   ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()**
+```
+
+Seems like a bug, that was introduced by the following fix:
+https://github.com/pytest-dev/pytest/commit/b6166dccb4d2b48173aa7e7739be52db9d2d56a0
+
+when using @patch like: @patch(target=&#x27;XXXXXX&#x27;, new=np.array([-5.5, 3.0])), p.new is an array and the check: &quot;p.new in sentinels&quot; returns an array of booleans instead of a boolean which causes the ValueError.
+</pre></details>
+
+<div class="verdict INCONCLUSIVE">INCONCLUSIVE</div>
+
+<p>SWE-bench says <b>RESOLVED</b> · benchmark oracle: the repository's own FAIL_TO_PASS tests (1)</p>
+<p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 1 failed in 0.20 seconds; the canary&#x27;s AssertionError is in the log)</b></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.20 seconds) and passes on the patch (exit 0, 1 passed in 0.10 seconds); all 15 PASS_TO_PASS tests PASSED, but no mutant could be distinguished from the patch (1 equivalent discarded)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint 5db49ee3-9ef6-4bc4-a716-c91dd4b3f1a6 ·
+7 forks · 1.72 CPU-s · $0.0181 · 2026-10-25T17:53:55+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status equivalent">equivalent, discarded</span><br><span class="muted">Uses `p.new in sentinels` with `any()` check that returns a boolean array for array inputs, but the fix uses `is` identity checks; this mutant keeps the original `in` check but changes the sentinel list to include only one mock module&#x27;s DEFAULT, missing the unittest.mock case, causing the `in` check to still fail on array inputs when unittest.mock is present.</span></div></div>
+
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.20 seconds · 0.339 CPU-s · 0.60 s · $0.00356<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.10 seconds · 0.248 CPU-s · 0.52 s · $0.00263<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 16 passed, 4 skipped in 0.44 seconds · 0.497 CPU-s · 0.87 s · $0.00515<br>
+canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.20 seconds · 0.338 CPU-s · 0.62 s · $0.00356</p>
+<details><summary>The canary mutant</summary><pre><span class="line">--- a/src/_pytest/compat.py</span><span class="line">+++ b/src/_pytest/compat.py</span><span class="line">@@ -60,22 +60,7 @@ def getlocation(function, curdir):</span><span class="line"> </span><span class="line"> </span><span class="line"> def num_mock_patch_args(function):</span><span class="line del">-    &quot;&quot;&quot; return number of arguments used up by mock arguments (if any) &quot;&quot;&quot;</span><span class="line del">-    patchings = getattr(function, &quot;patchings&quot;, None)</span><span class="line del">-    if not patchings:</span><span class="line del">-        return 0</span><span class="line del">-</span><span class="line del">-    mock_sentinel = getattr(sys.modules.get(&quot;mock&quot;), &quot;DEFAULT&quot;, object())</span><span class="line del">-    ut_mock_sentinel = getattr(sys.modules.get(&quot;unittest.mock&quot;), &quot;DEFAULT&quot;, object())</span><span class="line del">-</span><span class="line del">-    return len(</span><span class="line del">-        [</span><span class="line del">-            p</span><span class="line del">-            for p in patchings</span><span class="line del">-            if not p.attribute_name</span><span class="line del">-            and (p.new is mock_sentinel or p.new is ut_mock_sentinel)</span><span class="line del">-        ]</span><span class="line del">-    )</span><span class="line add">+    raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line"> </span><span class="line"> def getfuncargnames(function, is_method=False, cls=None):</span></pre></details>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">diff --git a/src/_pytest/compat.py b/src/_pytest/compat.py</span><span class="line">--- a/src/_pytest/compat.py</span><span class="line">+++ b/src/_pytest/compat.py</span><span class="line">@@ -64,13 +64,18 @@ def num_mock_patch_args(function):</span><span class="line">     patchings = getattr(function, &quot;patchings&quot;, None)</span><span class="line">     if not patchings:</span><span class="line">         return 0</span><span class="line del">-    mock_modules = [sys.modules.get(&quot;mock&quot;), sys.modules.get(&quot;unittest.mock&quot;)]</span><span class="line del">-    if any(mock_modules):</span><span class="line del">-        sentinels = [m.DEFAULT for m in mock_modules if m is not None]</span><span class="line del">-        return len(</span><span class="line del">-            [p for p in patchings if not p.attribute_name and p.new in sentinels]</span><span class="line del">-        )</span><span class="line del">-    return len(patchings)</span><span class="line add">+</span><span class="line add">+    mock_sentinel = getattr(sys.modules.get(&quot;mock&quot;), &quot;DEFAULT&quot;, object())</span><span class="line add">+    ut_mock_sentinel = getattr(sys.modules.get(&quot;unittest.mock&quot;), &quot;DEFAULT&quot;, object())</span><span class="line add">+</span><span class="line add">+    return len(</span><span class="line add">+        [</span><span class="line add">+            p</span><span class="line add">+            for p in patchings</span><span class="line add">+            if not p.attribute_name</span><span class="line add">+            and (p.new is mock_sentinel or p.new is ut_mock_sentinel)</span><span class="line add">+        ]</span><span class="line add">+    )</span><span class="line"> </span><span class="line"> </span><span class="line"> def getfuncargnames(function, is_method=False, cls=None):</span></pre></div>
+<div><h3>The test</h3><pre>import pytest
+from _pytest import python
+from _pytest import runner
+
+
+class TestOEJSKITSpecials:
+    def test_funcarg_non_pycollectobj(self, testdir):  # rough jstests usage
+        testdir.makeconftest(
+            &quot;&quot;&quot;
+            import pytest
+            def pytest_pycollect_makeitem(collector, name, obj):
+                if name == &quot;MyClass&quot;:
+                    return MyCollector(name, parent=collector)
+            class MyCollector(pytest.Collector):
+                def reportinfo(self):
+                    return self.fspath, 3, &quot;xyz&quot;
+        &quot;&quot;&quot;
+        )
+        modcol = testdir.getmodulecol(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.fixture
+            def arg1(request):
+                return 42
+            class MyClass(object):
+                pass
+        &quot;&quot;&quot;
+        )
+        # this hook finds funcarg factories
+        rep = runner.collect_one_node(collector=modcol)
+        clscol = rep.result[0]
+        clscol.obj = lambda arg1: None
+        clscol.funcargs = {}
+        pytest._fillfuncargs(clscol)
+        assert clscol.funcargs[&quot;arg1&quot;] == 42
+
+    def test_autouse_fixture(self, testdir):  # rough jstests usage
+        testdir.makeconftest(
+            &quot;&quot;&quot;
+            import pytest
+            def pytest_pycollect_makeitem(collector, name, obj):
+                if name == &quot;MyClass&quot;:
+                    return MyCollector(name, parent=collector)
+            class MyCollector(pytest.Collector):
+                def reportinfo(self):
+                    return self.fspath, 3, &quot;xyz&quot;
+        &quot;&quot;&quot;
+        )
+        modcol = testdir.getmodulecol(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.fixture(autouse=True)
+            def hello():
+                pass
+            @pytest.fixture
+            def arg1(request):
+                return 42
+            class MyClass(object):
+                pass
+        &quot;&quot;&quot;
+        )
+        # this hook finds funcarg factories
+        rep = runner.collect_one_node(modcol)
+        clscol = rep.result[0]
+        clscol.obj = lambda: None
+        clscol.funcargs = {}
+        pytest._fillfuncargs(clscol)
+        assert not clscol.funcargs
+
+
+def test_wrapped_getfslineno():
+    def func():
+        pass
+
+    def wrap(f):
+        func.__wrapped__ = f
+        func.patchings = [&quot;qwe&quot;]
+        return func
+
+    @wrap
+    def wrapped_func(x, y, z):
+        pass
+
+    fs, lineno = python.getfslineno(wrapped_func)
+    fs2, lineno2 = python.getfslineno(wrap)
+    assert lineno &gt; lineno2, &quot;getfslineno does not unwrap correctly&quot;
+
+
+class TestMockDecoration:
+    def test_wrapped_getfuncargnames(self):
+        from _pytest.compat import getfuncargnames
+
+        def wrap(f):
+            def func():
+                pass
+
+            func.__wrapped__ = f
+            return func
+
+        @wrap
+        def f(x):
+            pass
+
+        values = getfuncargnames(f)
+        assert values == (&quot;x&quot;,)
+
+    def test_getfuncargnames_patching(self):
+        from _pytest.compat import getfuncargnames
+        from unittest.mock import patch
+
+        class T:
+            def original(self, x, y, z):
+                pass
+
+        @patch.object(T, &quot;original&quot;)
+        def f(x, y, z):
+            pass
+
+        values = getfuncargnames(f)
+        assert values == (&quot;y&quot;, &quot;z&quot;)
+
+    def test_unittest_mock(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import unittest.mock
+            class T(unittest.TestCase):
+                @unittest.mock.patch(&quot;os.path.abspath&quot;)
+                def test_hello(self, abspath):
+                    import os
+                    os.path.abspath(&quot;hello&quot;)
+                    abspath.assert_any_call(&quot;hello&quot;)
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    def test_unittest_mock_and_fixture(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import os.path
+            import unittest.mock
+            import pytest
+
+            @pytest.fixture
+            def inject_me():
+                pass
+
+            @unittest.mock.patch.object(os.path, &quot;abspath&quot;,
+                                        new=unittest.mock.MagicMock)
+            def test_hello(inject_me):
+                import os
+                os.path.abspath(&quot;hello&quot;)
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    def test_unittest_mock_and_pypi_mock(self, testdir):
+        pytest.importorskip(&quot;mock&quot;, &quot;1.0.1&quot;)
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import mock
+            import unittest.mock
+            class TestBoth(object):
+                @unittest.mock.patch(&quot;os.path.abspath&quot;)
+                def test_hello(self, abspath):
+                    import os
+                    os.path.abspath(&quot;hello&quot;)
+                    abspath.assert_any_call(&quot;hello&quot;)
+
+                @mock.patch(&quot;os.path.abspath&quot;)
+                def test_hello_mock(self, abspath):
+                    import os
+                    os.path.abspath(&quot;hello&quot;)
+                    abspath.assert_any_call(&quot;hello&quot;)
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_mock_sentinel_check_against_numpy_like(self, testdir):
+        &quot;&quot;&quot;Ensure our function that detects mock arguments compares against sentinels using
+        identity to circumvent objects which can&#x27;t be compared with equality against others
+        in a truth context, like with numpy arrays (#5606).
+        &quot;&quot;&quot;
+        testdir.makepyfile(
+            dummy=&quot;&quot;&quot;
+            class NumpyLike:
+                def __init__(self, value):
+                    self.value = value
+                def __eq__(self, other):
+                    raise ValueError(&quot;like numpy, cannot compare against others for truth&quot;)
+            FOO = NumpyLike(10)
+        &quot;&quot;&quot;
+        )
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            from unittest.mock import patch
+            import dummy
+            class Test(object):
+                @patch(&quot;dummy.FOO&quot;, new=dummy.NumpyLike(50))
+                def test_hello(self):
+                    assert dummy.FOO.value == 50
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    def test_mock(self, testdir):
+        pytest.importorskip(&quot;mock&quot;, &quot;1.0.1&quot;)
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import os
+            import unittest
+            import mock
+
+            class T(unittest.TestCase):
+                @mock.patch(&quot;os.path.abspath&quot;)
+                def test_hello(self, abspath):
+                    os.path.abspath(&quot;hello&quot;)
+                    abspath.assert_any_call(&quot;hello&quot;)
+            def mock_basename(path):
+                return &quot;mock_basename&quot;
+            @mock.patch(&quot;os.path.abspath&quot;)
+            @mock.patch(&quot;os.path.normpath&quot;)
+            @mock.patch(&quot;os.path.basename&quot;, new=mock_basename)
+            def test_someting(normpath, abspath, tmpdir):
+                abspath.return_value = &quot;this&quot;
+                os.path.normpath(os.path.abspath(&quot;hello&quot;))
+                normpath.assert_any_call(&quot;this&quot;)
+                assert os.path.basename(&quot;123&quot;) == &quot;mock_basename&quot;
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+        calls = reprec.getcalls(&quot;pytest_runtest_logreport&quot;)
+        funcnames = [
+            call.report.location[2] for call in calls if call.report.when == &quot;call&quot;
+        ]
+        assert funcnames == [&quot;T.test_hello&quot;, &quot;test_someting&quot;]
+
+    def test_mock_sorting(self, testdir):
+        pytest.importorskip(&quot;mock&quot;, &quot;1.0.1&quot;)
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import os
+            import mock
+
+            @mock.patch(&quot;os.path.abspath&quot;)
+            def test_one(abspath):
+                pass
+            @mock.patch(&quot;os.path.abspath&quot;)
+            def test_two(abspath):
+                pass
+            @mock.patch(&quot;os.path.abspath&quot;)
+            def test_three(abspath):
+                pass
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+        calls = reprec.getreports(&quot;pytest_runtest_logreport&quot;)
+        calls = [x for x in calls if x.when == &quot;call&quot;]
+        names = [x.nodeid.split(&quot;::&quot;)[-1] for x in calls]
+        assert names == [&quot;test_one&quot;, &quot;test_two&quot;, &quot;test_three&quot;]
+
+    def test_mock_double_patch_issue473(self, testdir):
+        pytest.importorskip(&quot;mock&quot;, &quot;1.0.1&quot;)
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            from mock import patch
+            from pytest import mark
+
+            @patch(&#x27;os.getcwd&#x27;)
+            @patch(&#x27;os.path&#x27;)
+            @mark.slow
+            class TestSimple(object):
+                def test_simple_thing(self, mock_path, mock_getcwd):
+                    pass
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+
+class TestReRunTests:
+    def test_rerun(self, testdir):
+        testdir.makeconftest(
+            &quot;&quot;&quot;
+            from _pytest.runner import runtestprotocol
+            def pytest_runtest_protocol(item, nextitem):
+                runtestprotocol(item, log=False, nextitem=nextitem)
+                runtestprotocol(item, log=True, nextitem=nextitem)
+        &quot;&quot;&quot;
+        )
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            count = 0
+            req = None
+            @pytest.fixture
+            def fix(request):
+                global count, req
+                assert request != req
+                req = request
+                print(&quot;fix count %s&quot; % count)
+                count += 1
+            def test_fix(fix):
+                pass
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest(&quot;-s&quot;)
+        result.stdout.fnmatch_lines(
+            &quot;&quot;&quot;
+            *fix count 0*
+            *fix count 1*
+        &quot;&quot;&quot;
+        )
+        result.stdout.fnmatch_lines(
+            &quot;&quot;&quot;
+            *2 passed*
+        &quot;&quot;&quot;
+        )
+
+
+def test_pytestconfig_is_session_scoped():
+    from _pytest.fixtures import pytestconfig
+
+    assert pytestconfig._pytestfixturefunction.scope == &quot;session&quot;
+
+
+class TestNoselikeTestAttribute:
+    def test_module_with_global_test(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            __test__ = False
+            def test_hello():
+                pass
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+        assert not reprec.getfailedcollections()
+        calls = reprec.getreports(&quot;pytest_runtest_logreport&quot;)
+        assert not calls
+
+    def test_class_and_method(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            __test__ = True
+            def test_func():
+                pass
+            test_func.__test__ = False
+
+            class TestSome(object):
+                __test__ = False
+                def test_method(self):
+                    pass
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+        assert not reprec.getfailedcollections()
+        calls = reprec.getreports(&quot;pytest_runtest_logreport&quot;)
+        assert not calls
+
+    def test_unittest_class(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import unittest
+            class TC(unittest.TestCase):
+                def test_1(self):
+                    pass
+            class TC2(unittest.TestCase):
+                __test__ = False
+                def test_2(self):
+                    pass
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+        assert not reprec.getfailedcollections()
+        call = reprec.getcalls(&quot;pytest_collection_modifyitems&quot;)[0]
+        assert len(call.items) == 1
+        assert call.items[0].cls.__name__ == &quot;TC&quot;
+
+    def test_class_with_nasty_getattr(self, testdir):
+        &quot;&quot;&quot;Make sure we handle classes with a custom nasty __getattr__ right.
+
+        With a custom __getattr__ which e.g. returns a function (like with a
+        RPC wrapper), we shouldn&#x27;t assume this meant &quot;__test__ = True&quot;.
+        &quot;&quot;&quot;
+        # https://github.com/pytest-dev/pytest/issues/1204
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            class MetaModel(type):
+
+                def __getattr__(cls, key):
+                    return lambda: None
+
+
+            BaseModel = MetaModel(&#x27;Model&#x27;, (), {})
+
+
+            class Model(BaseModel):
+
+                __metaclass__ = MetaModel
+
+                def test_blah(self):
+                    pass
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+        assert not reprec.getfailedcollections()
+        call = reprec.getcalls(&quot;pytest_collection_modifyitems&quot;)[0]
+        assert not call.items
+
+
+class TestParameterize:
+    &quot;&quot;&quot;#351&quot;&quot;&quot;
+
+    def test_idfn_marker(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+
+            def idfn(param):
+                if param == 0:
+                    return &#x27;spam&#x27;
+                elif param == 1:
+                    return &#x27;ham&#x27;
+                else:
+                    return None
+
+            @pytest.mark.parametrize(&#x27;a,b&#x27;, [(0, 2), (1, 2)], ids=idfn)
+            def test_params(a, b):
+                pass
+        &quot;&quot;&quot;
+        )
+        res = testdir.runpytest(&quot;--collect-only&quot;)
+        res.stdout.fnmatch_lines([&quot;*spam-2*&quot;, &quot;*ham-2*&quot;])
+
+    def test_idfn_fixture(self, testdir):
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+
+            def idfn(param):
+                if param == 0:
+                    return &#x27;spam&#x27;
+                elif param == 1:
+                    return &#x27;ham&#x27;
+                else:
+                    return None
+
+            @pytest.fixture(params=[0, 1], ids=idfn)
+            def a(request):
+                return request.param
+
+            @pytest.fixture(params=[1, 2], ids=idfn)
+            def b(request):
+                return request.param
+
+            def test_params(a, b):
+                pass
+        &quot;&quot;&quot;
+        )
+        res = testdir.runpytest(&quot;--collect-only&quot;)
+        res.stdout.fnmatch_lines([&quot;*spam-2*&quot;, &quot;*ham-2*&quot;])
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/python/integration.py::TestMockDecoration::test_mock_sentinel_check_against_numpy_like&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 1 item
+
+testing/python/integration.py F                                          [100%]
+
+=================================== FAILURES ===================================
+________ TestMockDecoration.test_mock_sentinel_check_against_numpy_like ________
+
+self = &lt;integration.TestMockDecoration object at 0x7ffff701e100&gt;
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_mock_sentinel_check_against_numpy_like0&#x27;)&gt;
+
+    def test_mock_sentinel_check_against_numpy_like(self, testdir):
+        &quot;&quot;&quot;Ensure our function that detects mock arguments compares against sentinels using
+        identity to circumvent objects which can&#x27;t be compared with equality against others
+        in a truth context, like with numpy arrays (#5606).
+        &quot;&quot;&quot;
+        testdir.makepyfile(
+            dummy=&quot;&quot;&quot;
+            class NumpyLike:
+                def __init__(self, value):
+                    self.value = value
+                def __eq__(self, other):
+                    raise ValueError(&quot;like numpy, cannot compare against others for truth&quot;)
+            FOO = NumpyLike(10)
+        &quot;&quot;&quot;
+        )
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            from unittest.mock import patch
+            import dummy
+            class Test(object):
+                @patch(&quot;dummy.FOO&quot;, new=dummy.NumpyLike(50))
+                def test_hello(self):
+                    assert dummy.FOO.value == 50
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+&gt;       reprec.assertoutcome(passed=1)
+
+/testbed/testing/python/integration.py:207: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;_pytest.pytester.HookRecorder object at 0x7ffff7112400&gt;, passed = 1
+skipped = 0, failed = 0
+
+    def assertoutcome(self, passed=0, skipped=0, failed=0):
+        realpassed, realskipped, realfailed = self.listoutcomes()
+&gt;       assert passed == len(realpassed)
+E       assert 1 == 0
+E        +  where 0 = len([])
+
+/testbed/src/_pytest/pytester.py:302: AssertionError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_mock_sentinel_check_against_numpy_like0
+collected 0 items / 1 errors
+
+==================================== ERRORS ====================================
+_______ ERROR collecting test_mock_sentinel_check_against_numpy_like.py ________
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/hooks.py:286: in __call__
+    return self._hookexec(self, self.get_hookimpls(), kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:93: in _hookexec
+    return self._inner_hookexec(hook, methods, kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:337: in traced_hookexec
+    return outcome.get_result()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:335: in &lt;lambda&gt;
+    outcome = _Result.from_call(lambda: oldcall(hook, hook_impls, kwargs))
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:84: in &lt;lambda&gt;
+    self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+/testbed/src/_pytest/python.py:225: in pytest_pycollect_makeitem
+    res = list(collector._genfunctions(name, obj))
+/testbed/src/_pytest/python.py:385: in _genfunctions
+    definition = FunctionDefinition(name=name, parent=self, callobj=funcobj)
+/testbed/src/_pytest/python.py:1415: in __init__
+    fixtureinfo = self.session._fixturemanager.getfixtureinfo(
+/testbed/src/_pytest/fixtures.py:1146: in getfixtureinfo
+    argnames = getfuncargnames(func, cls=cls)
+/testbed/src/_pytest/compat.py:125: in getfuncargnames
+    arg_names = arg_names[num_mock_patch_args(function) :]
+/testbed/src/_pytest/compat.py:71: in num_mock_patch_args
+    [p for p in patchings if not p.attribute_name and p.new in sentinels]
+/testbed/src/_pytest/compat.py:71: in &lt;listcomp&gt;
+    [p for p in patchings if not p.attribute_name and p.new in sentinels]
+dummy.py:5: in __eq__
+    raise ValueError(&quot;like numpy, cannot compare against others for truth&quot;)
+E   ValueError: like numpy, cannot compare against others for truth
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 errors during collection !!!!!!!!!!!!!!!!!!!!
+=========================== 1 error in 0.14 seconds ============================
+=========================== short test summary info ============================
+FAILED testing/python/integration.py::TestMockDecoration::test_mock_sentinel_check_against_numpy_like
+=========================== 1 failed in 0.20 seconds ===========================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/python/integration.py::TestMockDecoration::test_mock_sentinel_check_against_numpy_like&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 1 item
+
+testing/python/integration.py .                                          [100%]
+
+==================================== PASSES ====================================
+________ TestMockDecoration.test_mock_sentinel_check_against_numpy_like ________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_mock_sentinel_check_against_numpy_like0
+collected 1 item
+
+test_mock_sentinel_check_against_numpy_like.py .                         [100%]
+
+=========================== 1 passed in 0.05 seconds ===========================
+=========================== short test summary info ============================
+PASSED testing/python/integration.py::TestMockDecoration::test_mock_sentinel_check_against_numpy_like
+=========================== 1 passed in 0.10 seconds ===========================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/python/integration.py&#x27;</pre><pre>1
+rootdir: /tmp/pytest-of-root/pytest-0/test_mock_sentinel_check_against_numpy_like0
+collected 1 item
+
+test_mock_sentinel_check_against_numpy_like.py .                         [100%]
+
+=========================== 1 passed in 0.01 seconds ===========================
+__________________________ TestReRunTests.test_rerun ___________________________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_rerun0
+collected 1 item
+fix count 0
+fix count 1
+
+test_rerun.py .fix count 2
+.
+
+=========================== 2 passed in 0.01 seconds ===========================
+____________ TestNoselikeTestAttribute.test_module_with_global_test ____________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_module_with_global_test0
+collected 0 items
+
+========================= no tests ran in 0.00 seconds =========================
+_______________ TestNoselikeTestAttribute.test_class_and_method ________________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_class_and_method0
+collected 0 items
+
+========================= no tests ran in 0.01 seconds =========================
+________________ TestNoselikeTestAttribute.test_unittest_class _________________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_unittest_class0
+collected 1 item
+
+test_unittest_class.py .                                                 [100%]
+
+=========================== 1 passed in 0.01 seconds ===========================
+___________ TestNoselikeTestAttribute.test_class_with_nasty_getattr ____________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_class_with_nasty_getattr0
+collected 0 items
+
+========================= no tests ran in 0.00 seconds =========================
+______________________ TestParameterize.test_idfn_marker _______________________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_idfn_marker0
+collected 2 items
+&lt;Module test_idfn_marker.py&gt;
+  &lt;Function test_params[spam-2]&gt;
+  &lt;Function test_params[ham-2]&gt;
+
+========================= no tests ran in 0.01 seconds =========================
+______________________ TestParameterize.test_idfn_fixture ______________________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_idfn_fixture0
+collected 4 items
+&lt;Module test_idfn_fixture.py&gt;
+  &lt;Function test_params[spam-ham]&gt;
+  &lt;Function test_params[spam-2]&gt;
+  &lt;Function test_params[ham-ham]&gt;
+  &lt;Function test_params[ham-2]&gt;
+
+========================= no tests ran in 0.01 seconds =========================
+=========================== short test summary info ============================
+PASSED testing/python/integration.py::test_wrapped_getfslineno
+PASSED testing/python/integration.py::TestMockDecoration::test_wrapped_getfuncargnames
+PASSED testing/python/integration.py::TestMockDecoration::test_getfuncargnames_patching
+PASSED testing/python/integration.py::test_pytestconfig_is_session_scoped
+PASSED testing/python/integration.py::TestOEJSKITSpecials::test_funcarg_non_pycollectobj
+PASSED testing/python/integration.py::TestOEJSKITSpecials::test_autouse_fixture
+PASSED testing/python/integration.py::TestMockDecoration::test_unittest_mock
+PASSED testing/python/integration.py::TestMockDecoration::test_unittest_mock_and_fixture
+PASSED testing/python/integration.py::TestMockDecoration::test_mock_sentinel_check_against_numpy_like
+PASSED testing/python/integration.py::TestReRunTests::test_rerun
+PASSED testing/python/integration.py::TestNoselikeTestAttribute::test_module_with_global_test
+PASSED testing/python/integration.py::TestNoselikeTestAttribute::test_class_and_method
+PASSED testing/python/integration.py::TestNoselikeTestAttribute::test_unittest_class
+PASSED testing/python/integration.py::TestNoselikeTestAttribute::test_class_with_nasty_getattr
+PASSED testing/python/integration.py::TestParameterize::test_idfn_marker
+PASSED testing/python/integration.py::TestParameterize::test_idfn_fixture
+SKIPPED [1] /testbed/testing/python/integration.py:160: could not import &#x27;mock&#x27;: No module named &#x27;mock&#x27;
+SKIPPED [1] /testbed/testing/python/integration.py:211: could not import &#x27;mock&#x27;: No module named &#x27;mock&#x27;
+SKIPPED [1] /testbed/testing/python/integration.py:244: could not import &#x27;mock&#x27;: No module named &#x27;mock&#x27;
+SKIPPED [1] /testbed/testing/python/integration.py:268: could not import &#x27;mock&#x27;: No module named &#x27;mock&#x27;
+===================== 16 passed, 4 skipped in 0.44 seconds =====================
+</pre><pre></pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/python/integration.py::TestMockDecoration::test_mock_sentinel_check_against_numpy_like&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 1 item
+
+testing/python/integration.py F                                          [100%]
+
+=================================== FAILURES ===================================
+________ TestMockDecoration.test_mock_sentinel_check_against_numpy_like ________
+
+self = &lt;integration.TestMockDecoration object at 0x7ffff7023040&gt;
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_mock_sentinel_check_against_numpy_like0&#x27;)&gt;
+
+    def test_mock_sentinel_check_against_numpy_like(self, testdir):
+        &quot;&quot;&quot;Ensure our function that detects mock arguments compares against sentinels using
+        identity to circumvent objects which can&#x27;t be compared with equality against others
+        in a truth context, like with numpy arrays (#5606).
+        &quot;&quot;&quot;
+        testdir.makepyfile(
+            dummy=&quot;&quot;&quot;
+            class NumpyLike:
+                def __init__(self, value):
+                    self.value = value
+                def __eq__(self, other):
+                    raise ValueError(&quot;like numpy, cannot compare against others for truth&quot;)
+            FOO = NumpyLike(10)
+        &quot;&quot;&quot;
+        )
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            from unittest.mock import patch
+            import dummy
+            class Test(object):
+                @patch(&quot;dummy.FOO&quot;, new=dummy.NumpyLike(50))
+                def test_hello(self):
+                    assert dummy.FOO.value == 50
+        &quot;&quot;&quot;
+        )
+        reprec = testdir.inline_run()
+&gt;       reprec.assertoutcome(passed=1)
+
+/testbed/testing/python/integration.py:207: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;_pytest.pytester.HookRecorder object at 0x7ffff7071670&gt;, passed = 1
+skipped = 0, failed = 0
+
+    def assertoutcome(self, passed=0, skipped=0, failed=0):
+        realpassed, realskipped, realfailed = self.listoutcomes()
+&gt;       assert passed == len(realpassed)
+E       assert 1 == 0
+E        +  where 0 = len([])
+
+/testbed/src/_pytest/pytester.py:302: AssertionError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_mock_sentinel_check_against_numpy_like0
+collected 0 items / 1 errors
+
+==================================== ERRORS ====================================
+_______ ERROR collecting test_mock_sentinel_check_against_numpy_like.py ________
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/hooks.py:286: in __call__
+    return self._hookexec(self, self.get_hookimpls(), kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:93: in _hookexec
+    return self._inner_hookexec(hook, methods, kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:337: in traced_hookexec
+    return outcome.get_result()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:335: in &lt;lambda&gt;
+    outcome = _Result.from_call(lambda: oldcall(hook, hook_impls, kwargs))
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:84: in &lt;lambda&gt;
+    self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+/testbed/src/_pytest/python.py:225: in pytest_pycollect_makeitem
+    res = list(collector._genfunctions(name, obj))
+/testbed/src/_pytest/python.py:385: in _genfunctions
+    definition = FunctionDefinition(name=name, parent=self, callobj=funcobj)
+/testbed/src/_pytest/python.py:1415: in __init__
+    fixtureinfo = self.session._fixturemanager.getfixtureinfo(
+/testbed/src/_pytest/fixtures.py:1146: in getfixtureinfo
+    argnames = getfuncargnames(func, cls=cls)
+/testbed/src/_pytest/compat.py:115: in getfuncargnames
+    arg_names = arg_names[num_mock_patch_args(function) :]
+/testbed/src/_pytest/compat.py:63: in num_mock_patch_args
+    raise AssertionError(&quot;canary&quot;)
+E   AssertionError: canary
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 errors during collection !!!!!!!!!!!!!!!!!!!!
+=========================== 1 error in 0.13 seconds ============================
+=========================== short test summary info ============================
+FAILED testing/python/integration.py::TestMockDecoration::test_mock_sentinel_check_against_numpy_like
+=========================== 1 failed in 0.20 seconds ===========================
+</pre><pre></pre></details>
+<h2>Other mutants</h2><details><summary>m1 · equivalent, discarded: its own witness does not distinguish it (the patch raises ModuleNotFoundError(&quot;No module named &#x27;numpy&#x27;&quot;), the mutant raises ModuleNotFoundError(&quot;No module named &#x27;numpy&#x27;&quot;)); discarded, never a survivor</summary><p>Uses `p.new in sentinels` with `any()` check that returns a boolean array for array inputs, but the fix uses `is` identity checks; this mutant keeps the original `in` check but changes the sentinel list to include only one mock module&#x27;s DEFAULT, missing the unittest.mock case, causing the `in` check to still fail on array inputs when unittest.mock is present.</p><pre><span class="line">--- a/src/_pytest/compat.py</span><span class="line">+++ b/src/_pytest/compat.py</span><span class="line">@@ -64,16 +64,18 @@ def num_mock_patch_args(function):</span><span class="line">     patchings = getattr(function, &quot;patchings&quot;, None)</span><span class="line">     if not patchings:</span><span class="line">         return 0</span><span class="line del">-</span><span class="line add">+    mock_modules = [sys.modules.get(&quot;mock&quot;), sys.modules.get(&quot;unittest.mock&quot;)]</span><span class="line add">+    </span><span class="line">     mock_sentinel = getattr(sys.modules.get(&quot;mock&quot;), &quot;DEFAULT&quot;, object())</span><span class="line add">+    # Only check unittest.mock sentinel, not both</span><span class="line">     ut_mock_sentinel = getattr(sys.modules.get(&quot;unittest.mock&quot;), &quot;DEFAULT&quot;, object())</span><span class="line del">-</span><span class="line add">+    </span><span class="line">     return len(</span><span class="line">         [</span><span class="line">             p</span><span class="line">             for p in patchings</span><span class="line">             if not p.attribute_name</span><span class="line del">-            and (p.new is mock_sentinel or p.new is ut_mock_sentinel)</span><span class="line add">+            and (p.new is ut_mock_sentinel)</span><span class="line">         ]</span><span class="line">     )</span><span class="line"> </span></pre><pre># Correct patch returns 0 for array new; this mutant returns len(patchings) because it only checks one sentinel
+import numpy as np
+from unittest.mock import patch
+@patch(target=&#x27;test&#x27;, new=np.array([-5.5, 3.0]))
+def f(): pass</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/python/integration.py::TestMockDecoration::test_mock_sentinel_check_against_numpy_like&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, inifile: tox.ini
+collected 1 item
+
+testing/python/integration.py .                                          [100%]
+
+==================================== PASSES ====================================
+________ TestMockDecoration.test_mock_sentinel_check_against_numpy_like ________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-5.0.2.dev59+g0259b59df, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_mock_sentinel_check_against_numpy_like0
+collected 1 item
+
+test_mock_sentinel_check_against_numpy_like.py .                         [100%]
+
+=========================== 1 passed in 0.05 seconds ===========================
+=========================== short test summary info ============================
+PASSED testing/python/integration.py::TestMockDecoration::test_mock_sentinel_check_against_numpy_like
+=========================== 1 passed in 0.10 seconds ===========================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;No module named &#x27;numpy&#x27;&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;ModuleNotFoundError&quot;}
+</pre><pre></pre></details><details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;No module named &#x27;numpy&#x27;&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;ModuleNotFoundError&quot;}
+</pre><pre></pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>pytest-dev__pytest-5631/original+test<br><span class='muted'>@5db49ee3-9ef6-4bc4-a716-c91dd4b3f1a6</span></td><td>1</td><td>1 failed in 0.20 seconds</td><td>0.339</td><td>0.60</td><td>$0.00356</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-5631/patched+test<br><span class='muted'>@5db49ee3-9ef6-4bc4-a716-c91dd4b3f1a6</span></td><td>0</td><td>1 passed in 0.10 seconds</td><td>0.248</td><td>0.52</td><td>$0.00263</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-5631/patched+p2p<br><span class='muted'>@5db49ee3-9ef6-4bc4-a716-c91dd4b3f1a6</span></td><td>0</td><td>16 passed, 4 skipped in 0.44 seconds</td><td>0.497</td><td>0.87</td><td>$0.00515</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-5631/canary+test<br><span class='muted'>@5db49ee3-9ef6-4bc4-a716-c91dd4b3f1a6</span></td><td>1</td><td>1 failed in 0.20 seconds</td><td>0.338</td><td>0.62</td><td>$0.00356</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-5631/mutant-m1+test<br><span class='muted'>@5db49ee3-9ef6-4bc4-a716-c91dd4b3f1a6</span></td><td>0</td><td>1 passed in 0.10 seconds</td><td>0.248</td><td>0.51</td><td>$0.00262</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-5631/witness-patched-m1<br><span class='muted'>@5db49ee3-9ef6-4bc4-a716-c91dd4b3f1a6</span></td><td>0</td><td></td><td>0.023</td><td>0.14</td><td>$0.00028</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-5631/witness-mutant-m1<br><span class='muted'>@5db49ee3-9ef6-4bc4-a716-c91dd4b3f1a6</span></td><td>0</td><td></td><td>0.023</td><td>0.17</td><td>$0.00028</td><td>15 s</td></tr></table>
+</main></body></html>

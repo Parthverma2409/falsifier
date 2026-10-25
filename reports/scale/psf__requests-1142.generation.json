@@ -1,0 +1,793 @@
+{
+  "asked": 50,
+  "returned": 0,
+  "usd": 0.014685,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 50,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 3,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 4,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 5,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 10,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 13,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 14,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 15,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 16,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 17,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 18,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 19,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 20,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 21,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 22,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 23,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 24,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 25,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 26,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 27,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 28,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 29,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 30,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 31,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 32,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 33,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 34,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 35,
+          "kind": "too-narrow",
+          "reason": "touches files outside ['requests/models.py']: ['requests/models.py', 'requestsmodels.py']"
+        },
+        {
+          "mutant": 36,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 37,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 38,
+          "kind": "wrong-condition",
+          "reason": "touches files outside ['requests/models.py']: ['requests/models.py', 'requestsmodels.py']"
+        },
+        {
+          "mutant": 39,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 40,
+          "kind": "silences-symptom",
+          "reason": "touches files outside ['requests/models.py']: ['requests/models.py', 'requestsmodels.py']"
+        },
+        {
+          "mutant": 41,
+          "kind": "off-by-one",
+          "reason": "touches files outside ['requests/models.py']: ['requests/models.py', 'requestsmodels.py']"
+        },
+        {
+          "mutant": 42,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 43,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 44,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 45,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 46,
+          "kind": "wrong-condition",
+          "reason": "touches files outside ['requests/models.py']: ['requests/models.py', 'requestsmodels.py']"
+        },
+        {
+          "mutant": 47,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 48,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:390\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 49,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 50,
+          "kind": "wrong-condition",
+          "reason": "touches files outside ['requests/models.py']: ['requests/models.py', 'requestsmodels.py']"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 50,
+      "parsed": 50,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 3,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 4,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 5,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 10,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 13,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 14,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 15,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 16,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 17,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 18,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 19,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 20,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 21,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 22,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 23,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 24,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 25,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 26,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 27,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 28,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 29,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 30,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 31,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 32,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 33,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 34,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 35,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 36,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 37,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 38,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 39,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 40,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 41,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 42,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 43,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 44,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 45,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 46,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 47,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 48,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 49,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 50,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 2,
+      "asked": 50,
+      "parsed": 50,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 3,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 4,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 5,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 10,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 13,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 14,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 15,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 16,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 17,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 18,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 19,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 20,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 21,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 22,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 23,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 24,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 25,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 26,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 27,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 28,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 29,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 30,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 31,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 32,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 33,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 34,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 35,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 36,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 37,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 38,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 39,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 40,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 41,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 42,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 43,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 44,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 45,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 46,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 47,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 48,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 49,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 50,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:386\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        }
+      ]
+    }
+  ]
+}

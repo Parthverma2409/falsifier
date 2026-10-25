@@ -63,7 +63,8 @@ class RunRecord:
 # Reading pytest and witness output. Classification only; no judgement about the code.
 
 PASS, FAIL, ERROR = "PASS", "FAIL", "ERROR"
-_SUMMARY = re.compile(r"^=+ (.*\bin [\d.]+s.*?) =+\s*$", re.M)
+_SUMMARY = re.compile(r"^=+ (.*\bin [\d.]+ ?s(?:econds)?\b.*?) =+\s*$", re.M)
+"""pytest >= 5 ends with `in 0.12s`; pytest 4.x (pytest-5262's own repo) with `in 0.12 seconds`."""
 _COUNT = re.compile(
     r"(\d+) (passed|failed|errors?|skipped|xfailed|xpassed|deselected|warnings?|no tests ran)"
 )

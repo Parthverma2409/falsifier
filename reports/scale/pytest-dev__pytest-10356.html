@@ -1,0 +1,1703 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · pytest-dev__pytest-10356</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>pytest-dev__pytest-10356</h1>
+<p class="muted">Consider MRO when obtaining marks for classes When using pytest markers in two baseclasses `Foo` and `Bar`, inheriting from both of those baseclasses will lose the markers of one of those classes. …</p><details><summary>Full issue</summary><pre>Consider MRO when obtaining marks for classes
+When using pytest markers in two baseclasses `Foo` and `Bar`, inheriting from both of those baseclasses will lose the markers of one of those classes. This behavior is present in pytest 3-6, and I think it may as well have been intended. I am still filing it as a bug because I am not sure if this edge case was ever explicitly considered.
+
+If it is widely understood that all markers are part of a single attribute, I guess you could say that this is just expected behavior as per MRO. However, I&#x27;d argue that it would be more intuitive to attempt to merge marker values into one, possibly deduplicating marker names by MRO.
+
+```python
+import itertools
+import pytest
+
+class BaseMeta(type):
+    @property
+    def pytestmark(self):
+        return (
+            getattr(self, &quot;_pytestmark&quot;, []) +
+            list(itertools.chain.from_iterable(getattr(x, &quot;_pytestmark&quot;, []) for x in self.__mro__))
+        )
+
+    @pytestmark.setter
+    def pytestmark(self, value):
+        self._pytestmark = value
+
+
+class Base(object):
+    # Without this metaclass, foo and bar markers override each other, and test_dings
+    # will only have one marker
+    # With the metaclass, test_dings will have both
+    __metaclass__ = BaseMeta
+
+@pytest.mark.foo
+class Foo(Base):
+    pass
+
+
+@pytest.mark.bar
+class Bar(Base):
+    pass
+
+class TestDings(Foo, Bar):
+    def test_dings(self):
+        # This test should have both markers, foo and bar.
+        # In practice markers are resolved using MRO (so foo wins), unless the
+        # metaclass is applied
+        pass
+```
+
+I&#x27;d expect `foo` and `bar` to be markers for `test_dings`, but this only actually is the case with this metaclass.
+
+Please note that the repro case is Python 2/3 compatible excluding how metaclasses are added to `Base` (this needs to be taken care of to repro this issue on pytest 6)
+Consider MRO when obtaining marks for classes
+When using pytest markers in two baseclasses `Foo` and `Bar`, inheriting from both of those baseclasses will lose the markers of one of those classes. This behavior is present in pytest 3-6, and I think it may as well have been intended. I am still filing it as a bug because I am not sure if this edge case was ever explicitly considered.
+
+If it is widely understood that all markers are part of a single attribute, I guess you could say that this is just expected behavior as per MRO. However, I&#x27;d argue that it would be more intuitive to attempt to merge marker values into one, possibly deduplicating marker names by MRO.
+
+```python
+import itertools
+import pytest
+
+class BaseMeta(type):
+    @property
+    def pytestmark(self):
+        return (
+            getattr(self, &quot;_pytestmark&quot;, []) +
+            list(itertools.chain.from_iterable(getattr(x, &quot;_pytestmark&quot;, []) for x in self.__mro__))
+        )
+
+    @pytestmark.setter
+    def pytestmark(self, value):
+        self._pytestmark = value
+
+
+class Base(object):
+    # Without this metaclass, foo and bar markers override each other, and test_dings
+    # will only have one marker
+    # With the metaclass, test_dings will have both
+    __metaclass__ = BaseMeta
+
+@pytest.mark.foo
+class Foo(Base):
+    pass
+
+
+@pytest.mark.bar
+class Bar(Base):
+    pass
+
+class TestDings(Foo, Bar):
+    def test_dings(self):
+        # This test should have both markers, foo and bar.
+        # In practice markers are resolved using MRO (so foo wins), unless the
+        # metaclass is applied
+        pass
+```
+
+I&#x27;d expect `foo` and `bar` to be markers for `test_dings`, but this only actually is the case with this metaclass.
+
+Please note that the repro case is Python 2/3 compatible excluding how metaclasses are added to `Base` (this needs to be taken care of to repro this issue on pytest 6)
+Fix missing marks when inheritance from multiple classes
+
+&lt;!--
+Thanks for submitting a PR, your contribution is really appreciated!
+
+Here is a quick checklist that should be present in PRs.
+
+- [] Include documentation when adding new features.
+- [ ] Include new tests or update existing tests when applicable.
+- [X] Allow maintainers to push and squash when merging my commits. Please uncheck this if you prefer to squash the commits yourself.
+
+If this change fixes an issue, please:
+
+- [x] Add text like ``closes #XYZW`` to the PR description and/or commits (where ``XYZW`` is the issue number). See the [github docs](https://help.github.com/en/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) for more information.
+
+Unless your change is trivial or a small documentation fix (e.g., a typo or reword of a small section) please:
+
+- [x] Create a new changelog file in the `changelog` folder, with a name like `&lt;ISSUE NUMBER&gt;.&lt;TYPE&gt;.rst`. See [changelog/README.rst](https://github.com/pytest-dev/pytest/blob/main/changelog/README.rst) for details.
+
+  Write sentences in the **past or present tense**, examples:
+
+  * *Improved verbose diff output with sequences.*
+  * *Terminal summary statistics now use multiple colors.*
+
+  Also make sure to end the sentence with a `.`.
+
+- [x] Add yourself to `AUTHORS` in alphabetical order.
+--&gt;
+
+</pre></details>
+
+<div class="verdict INCONCLUSIVE">INCONCLUSIVE</div>
+
+<p>SWE-bench says <b>RESOLVED</b> · benchmark oracle: the repository's own FAIL_TO_PASS tests (1)</p>
+<p><b>Negative control (canary): exit 4 · <span class="ok">live</span> · the canary failed the test (exit 4, 1 error in 0.11s; the canary&#x27;s AssertionError is in the log)</b></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.11s) and passes on the patch (exit 0, 1 passed in 0.08s); all 79 PASS_TO_PASS tests PASSED, but 5 mutant fork(s) did not run cleanly</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint b0c7355b-6034-4f77-9d9b-06bf67d43cd7 ·
+9 forks · 4.33 CPU-s · $0.0447 · 2026-10-25T18:56:29+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · silences-symptom<br><span class="status error">did not run cleanly</span><br><span class="muted">The mutant catches `AttributeError` when accessing `pytestmark` and returns an empty list, silently dropping all marks instead of fixing the root cause. With `TestDings(Foo, Bar)` where markers should merge, the mutant returns no marks at all, making the error &quot;disappear&quot; by hiding it.</span></div><div class="card"><b>m2</b> · too-narrow<br><span class="status error">did not run cleanly</span><br><span class="muted">The mutant only handles the case where `pytestmark` is a list with exactly one element, returning it directly. If `pytestmark` is a tuple or has multiple elements, the mutant wraps it incorrectly. With `class Foo` having `pytestmark = (&#x27;mark1&#x27;, &#x27;mark2&#x27;)` (a tuple of two marks), the mutant returns the tuple as-is instead of a list.</span></div><div class="card"><b>m3</b> · silences-symptom<br><span class="status error">did not run cleanly</span><br><span class="muted">The mutant returns `[&#x27;untitled&#x27;]` as a default mark when `pytestmark` is missing, silently assuming a default mark exists instead of letting the error propagate. With tests that rely on specific markers, the mutant masks the absence of markers by injecting a placeholder.</span></div><div class="card"><b>m4</b> · wrong-condition<br><span class="status error">did not run cleanly</span><br><span class="muted">The mutant checks `if mark_list:` instead of `if not mark_list:`, inverting the logic so it returns marks only when the object has NO marks. With a plain class having no markers, the mutant incorrectly returns the mark list instead of empty list.</span></div><div class="card"><b>m5</b> · silences-symptom<br><span class="status error">did not run cleanly</span><br><span class="muted">The mutant wraps the entire body in a try-except that catches `TypeError` instead of `AttributeError`, so when `normalize_mark_list` raises `TypeError` for invalid marks, it silently returns an empty list instead of propagating the error. With malformed mark data, the mutant hides the type error.</span></div></div>
+
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.11s · 0.291 CPU-s · 0.57 s · $0.00307<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.08s · 0.278 CPU-s · 0.54 s · $0.00293<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 89 passed, 1 xfailed in 2.29s · 1.943 CPU-s · 2.79 s · $0.01963<br>
+canary + test: <b>ERROR</b>: exit 4, 1 error in 0.11s · 0.300 CPU-s · 0.60 s · $0.00316</p>
+<details><summary>The canary mutant</summary><pre><span class="line">--- a/src/_pytest/mark/structures.py</span><span class="line">+++ b/src/_pytest/mark/structures.py</span><span class="line">@@ -404,14 +404,7 @@ def normalize_mark_list(</span><span class="line"> </span><span class="line"> </span><span class="line"> def store_mark(obj, mark: Mark) -&gt; None:</span><span class="line del">-    &quot;&quot;&quot;Store a Mark on an object.</span><span class="line del">-</span><span class="line del">-    This is used to implement the Mark declarations/decorators correctly.</span><span class="line del">-    &quot;&quot;&quot;</span><span class="line del">-    assert isinstance(mark, Mark), mark</span><span class="line del">-    # Always reassign name to avoid updating pytestmark in a reference that</span><span class="line del">-    # was only borrowed.</span><span class="line del">-    obj.pytestmark = [*get_unpacked_marks(obj, consider_mro=False), mark]</span><span class="line add">+    raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line"> </span><span class="line"> # Typing for builtin pytest marks. This is cheating; it gives builtin marks</span></pre></details>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">diff --git a/src/_pytest/mark/structures.py b/src/_pytest/mark/structures.py</span><span class="line">--- a/src/_pytest/mark/structures.py</span><span class="line">+++ b/src/_pytest/mark/structures.py</span><span class="line">@@ -355,12 +355,35 @@ def __call__(self, *args: object, **kwargs: object):</span><span class="line">         return self.with_args(*args, **kwargs)</span><span class="line"> </span><span class="line"> </span><span class="line del">-def get_unpacked_marks(obj: object) -&gt; Iterable[Mark]:</span><span class="line del">-    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.&quot;&quot;&quot;</span><span class="line del">-    mark_list = getattr(obj, &quot;pytestmark&quot;, [])</span><span class="line del">-    if not isinstance(mark_list, list):</span><span class="line del">-        mark_list = [mark_list]</span><span class="line del">-    return normalize_mark_list(mark_list)</span><span class="line add">+def get_unpacked_marks(</span><span class="line add">+    obj: Union[object, type],</span><span class="line add">+    *,</span><span class="line add">+    consider_mro: bool = True,</span><span class="line add">+) -&gt; List[Mark]:</span><span class="line add">+    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.</span><span class="line add">+</span><span class="line add">+    If obj is a class and consider_mro is true, return marks applied to</span><span class="line add">+    this class and all of its super-classes in MRO order. If consider_mro</span><span class="line add">+    is false, only return marks applied directly to this class.</span><span class="line add">+    &quot;&quot;&quot;</span><span class="line add">+    if isinstance(obj, type):</span><span class="line add">+        if not consider_mro:</span><span class="line add">+            mark_lists = [obj.__dict__.get(&quot;pytestmark&quot;, [])]</span><span class="line add">+        else:</span><span class="line add">+            mark_lists = [x.__dict__.get(&quot;pytestmark&quot;, []) for x in obj.__mro__]</span><span class="line add">+        mark_list = []</span><span class="line add">+        for item in mark_lists:</span><span class="line add">+            if isinstance(item, list):</span><span class="line add">+                mark_list.extend(item)</span><span class="line add">+            else:</span><span class="line add">+                mark_list.append(item)</span><span class="line add">+    else:</span><span class="line add">+        mark_attribute = getattr(obj, &quot;pytestmark&quot;, [])</span><span class="line add">+        if isinstance(mark_attribute, list):</span><span class="line add">+            mark_list = mark_attribute</span><span class="line add">+        else:</span><span class="line add">+            mark_list = [mark_attribute]</span><span class="line add">+    return list(normalize_mark_list(mark_list))</span><span class="line"> </span><span class="line"> </span><span class="line"> def normalize_mark_list(</span><span class="line">@@ -388,7 +411,7 @@ def store_mark(obj, mark: Mark) -&gt; None:</span><span class="line">     assert isinstance(mark, Mark), mark</span><span class="line">     # Always reassign name to avoid updating pytestmark in a reference that</span><span class="line">     # was only borrowed.</span><span class="line del">-    obj.pytestmark = [*get_unpacked_marks(obj), mark]</span><span class="line add">+    obj.pytestmark = [*get_unpacked_marks(obj, consider_mro=False), mark]</span><span class="line"> </span><span class="line"> </span><span class="line"> # Typing for builtin pytest marks. This is cheating; it gives builtin marks</span></pre></div>
+<div><h3>The test</h3><pre>import os
+import sys
+from typing import List
+from typing import Optional
+from unittest import mock
+
+import pytest
+from _pytest.config import ExitCode
+from _pytest.mark import MarkGenerator
+from _pytest.mark.structures import EMPTY_PARAMETERSET_OPTION
+from _pytest.nodes import Collector
+from _pytest.nodes import Node
+from _pytest.pytester import Pytester
+
+
+class TestMark:
+    @pytest.mark.parametrize(&quot;attr&quot;, [&quot;mark&quot;, &quot;param&quot;])
+    def test_pytest_exists_in_namespace_all(self, attr: str) -&gt; None:
+        module = sys.modules[&quot;pytest&quot;]
+        assert attr in module.__all__  # type: ignore
+
+    def test_pytest_mark_notcallable(self) -&gt; None:
+        mark = MarkGenerator(_ispytest=True)
+        with pytest.raises(TypeError):
+            mark()  # type: ignore[operator]
+
+    def test_mark_with_param(self):
+        def some_function(abc):
+            pass
+
+        class SomeClass:
+            pass
+
+        assert pytest.mark.foo(some_function) is some_function
+        marked_with_args = pytest.mark.foo.with_args(some_function)
+        assert marked_with_args is not some_function  # type: ignore[comparison-overlap]
+
+        assert pytest.mark.foo(SomeClass) is SomeClass
+        assert pytest.mark.foo.with_args(SomeClass) is not SomeClass  # type: ignore[comparison-overlap]
+
+    def test_pytest_mark_name_starts_with_underscore(self) -&gt; None:
+        mark = MarkGenerator(_ispytest=True)
+        with pytest.raises(AttributeError):
+            mark._some_name
+
+
+def test_marked_class_run_twice(pytester: Pytester) -&gt; None:
+    &quot;&quot;&quot;Test fails file is run twice that contains marked class.
+    See issue#683.
+    &quot;&quot;&quot;
+    py_file = pytester.makepyfile(
+        &quot;&quot;&quot;
+    import pytest
+    @pytest.mark.parametrize(&#x27;abc&#x27;, [1, 2, 3])
+    class Test1(object):
+        def test_1(self, abc):
+            assert abc in [1, 2, 3]
+    &quot;&quot;&quot;
+    )
+    file_name = os.path.basename(py_file)
+    rec = pytester.inline_run(file_name, file_name)
+    rec.assertoutcome(passed=6)
+
+
+def test_ini_markers(pytester: Pytester) -&gt; None:
+    pytester.makeini(
+        &quot;&quot;&quot;
+        [pytest]
+        markers =
+            a1: this is a webtest marker
+            a2: this is a smoke marker
+    &quot;&quot;&quot;
+    )
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+        def test_markers(pytestconfig):
+            markers = pytestconfig.getini(&quot;markers&quot;)
+            print(markers)
+            assert len(markers) &gt;= 2
+            assert markers[0].startswith(&quot;a1:&quot;)
+            assert markers[1].startswith(&quot;a2:&quot;)
+    &quot;&quot;&quot;
+    )
+    rec = pytester.inline_run()
+    rec.assertoutcome(passed=1)
+
+
+def test_markers_option(pytester: Pytester) -&gt; None:
+    pytester.makeini(
+        &quot;&quot;&quot;
+        [pytest]
+        markers =
+            a1: this is a webtest marker
+            a1some: another marker
+            nodescription
+    &quot;&quot;&quot;
+    )
+    result = pytester.runpytest(&quot;--markers&quot;)
+    result.stdout.fnmatch_lines(
+        [&quot;*a1*this is a webtest*&quot;, &quot;*a1some*another marker&quot;, &quot;*nodescription*&quot;]
+    )
+
+
+def test_ini_markers_whitespace(pytester: Pytester) -&gt; None:
+    pytester.makeini(
+        &quot;&quot;&quot;
+        [pytest]
+        markers =
+            a1 : this is a whitespace marker
+    &quot;&quot;&quot;
+    )
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+
+        @pytest.mark.a1
+        def test_markers():
+            assert True
+    &quot;&quot;&quot;
+    )
+    rec = pytester.inline_run(&quot;--strict-markers&quot;, &quot;-m&quot;, &quot;a1&quot;)
+    rec.assertoutcome(passed=1)
+
+
+def test_marker_without_description(pytester: Pytester) -&gt; None:
+    pytester.makefile(
+        &quot;.cfg&quot;,
+        setup=&quot;&quot;&quot;
+        [tool:pytest]
+        markers=slow
+    &quot;&quot;&quot;,
+    )
+    pytester.makeconftest(
+        &quot;&quot;&quot;
+        import pytest
+        pytest.mark.xfail(&#x27;FAIL&#x27;)
+    &quot;&quot;&quot;
+    )
+    ftdir = pytester.mkdir(&quot;ft1_dummy&quot;)
+    pytester.path.joinpath(&quot;conftest.py&quot;).replace(ftdir.joinpath(&quot;conftest.py&quot;))
+    rec = pytester.runpytest(&quot;--strict-markers&quot;)
+    rec.assert_outcomes()
+
+
+def test_markers_option_with_plugin_in_current_dir(pytester: Pytester) -&gt; None:
+    pytester.makeconftest(&#x27;pytest_plugins = &quot;flip_flop&quot;&#x27;)
+    pytester.makepyfile(
+        flip_flop=&quot;&quot;&quot;\
+        def pytest_configure(config):
+            config.addinivalue_line(&quot;markers&quot;, &quot;flip:flop&quot;)
+
+        def pytest_generate_tests(metafunc):
+            try:
+                mark = metafunc.function.flipper
+            except AttributeError:
+                return
+            metafunc.parametrize(&quot;x&quot;, (10, 20))&quot;&quot;&quot;
+    )
+    pytester.makepyfile(
+        &quot;&quot;&quot;\
+        import pytest
+        @pytest.mark.flipper
+        def test_example(x):
+            assert x&quot;&quot;&quot;
+    )
+
+    result = pytester.runpytest(&quot;--markers&quot;)
+    result.stdout.fnmatch_lines([&quot;*flip*flop*&quot;])
+
+
+def test_mark_on_pseudo_function(pytester: Pytester) -&gt; None:
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+
+        @pytest.mark.r(lambda x: 0/0)
+        def test_hello():
+            pass
+    &quot;&quot;&quot;
+    )
+    reprec = pytester.inline_run()
+    reprec.assertoutcome(passed=1)
+
+
+@pytest.mark.parametrize(&quot;option_name&quot;, [&quot;--strict-markers&quot;, &quot;--strict&quot;])
+def test_strict_prohibits_unregistered_markers(
+    pytester: Pytester, option_name: str
+) -&gt; None:
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        @pytest.mark.unregisteredmark
+        def test_hello():
+            pass
+    &quot;&quot;&quot;
+    )
+    result = pytester.runpytest(option_name)
+    assert result.ret != 0
+    result.stdout.fnmatch_lines(
+        [&quot;&#x27;unregisteredmark&#x27; not found in `markers` configuration option&quot;]
+    )
+
+
+@pytest.mark.parametrize(
+    (&quot;expr&quot;, &quot;expected_passed&quot;),
+    [
+        (&quot;xyz&quot;, [&quot;test_one&quot;]),
+        (&quot;(((  xyz))  )&quot;, [&quot;test_one&quot;]),
+        (&quot;not not xyz&quot;, [&quot;test_one&quot;]),
+        (&quot;xyz and xyz2&quot;, []),
+        (&quot;xyz2&quot;, [&quot;test_two&quot;]),
+        (&quot;xyz or xyz2&quot;, [&quot;test_one&quot;, &quot;test_two&quot;]),
+    ],
+)
+def test_mark_option(
+    expr: str, expected_passed: List[Optional[str]], pytester: Pytester
+) -&gt; None:
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        @pytest.mark.xyz
+        def test_one():
+            pass
+        @pytest.mark.xyz2
+        def test_two():
+            pass
+    &quot;&quot;&quot;
+    )
+    rec = pytester.inline_run(&quot;-m&quot;, expr)
+    passed, skipped, fail = rec.listoutcomes()
+    passed_str = [x.nodeid.split(&quot;::&quot;)[-1] for x in passed]
+    assert passed_str == expected_passed
+
+
+@pytest.mark.parametrize(
+    (&quot;expr&quot;, &quot;expected_passed&quot;),
+    [(&quot;interface&quot;, [&quot;test_interface&quot;]), (&quot;not interface&quot;, [&quot;test_nointer&quot;])],
+)
+def test_mark_option_custom(
+    expr: str, expected_passed: List[str], pytester: Pytester
+) -&gt; None:
+    pytester.makeconftest(
+        &quot;&quot;&quot;
+        import pytest
+        def pytest_collection_modifyitems(items):
+            for item in items:
+                if &quot;interface&quot; in item.nodeid:
+                    item.add_marker(pytest.mark.interface)
+    &quot;&quot;&quot;
+    )
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+        def test_interface():
+            pass
+        def test_nointer():
+            pass
+    &quot;&quot;&quot;
+    )
+    rec = pytester.inline_run(&quot;-m&quot;, expr)
+    passed, skipped, fail = rec.listoutcomes()
+    passed_str = [x.nodeid.split(&quot;::&quot;)[-1] for x in passed]
+    assert passed_str == expected_passed
+
+
+@pytest.mark.parametrize(
+    (&quot;expr&quot;, &quot;expected_passed&quot;),
+    [
+        (&quot;interface&quot;, [&quot;test_interface&quot;]),
+        (&quot;not interface&quot;, [&quot;test_nointer&quot;, &quot;test_pass&quot;, &quot;test_1&quot;, &quot;test_2&quot;]),
+        (&quot;pass&quot;, [&quot;test_pass&quot;]),
+        (&quot;not pass&quot;, [&quot;test_interface&quot;, &quot;test_nointer&quot;, &quot;test_1&quot;, &quot;test_2&quot;]),
+        (&quot;not not not (pass)&quot;, [&quot;test_interface&quot;, &quot;test_nointer&quot;, &quot;test_1&quot;, &quot;test_2&quot;]),
+        (&quot;1 or 2&quot;, [&quot;test_1&quot;, &quot;test_2&quot;]),
+        (&quot;not (1 or 2)&quot;, [&quot;test_interface&quot;, &quot;test_nointer&quot;, &quot;test_pass&quot;]),
+    ],
+)
+def test_keyword_option_custom(
+    expr: str, expected_passed: List[str], pytester: Pytester
+) -&gt; None:
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+        def test_interface():
+            pass
+        def test_nointer():
+            pass
+        def test_pass():
+            pass
+        def test_1():
+            pass
+        def test_2():
+            pass
+    &quot;&quot;&quot;
+    )
+    rec = pytester.inline_run(&quot;-k&quot;, expr)
+    passed, skipped, fail = rec.listoutcomes()
+    passed_str = [x.nodeid.split(&quot;::&quot;)[-1] for x in passed]
+    assert passed_str == expected_passed
+
+
+def test_keyword_option_considers_mark(pytester: Pytester) -&gt; None:
+    pytester.copy_example(&quot;marks/marks_considered_keywords&quot;)
+    rec = pytester.inline_run(&quot;-k&quot;, &quot;foo&quot;)
+    passed = rec.listoutcomes()[0]
+    assert len(passed) == 1
+
+
+@pytest.mark.parametrize(
+    (&quot;expr&quot;, &quot;expected_passed&quot;),
+    [
+        (&quot;None&quot;, [&quot;test_func[None]&quot;]),
+        (&quot;[1.3]&quot;, [&quot;test_func[1.3]&quot;]),
+        (&quot;2-3&quot;, [&quot;test_func[2-3]&quot;]),
+    ],
+)
+def test_keyword_option_parametrize(
+    expr: str, expected_passed: List[str], pytester: Pytester
+) -&gt; None:
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        @pytest.mark.parametrize(&quot;arg&quot;, [None, 1.3, &quot;2-3&quot;])
+        def test_func(arg):
+            pass
+    &quot;&quot;&quot;
+    )
+    rec = pytester.inline_run(&quot;-k&quot;, expr)
+    passed, skipped, fail = rec.listoutcomes()
+    passed_str = [x.nodeid.split(&quot;::&quot;)[-1] for x in passed]
+    assert passed_str == expected_passed
+
+
+def test_parametrize_with_module(pytester: Pytester) -&gt; None:
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        @pytest.mark.parametrize(&quot;arg&quot;, [pytest,])
+        def test_func(arg):
+            pass
+    &quot;&quot;&quot;
+    )
+    rec = pytester.inline_run()
+    passed, skipped, fail = rec.listoutcomes()
+    expected_id = &quot;test_func[&quot; + pytest.__name__ + &quot;]&quot;
+    assert passed[0].nodeid.split(&quot;::&quot;)[-1] == expected_id
+
+
+@pytest.mark.parametrize(
+    (&quot;expr&quot;, &quot;expected_error&quot;),
+    [
+        (
+            &quot;foo or&quot;,
+            &quot;at column 7: expected not OR left parenthesis OR identifier; got end of input&quot;,
+        ),
+        (
+            &quot;foo or or&quot;,
+            &quot;at column 8: expected not OR left parenthesis OR identifier; got or&quot;,
+        ),
+        (
+            &quot;(foo&quot;,
+            &quot;at column 5: expected right parenthesis; got end of input&quot;,
+        ),
+        (
+            &quot;foo bar&quot;,
+            &quot;at column 5: expected end of input; got identifier&quot;,
+        ),
+        (
+            &quot;or or&quot;,
+            &quot;at column 1: expected not OR left parenthesis OR identifier; got or&quot;,
+        ),
+        (
+            &quot;not or&quot;,
+            &quot;at column 5: expected not OR left parenthesis OR identifier; got or&quot;,
+        ),
+    ],
+)
+def test_keyword_option_wrong_arguments(
+    expr: str, expected_error: str, pytester: Pytester, capsys
+) -&gt; None:
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+            def test_func(arg):
+                pass
+        &quot;&quot;&quot;
+    )
+    pytester.inline_run(&quot;-k&quot;, expr)
+    err = capsys.readouterr().err
+    assert expected_error in err
+
+
+def test_parametrized_collected_from_command_line(pytester: Pytester) -&gt; None:
+    &quot;&quot;&quot;Parametrized test not collected if test named specified in command
+    line issue#649.&quot;&quot;&quot;
+    py_file = pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        @pytest.mark.parametrize(&quot;arg&quot;, [None, 1.3, &quot;2-3&quot;])
+        def test_func(arg):
+            pass
+    &quot;&quot;&quot;
+    )
+    file_name = os.path.basename(py_file)
+    rec = pytester.inline_run(file_name + &quot;::&quot; + &quot;test_func&quot;)
+    rec.assertoutcome(passed=3)
+
+
+def test_parametrized_collect_with_wrong_args(pytester: Pytester) -&gt; None:
+    &quot;&quot;&quot;Test collect parametrized func with wrong number of args.&quot;&quot;&quot;
+    py_file = pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+
+        @pytest.mark.parametrize(&#x27;foo, bar&#x27;, [(1, 2, 3)])
+        def test_func(foo, bar):
+            pass
+    &quot;&quot;&quot;
+    )
+
+    result = pytester.runpytest(py_file)
+    result.stdout.fnmatch_lines(
+        [
+            &#x27;test_parametrized_collect_with_wrong_args.py::test_func: in &quot;parametrize&quot; the number of names (2):&#x27;,
+            &quot;  [&#x27;foo&#x27;, &#x27;bar&#x27;]&quot;,
+            &quot;must be equal to the number of values (3):&quot;,
+            &quot;  (1, 2, 3)&quot;,
+        ]
+    )
+
+
+def test_parametrized_with_kwargs(pytester: Pytester) -&gt; None:
+    &quot;&quot;&quot;Test collect parametrized func with wrong number of args.&quot;&quot;&quot;
+    py_file = pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+
+        @pytest.fixture(params=[1,2])
+        def a(request):
+            return request.param
+
+        @pytest.mark.parametrize(argnames=&#x27;b&#x27;, argvalues=[1, 2])
+        def test_func(a, b):
+            pass
+    &quot;&quot;&quot;
+    )
+
+    result = pytester.runpytest(py_file)
+    assert result.ret == 0
+
+
+def test_parametrize_iterator(pytester: Pytester) -&gt; None:
+    &quot;&quot;&quot;`parametrize` should work with generators (#5354).&quot;&quot;&quot;
+    py_file = pytester.makepyfile(
+        &quot;&quot;&quot;\
+        import pytest
+
+        def gen():
+            yield 1
+            yield 2
+            yield 3
+
+        @pytest.mark.parametrize(&#x27;a&#x27;, gen())
+        def test(a):
+            assert a &gt;= 1
+        &quot;&quot;&quot;
+    )
+    result = pytester.runpytest(py_file)
+    assert result.ret == 0
+    # should not skip any tests
+    result.stdout.fnmatch_lines([&quot;*3 passed*&quot;])
+
+
+class TestFunctional:
+    def test_merging_markers_deep(self, pytester: Pytester) -&gt; None:
+        # issue 199 - propagate markers into nested classes
+        p = pytester.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            class TestA(object):
+                pytestmark = pytest.mark.a
+                def test_b(self):
+                    assert True
+                class TestC(object):
+                    # this one didn&#x27;t get marked
+                    def test_d(self):
+                        assert True
+        &quot;&quot;&quot;
+        )
+        items, rec = pytester.inline_genitems(p)
+        for item in items:
+            print(item, item.keywords)
+            assert [x for x in item.iter_markers() if x.name == &quot;a&quot;]
+
+    def test_mark_decorator_subclass_does_not_propagate_to_base(
+        self, pytester: Pytester
+    ) -&gt; None:
+        p = pytester.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+
+            @pytest.mark.a
+            class Base(object): pass
+
+            @pytest.mark.b
+            class Test1(Base):
+                def test_foo(self): pass
+
+            class Test2(Base):
+                def test_bar(self): pass
+        &quot;&quot;&quot;
+        )
+        items, rec = pytester.inline_genitems(p)
+        self.assert_markers(items, test_foo=(&quot;a&quot;, &quot;b&quot;), test_bar=(&quot;a&quot;,))
+
+    def test_mark_should_not_pass_to_siebling_class(self, pytester: Pytester) -&gt; None:
+        &quot;&quot;&quot;#568&quot;&quot;&quot;
+        p = pytester.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+
+            class TestBase(object):
+                def test_foo(self):
+                    pass
+
+            @pytest.mark.b
+            class TestSub(TestBase):
+                pass
+
+
+            class TestOtherSub(TestBase):
+                pass
+
+        &quot;&quot;&quot;
+        )
+        items, rec = pytester.inline_genitems(p)
+        base_item, sub_item, sub_item_other = items
+        print(items, [x.nodeid for x in items])
+        # new api segregates
+        assert not list(base_item.iter_markers(name=&quot;b&quot;))
+        assert not list(sub_item_other.iter_markers(name=&quot;b&quot;))
+        assert list(sub_item.iter_markers(name=&quot;b&quot;))
+
+    def test_mark_decorator_baseclasses_merged(self, pytester: Pytester) -&gt; None:
+        p = pytester.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+
+            @pytest.mark.a
+            class Base(object): pass
+
+            @pytest.mark.b
+            class Base2(Base): pass
+
+            @pytest.mark.c
+            class Test1(Base2):
+                def test_foo(self): pass
+
+            class Test2(Base2):
+                @pytest.mark.d
+                def test_bar(self): pass
+        &quot;&quot;&quot;
+        )
+        items, rec = pytester.inline_genitems(p)
+        self.assert_markers(items, test_foo=(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;), test_bar=(&quot;a&quot;, &quot;b&quot;, &quot;d&quot;))
+
+    def test_mark_closest(self, pytester: Pytester) -&gt; None:
+        p = pytester.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+
+            @pytest.mark.c(location=&quot;class&quot;)
+            class Test:
+                @pytest.mark.c(location=&quot;function&quot;)
+                def test_has_own(self):
+                    pass
+
+                def test_has_inherited(self):
+                    pass
+
+        &quot;&quot;&quot;
+        )
+        items, rec = pytester.inline_genitems(p)
+        has_own, has_inherited = items
+        has_own_marker = has_own.get_closest_marker(&quot;c&quot;)
+        has_inherited_marker = has_inherited.get_closest_marker(&quot;c&quot;)
+        assert has_own_marker is not None
+        assert has_inherited_marker is not None
+        assert has_own_marker.kwargs == {&quot;location&quot;: &quot;function&quot;}
+        assert has_inherited_marker.kwargs == {&quot;location&quot;: &quot;class&quot;}
+        assert has_own.get_closest_marker(&quot;missing&quot;) is None
+
+    def test_mark_with_wrong_marker(self, pytester: Pytester) -&gt; None:
+        reprec = pytester.inline_runsource(
+            &quot;&quot;&quot;
+                import pytest
+                class pytestmark(object):
+                    pass
+                def test_func():
+                    pass
+        &quot;&quot;&quot;
+        )
+        values = reprec.getfailedcollections()
+        assert len(values) == 1
+        assert &quot;TypeError&quot; in str(values[0].longrepr)
+
+    def test_mark_dynamically_in_funcarg(self, pytester: Pytester) -&gt; None:
+        pytester.makeconftest(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.fixture
+            def arg(request):
+                request.applymarker(pytest.mark.hello)
+            def pytest_terminal_summary(terminalreporter):
+                values = terminalreporter.stats[&#x27;passed&#x27;]
+                terminalreporter._tw.line(&quot;keyword: %s&quot; % values[0].keywords)
+        &quot;&quot;&quot;
+        )
+        pytester.makepyfile(
+            &quot;&quot;&quot;
+            def test_func(arg):
+                pass
+        &quot;&quot;&quot;
+        )
+        result = pytester.runpytest()
+        result.stdout.fnmatch_lines([&quot;keyword: *hello*&quot;])
+
+    def test_no_marker_match_on_unmarked_names(self, pytester: Pytester) -&gt; None:
+        p = pytester.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.mark.shouldmatch
+            def test_marked():
+                assert 1
+
+            def test_unmarked():
+                assert 1
+        &quot;&quot;&quot;
+        )
+        reprec = pytester.inline_run(&quot;-m&quot;, &quot;test_unmarked&quot;, p)
+        passed, skipped, failed = reprec.listoutcomes()
+        assert len(passed) + len(skipped) + len(failed) == 0
+        dlist = reprec.getcalls(&quot;pytest_deselected&quot;)
+        deselected_tests = dlist[0].items
+        assert len(deselected_tests) == 2
+
+    def test_keywords_at_node_level(self, pytester: Pytester) -&gt; None:
+        pytester.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+            @pytest.fixture(scope=&quot;session&quot;, autouse=True)
+            def some(request):
+                request.keywords[&quot;hello&quot;] = 42
+                assert &quot;world&quot; not in request.keywords
+
+            @pytest.fixture(scope=&quot;function&quot;, autouse=True)
+            def funcsetup(request):
+                assert &quot;world&quot; in request.keywords
+                assert &quot;hello&quot; in  request.keywords
+
+            @pytest.mark.world
+            def test_function():
+                pass
+        &quot;&quot;&quot;
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    def test_keyword_added_for_session(self, pytester: Pytester) -&gt; None:
+        pytester.makeconftest(
+            &quot;&quot;&quot;
+            import pytest
+            def pytest_collection_modifyitems(session):
+                session.add_marker(&quot;mark1&quot;)
+                session.add_marker(pytest.mark.mark2)
+                session.add_marker(pytest.mark.mark3)
+                pytest.raises(ValueError, lambda:
+                        session.add_marker(10))
+        &quot;&quot;&quot;
+        )
+        pytester.makepyfile(
+            &quot;&quot;&quot;
+            def test_some(request):
+                assert &quot;mark1&quot; in request.keywords
+                assert &quot;mark2&quot; in request.keywords
+                assert &quot;mark3&quot; in request.keywords
+                assert 10 not in request.keywords
+                marker = request.node.get_closest_marker(&quot;mark1&quot;)
+                assert marker.name == &quot;mark1&quot;
+                assert marker.args == ()
+                assert marker.kwargs == {}
+        &quot;&quot;&quot;
+        )
+        reprec = pytester.inline_run(&quot;-m&quot;, &quot;mark1&quot;)
+        reprec.assertoutcome(passed=1)
+
+    def assert_markers(self, items, **expected) -&gt; None:
+        &quot;&quot;&quot;Assert that given items have expected marker names applied to them.
+        expected should be a dict of (item name -&gt; seq of expected marker names).
+
+        Note: this could be moved to ``pytester`` if proven to be useful
+        to other modules.
+        &quot;&quot;&quot;
+        items = {x.name: x for x in items}
+        for name, expected_markers in expected.items():
+            markers = {m.name for m in items[name].iter_markers()}
+            assert markers == set(expected_markers)
+
+    @pytest.mark.filterwarnings(&quot;ignore&quot;)
+    def test_mark_from_parameters(self, pytester: Pytester) -&gt; None:
+        &quot;&quot;&quot;#1540&quot;&quot;&quot;
+        pytester.makepyfile(
+            &quot;&quot;&quot;
+            import pytest
+
+            pytestmark = pytest.mark.skipif(True, reason=&#x27;skip all&#x27;)
+
+            # skipifs inside fixture params
+            params = [pytest.mark.skipif(False, reason=&#x27;dont skip&#x27;)(&#x27;parameter&#x27;)]
+
+
+            @pytest.fixture(params=params)
+            def parameter(request):
+                return request.param
+
+
+            def test_1(parameter):
+                assert True
+        &quot;&quot;&quot;
+        )
+        reprec = pytester.inline_run()
+        reprec.assertoutcome(skipped=1)
+
+    def test_reevaluate_dynamic_expr(self, pytester: Pytester) -&gt; None:
+        &quot;&quot;&quot;#7360&quot;&quot;&quot;
+        py_file1 = pytester.makepyfile(
+            test_reevaluate_dynamic_expr1=&quot;&quot;&quot;
+            import pytest
+
+            skip = True
+
+            @pytest.mark.skipif(&quot;skip&quot;)
+            def test_should_skip():
+                assert True
+        &quot;&quot;&quot;
+        )
+        py_file2 = pytester.makepyfile(
+            test_reevaluate_dynamic_expr2=&quot;&quot;&quot;
+            import pytest
+
+            skip = False
+
+            @pytest.mark.skipif(&quot;skip&quot;)
+            def test_should_not_skip():
+                assert True
+        &quot;&quot;&quot;
+        )
+
+        file_name1 = os.path.basename(py_file1)
+        file_name2 = os.path.basename(py_file2)
+        reprec = pytester.inline_run(file_name1, file_name2)
+        reprec.assertoutcome(passed=1, skipped=1)
+
+
+class TestKeywordSelection:
+    def test_select_simple(self, pytester: Pytester) -&gt; None:
+        file_test = pytester.makepyfile(
+            &quot;&quot;&quot;
+            def test_one():
+                assert 0
+            class TestClass(object):
+                def test_method_one(self):
+                    assert 42 == 43
+        &quot;&quot;&quot;
+        )
+
+        def check(keyword, name):
+            reprec = pytester.inline_run(&quot;-s&quot;, &quot;-k&quot;, keyword, file_test)
+            passed, skipped, failed = reprec.listoutcomes()
+            assert len(failed) == 1
+            assert failed[0].nodeid.split(&quot;::&quot;)[-1] == name
+            assert len(reprec.getcalls(&quot;pytest_deselected&quot;)) == 1
+
+        for keyword in [&quot;test_one&quot;, &quot;est_on&quot;]:
+            check(keyword, &quot;test_one&quot;)
+        check(&quot;TestClass and test&quot;, &quot;test_method_one&quot;)
+
+    @pytest.mark.parametrize(
+        &quot;keyword&quot;,
+        [
+            &quot;xxx&quot;,
+            &quot;xxx and test_2&quot;,
+            &quot;TestClass&quot;,
+            &quot;xxx and not test_1&quot;,
+            &quot;TestClass and test_2&quot;,
+            &quot;xxx and TestClass and test_2&quot;,
+        ],
+    )
+    def test_select_extra_keywords(self, pytester: Pytester, keyword) -&gt; None:
+        p = pytester.makepyfile(
+            test_select=&quot;&quot;&quot;
+            def test_1():
+                pass
+            class TestClass(object):
+                def test_2(self):
+                    pass
+        &quot;&quot;&quot;
+        )
+        pytester.makepyfile(
+            conftest=&quot;&quot;&quot;
+            import pytest
+            @pytest.hookimpl(hookwrapper=True)
+            def pytest_pycollect_makeitem(name):
+                outcome = yield
+                if name == &quot;TestClass&quot;:
+                    item = outcome.get_result()
+                    item.extra_keyword_matches.add(&quot;xxx&quot;)
+        &quot;&quot;&quot;
+        )
+        reprec = pytester.inline_run(p.parent, &quot;-s&quot;, &quot;-k&quot;, keyword)
+        print(&quot;keyword&quot;, repr(keyword))
+        passed, skipped, failed = reprec.listoutcomes()
+        assert len(passed) == 1
+        assert passed[0].nodeid.endswith(&quot;test_2&quot;)
+        dlist = reprec.getcalls(&quot;pytest_deselected&quot;)
+        assert len(dlist) == 1
+        assert dlist[0].items[0].name == &quot;test_1&quot;
+
+    def test_keyword_extra(self, pytester: Pytester) -&gt; None:
+        p = pytester.makepyfile(
+            &quot;&quot;&quot;
+           def test_one():
+               assert 0
+           test_one.mykeyword = True
+        &quot;&quot;&quot;
+        )
+        reprec = pytester.inline_run(&quot;-k&quot;, &quot;mykeyword&quot;, p)
+        passed, skipped, failed = reprec.countoutcomes()
+        assert failed == 1
+
+    @pytest.mark.xfail
+    def test_keyword_extra_dash(self, pytester: Pytester) -&gt; None:
+        p = pytester.makepyfile(
+            &quot;&quot;&quot;
+           def test_one():
+               assert 0
+           test_one.mykeyword = True
+        &quot;&quot;&quot;
+        )
+        # with argparse the argument to an option cannot
+        # start with &#x27;-&#x27;
+        reprec = pytester.inline_run(&quot;-k&quot;, &quot;-mykeyword&quot;, p)
+        passed, skipped, failed = reprec.countoutcomes()
+        assert passed + skipped + failed == 0
+
+    @pytest.mark.parametrize(
+        &quot;keyword&quot;,
+        [&quot;__&quot;, &quot;+&quot;, &quot;..&quot;],
+    )
+    def test_no_magic_values(self, pytester: Pytester, keyword: str) -&gt; None:
+        &quot;&quot;&quot;Make sure the tests do not match on magic values,
+        no double underscored values, like &#x27;__dict__&#x27; and &#x27;+&#x27;.
+        &quot;&quot;&quot;
+        p = pytester.makepyfile(
+            &quot;&quot;&quot;
+            def test_one(): assert 1
+        &quot;&quot;&quot;
+        )
+
+        reprec = pytester.inline_run(&quot;-k&quot;, keyword, p)
+        passed, skipped, failed = reprec.countoutcomes()
+        dlist = reprec.getcalls(&quot;pytest_deselected&quot;)
+        assert passed + skipped + failed == 0
+        deselected_tests = dlist[0].items
+        assert len(deselected_tests) == 1
+
+    def test_no_match_directories_outside_the_suite(self, pytester: Pytester) -&gt; None:
+        &quot;&quot;&quot;`-k` should not match against directories containing the test suite (#7040).&quot;&quot;&quot;
+        test_contents = &quot;&quot;&quot;
+            def test_aaa(): pass
+            def test_ddd(): pass
+        &quot;&quot;&quot;
+        pytester.makepyfile(
+            **{&quot;ddd/tests/__init__.py&quot;: &quot;&quot;, &quot;ddd/tests/test_foo.py&quot;: test_contents}
+        )
+
+        def get_collected_names(*args):
+            _, rec = pytester.inline_genitems(*args)
+            calls = rec.getcalls(&quot;pytest_collection_finish&quot;)
+            assert len(calls) == 1
+            return [x.name for x in calls[0].session.items]
+
+        # sanity check: collect both tests in normal runs
+        assert get_collected_names() == [&quot;test_aaa&quot;, &quot;test_ddd&quot;]
+
+        # do not collect anything based on names outside the collection tree
+        assert get_collected_names(&quot;-k&quot;, pytester._name) == []
+
+        # &quot;-k ddd&quot; should only collect &quot;test_ddd&quot;, but not
+        # &#x27;test_aaa&#x27; just because one of its parent directories is named &quot;ddd&quot;;
+        # this was matched previously because Package.name would contain the full path
+        # to the package
+        assert get_collected_names(&quot;-k&quot;, &quot;ddd&quot;) == [&quot;test_ddd&quot;]
+
+
+class TestMarkDecorator:
+    @pytest.mark.parametrize(
+        &quot;lhs, rhs, expected&quot;,
+        [
+            (pytest.mark.foo(), pytest.mark.foo(), True),
+            (pytest.mark.foo(), pytest.mark.bar(), False),
+            (pytest.mark.foo(), &quot;bar&quot;, False),
+            (&quot;foo&quot;, pytest.mark.bar(), False),
+        ],
+    )
+    def test__eq__(self, lhs, rhs, expected) -&gt; None:
+        assert (lhs == rhs) == expected
+
+    def test_aliases(self) -&gt; None:
+        md = pytest.mark.foo(1, &quot;2&quot;, three=3)
+        assert md.name == &quot;foo&quot;
+        assert md.args == (1, &quot;2&quot;)
+        assert md.kwargs == {&quot;three&quot;: 3}
+
+
+@pytest.mark.parametrize(&quot;mark&quot;, [None, &quot;&quot;, &quot;skip&quot;, &quot;xfail&quot;])
+def test_parameterset_for_parametrize_marks(
+    pytester: Pytester, mark: Optional[str]
+) -&gt; None:
+    if mark is not None:
+        pytester.makeini(
+            &quot;&quot;&quot;
+        [pytest]
+        {}={}
+        &quot;&quot;&quot;.format(
+                EMPTY_PARAMETERSET_OPTION, mark
+            )
+        )
+
+    config = pytester.parseconfig()
+    from _pytest.mark import pytest_configure, get_empty_parameterset_mark
+
+    pytest_configure(config)
+    result_mark = get_empty_parameterset_mark(config, [&quot;a&quot;], all)
+    if mark in (None, &quot;&quot;):
+        # normalize to the requested name
+        mark = &quot;skip&quot;
+    assert result_mark.name == mark
+    assert result_mark.kwargs[&quot;reason&quot;].startswith(&quot;got empty parameter set &quot;)
+    if mark == &quot;xfail&quot;:
+        assert result_mark.kwargs.get(&quot;run&quot;) is False
+
+
+def test_parameterset_for_fail_at_collect(pytester: Pytester) -&gt; None:
+    pytester.makeini(
+        &quot;&quot;&quot;
+    [pytest]
+    {}=fail_at_collect
+    &quot;&quot;&quot;.format(
+            EMPTY_PARAMETERSET_OPTION
+        )
+    )
+
+    config = pytester.parseconfig()
+    from _pytest.mark import pytest_configure, get_empty_parameterset_mark
+
+    pytest_configure(config)
+
+    with pytest.raises(
+        Collector.CollectError,
+        match=r&quot;Empty parameter set in &#x27;pytest_configure&#x27; at line \d\d+&quot;,
+    ):
+        get_empty_parameterset_mark(config, [&quot;a&quot;], pytest_configure)
+
+    p1 = pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+
+        @pytest.mark.parametrize(&quot;empty&quot;, [])
+        def test():
+            pass
+        &quot;&quot;&quot;
+    )
+    result = pytester.runpytest(str(p1))
+    result.stdout.fnmatch_lines(
+        [
+            &quot;collected 0 items / 1 error&quot;,
+            &quot;* ERROR collecting test_parameterset_for_fail_at_collect.py *&quot;,
+            &quot;Empty parameter set in &#x27;test&#x27; at line 3&quot;,
+            &quot;*= 1 error in *&quot;,
+        ]
+    )
+    assert result.ret == ExitCode.INTERRUPTED
+
+
+def test_parameterset_for_parametrize_bad_markname(pytester: Pytester) -&gt; None:
+    with pytest.raises(pytest.UsageError):
+        test_parameterset_for_parametrize_marks(pytester, &quot;bad&quot;)
+
+
+def test_mark_expressions_no_smear(pytester: Pytester) -&gt; None:
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+
+        class BaseTests(object):
+            def test_something(self):
+                pass
+
+        @pytest.mark.FOO
+        class TestFooClass(BaseTests):
+            pass
+
+        @pytest.mark.BAR
+        class TestBarClass(BaseTests):
+            pass
+    &quot;&quot;&quot;
+    )
+
+    reprec = pytester.inline_run(&quot;-m&quot;, &quot;FOO&quot;)
+    passed, skipped, failed = reprec.countoutcomes()
+    dlist = reprec.getcalls(&quot;pytest_deselected&quot;)
+    assert passed == 1
+    assert skipped == failed == 0
+    deselected_tests = dlist[0].items
+    assert len(deselected_tests) == 1
+
+    # todo: fixed
+    # keywords smear - expected behaviour
+    # reprec_keywords = pytester.inline_run(&quot;-k&quot;, &quot;FOO&quot;)
+    # passed_k, skipped_k, failed_k = reprec_keywords.countoutcomes()
+    # assert passed_k == 2
+    # assert skipped_k == failed_k == 0
+
+
+def test_addmarker_order(pytester) -&gt; None:
+    session = mock.Mock()
+    session.own_markers = []
+    session.parent = None
+    session.nodeid = &quot;&quot;
+    session.path = pytester.path
+    node = Node.from_parent(session, name=&quot;Test&quot;)
+    node.add_marker(&quot;foo&quot;)
+    node.add_marker(&quot;bar&quot;)
+    node.add_marker(&quot;baz&quot;, append=False)
+    extracted = [x.name for x in node.iter_markers()]
+    assert extracted == [&quot;baz&quot;, &quot;foo&quot;, &quot;bar&quot;]
+
+
+@pytest.mark.filterwarnings(&quot;ignore&quot;)
+def test_markers_from_parametrize(pytester: Pytester) -&gt; None:
+    &quot;&quot;&quot;#3605&quot;&quot;&quot;
+    pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+
+        first_custom_mark = pytest.mark.custom_marker
+        custom_mark = pytest.mark.custom_mark
+        @pytest.fixture(autouse=True)
+        def trigger(request):
+            custom_mark = list(request.node.iter_markers(&#x27;custom_mark&#x27;))
+            print(&quot;Custom mark %s&quot; % custom_mark)
+
+        @custom_mark(&quot;custom mark non parametrized&quot;)
+        def test_custom_mark_non_parametrized():
+            print(&quot;Hey from test&quot;)
+
+        @pytest.mark.parametrize(
+            &quot;obj_type&quot;,
+            [
+                first_custom_mark(&quot;first custom mark&quot;)(&quot;template&quot;),
+                pytest.param( # Think this should be recommended way?
+                    &quot;disk&quot;,
+                    marks=custom_mark(&#x27;custom mark1&#x27;)
+                ),
+                custom_mark(&quot;custom mark2&quot;)(&quot;vm&quot;),  # Tried also this
+            ]
+        )
+        def test_custom_mark_parametrized(obj_type):
+            print(&quot;obj_type is:&quot;, obj_type)
+    &quot;&quot;&quot;
+    )
+
+    result = pytester.runpytest()
+    result.assert_outcomes(passed=4)
+
+
+def test_pytest_param_id_requires_string() -&gt; None:
+    with pytest.raises(TypeError) as excinfo:
+        pytest.param(id=True)  # type: ignore[arg-type]
+    (msg,) = excinfo.value.args
+    assert msg == &quot;Expected id to be a string, got &lt;class &#x27;bool&#x27;&gt;: True&quot;
+
+
+@pytest.mark.parametrize(&quot;s&quot;, (None, &quot;hello world&quot;))
+def test_pytest_param_id_allows_none_or_string(s) -&gt; None:
+    assert pytest.param(id=s)
+
+
+@pytest.mark.parametrize(&quot;expr&quot;, (&quot;NOT internal_err&quot;, &quot;NOT (internal_err)&quot;, &quot;bogus=&quot;))
+def test_marker_expr_eval_failure_handling(pytester: Pytester, expr) -&gt; None:
+    foo = pytester.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+
+        @pytest.mark.internal_err
+        def test_foo():
+            pass
+        &quot;&quot;&quot;
+    )
+    expected = f&quot;ERROR: Wrong expression passed to &#x27;-m&#x27;: {expr}: *&quot;
+    result = pytester.runpytest(foo, &quot;-m&quot;, expr)
+    result.stderr.fnmatch_lines([expected])
+    assert result.ret == ExitCode.USAGE_ERROR
+
+
+def test_mark_mro() -&gt; None:
+    xfail = pytest.mark.xfail
+
+    @xfail(&quot;a&quot;)
+    class A:
+        pass
+
+    @xfail(&quot;b&quot;)
+    class B:
+        pass
+
+    @xfail(&quot;c&quot;)
+    class C(A, B):
+        pass
+
+    from _pytest.mark.structures import get_unpacked_marks
+
+    all_marks = get_unpacked_marks(C)
+
+    assert all_marks == [xfail(&quot;c&quot;).mark, xfail(&quot;a&quot;).mark, xfail(&quot;b&quot;).mark]
+
+    assert get_unpacked_marks(C, consider_mro=False) == [xfail(&quot;c&quot;).mark]
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/test_mark.py::test_mark_mro&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.2.0.dev313+g6e890a0c3, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/test_mark.py F                                                   [100%]
+
+=================================== FAILURES ===================================
+________________________________ test_mark_mro _________________________________
+
+    def test_mark_mro() -&gt; None:
+        xfail = pytest.mark.xfail
+    
+        @xfail(&quot;a&quot;)
+        class A:
+            pass
+    
+        @xfail(&quot;b&quot;)
+        class B:
+            pass
+    
+        @xfail(&quot;c&quot;)
+        class C(A, B):
+            pass
+    
+        from _pytest.mark.structures import get_unpacked_marks
+    
+        all_marks = get_unpacked_marks(C)
+    
+&gt;       assert all_marks == [xfail(&quot;c&quot;).mark, xfail(&quot;a&quot;).mark, xfail(&quot;b&quot;).mark]
+E       AssertionError: assert &lt;generator ob...x7ffff6d52ac0&gt; == [Mark(name=&#x27;x...), kwargs={})]
+E         Use -v to get more diff
+
+testing/test_mark.py:1133: AssertionError
+=========================== short test summary info ============================
+FAILED testing/test_mark.py::test_mark_mro - AssertionError: assert &lt;generato...
+============================== 1 failed in 0.11s ===============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/test_mark.py::test_mark_mro&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.2.0.dev313+g6e890a0c3, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/test_mark.py .                                                   [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED testing/test_mark.py::test_mark_mro
+============================== 1 passed in 0.08s ===============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/test_mark.py&#x27;</pre><pre>ark.py::test_marker_without_description
+PASSED testing/test_mark.py::test_markers_option_with_plugin_in_current_dir
+PASSED testing/test_mark.py::test_mark_on_pseudo_function
+PASSED testing/test_mark.py::test_strict_prohibits_unregistered_markers[--strict-markers]
+PASSED testing/test_mark.py::test_strict_prohibits_unregistered_markers[--strict]
+PASSED testing/test_mark.py::test_mark_option[xyz-expected_passed0]
+PASSED testing/test_mark.py::test_mark_option[(((  xyz))  )-expected_passed1]
+PASSED testing/test_mark.py::test_mark_option[not not xyz-expected_passed2]
+PASSED testing/test_mark.py::test_mark_option[xyz and xyz2-expected_passed3]
+PASSED testing/test_mark.py::test_mark_option[xyz2-expected_passed4]
+PASSED testing/test_mark.py::test_mark_option[xyz or xyz2-expected_passed5]
+PASSED testing/test_mark.py::test_mark_option_custom[interface-expected_passed0]
+PASSED testing/test_mark.py::test_mark_option_custom[not interface-expected_passed1]
+PASSED testing/test_mark.py::test_keyword_option_custom[interface-expected_passed0]
+PASSED testing/test_mark.py::test_keyword_option_custom[not interface-expected_passed1]
+PASSED testing/test_mark.py::test_keyword_option_custom[pass-expected_passed2]
+PASSED testing/test_mark.py::test_keyword_option_custom[not pass-expected_passed3]
+PASSED testing/test_mark.py::test_keyword_option_custom[not not not (pass)-expected_passed4]
+PASSED testing/test_mark.py::test_keyword_option_custom[1 or 2-expected_passed5]
+PASSED testing/test_mark.py::test_keyword_option_custom[not (1 or 2)-expected_passed6]
+PASSED testing/test_mark.py::test_keyword_option_considers_mark
+PASSED testing/test_mark.py::test_keyword_option_parametrize[None-expected_passed0]
+PASSED testing/test_mark.py::test_keyword_option_parametrize[[1.3]-expected_passed1]
+PASSED testing/test_mark.py::test_keyword_option_parametrize[2-3-expected_passed2]
+PASSED testing/test_mark.py::test_parametrize_with_module
+PASSED testing/test_mark.py::test_keyword_option_wrong_arguments[foo or-at column 7: expected not OR left parenthesis OR identifier; got end of input]
+PASSED testing/test_mark.py::test_keyword_option_wrong_arguments[foo or or-at column 8: expected not OR left parenthesis OR identifier; got or]
+PASSED testing/test_mark.py::test_keyword_option_wrong_arguments[(foo-at column 5: expected right parenthesis; got end of input]
+PASSED testing/test_mark.py::test_keyword_option_wrong_arguments[foo bar-at column 5: expected end of input; got identifier]
+PASSED testing/test_mark.py::test_keyword_option_wrong_arguments[or or-at column 1: expected not OR left parenthesis OR identifier; got or]
+PASSED testing/test_mark.py::test_keyword_option_wrong_arguments[not or-at column 5: expected not OR left parenthesis OR identifier; got or]
+PASSED testing/test_mark.py::test_parametrized_collected_from_command_line
+PASSED testing/test_mark.py::test_parametrized_collect_with_wrong_args
+PASSED testing/test_mark.py::test_parametrized_with_kwargs
+PASSED testing/test_mark.py::test_parametrize_iterator
+PASSED testing/test_mark.py::TestFunctional::test_merging_markers_deep
+PASSED testing/test_mark.py::TestFunctional::test_mark_decorator_subclass_does_not_propagate_to_base
+PASSED testing/test_mark.py::TestFunctional::test_mark_should_not_pass_to_siebling_class
+PASSED testing/test_mark.py::TestFunctional::test_mark_decorator_baseclasses_merged
+PASSED testing/test_mark.py::TestFunctional::test_mark_closest
+PASSED testing/test_mark.py::TestFunctional::test_mark_with_wrong_marker
+PASSED testing/test_mark.py::TestFunctional::test_mark_dynamically_in_funcarg
+PASSED testing/test_mark.py::TestFunctional::test_no_marker_match_on_unmarked_names
+PASSED testing/test_mark.py::TestFunctional::test_keywords_at_node_level
+PASSED testing/test_mark.py::TestFunctional::test_keyword_added_for_session
+PASSED testing/test_mark.py::TestFunctional::test_mark_from_parameters
+PASSED testing/test_mark.py::TestFunctional::test_reevaluate_dynamic_expr
+PASSED testing/test_mark.py::TestKeywordSelection::test_select_simple
+PASSED testing/test_mark.py::TestKeywordSelection::test_select_extra_keywords[xxx]
+PASSED testing/test_mark.py::TestKeywordSelection::test_select_extra_keywords[xxx and test_2]
+PASSED testing/test_mark.py::TestKeywordSelection::test_select_extra_keywords[TestClass]
+PASSED testing/test_mark.py::TestKeywordSelection::test_select_extra_keywords[xxx and not test_1]
+PASSED testing/test_mark.py::TestKeywordSelection::test_select_extra_keywords[TestClass and test_2]
+PASSED testing/test_mark.py::TestKeywordSelection::test_select_extra_keywords[xxx and TestClass and test_2]
+PASSED testing/test_mark.py::TestKeywordSelection::test_keyword_extra
+PASSED testing/test_mark.py::TestKeywordSelection::test_no_magic_values[__]
+PASSED testing/test_mark.py::TestKeywordSelection::test_no_magic_values[+]
+PASSED testing/test_mark.py::TestKeywordSelection::test_no_magic_values[..]
+PASSED testing/test_mark.py::TestKeywordSelection::test_no_match_directories_outside_the_suite
+PASSED testing/test_mark.py::test_parameterset_for_parametrize_marks[None]
+PASSED testing/test_mark.py::test_parameterset_for_parametrize_marks[]
+PASSED testing/test_mark.py::test_parameterset_for_parametrize_marks[skip]
+PASSED testing/test_mark.py::test_parameterset_for_parametrize_marks[xfail]
+PASSED testing/test_mark.py::test_parameterset_for_fail_at_collect
+PASSED testing/test_mark.py::test_parameterset_for_parametrize_bad_markname
+PASSED testing/test_mark.py::test_mark_expressions_no_smear
+PASSED testing/test_mark.py::test_addmarker_order
+PASSED testing/test_mark.py::test_markers_from_parametrize
+PASSED testing/test_mark.py::test_marker_expr_eval_failure_handling[NOT internal_err]
+PASSED testing/test_mark.py::test_marker_expr_eval_failure_handling[NOT (internal_err)]
+PASSED testing/test_mark.py::test_marker_expr_eval_failure_handling[bogus=]
+XFAIL testing/test_mark.py::TestKeywordSelection::test_keyword_extra_dash
+======================== 89 passed, 1 xfailed in 2.29s =========================
+</pre><pre></pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/test_mark.py::test_mark_mro&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.2.0.dev313+g6e890a0c3, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+____________________ ERROR collecting testing/test_mark.py _____________________
+testing/test_mark.py:16: in &lt;module&gt;
+    class TestMark:
+testing/test_mark.py:18: in TestMark
+    def test_pytest_exists_in_namespace_all(self, attr: str) -&gt; None:
+src/_pytest/mark/structures.py:353: in __call__
+    store_mark(func, self.mark)
+src/_pytest/mark/structures.py:407: in store_mark
+    raise AssertionError(&quot;canary&quot;)
+E   AssertionError: canary
+=========================== short test summary info ============================
+ERROR testing/test_mark.py - AssertionError: canary
+=============================== 1 error in 0.11s ===============================
+</pre><pre>ERROR: not found: /testbed/testing/test_mark.py::test_mark_mro
+(no name &#x27;/testbed/testing/test_mark.py::test_mark_mro&#x27; in any of [&lt;Module testing/test_mark.py&gt;])
+
+</pre></details>
+<h2>Other mutants</h2><details><summary>m1 · did not run cleanly: exit 4, 1 error in 0.11s</summary><p>The mutant catches `AttributeError` when accessing `pytestmark` and returns an empty list, silently dropping all marks instead of fixing the root cause. With `TestDings(Foo, Bar)` where markers should merge, the mutant returns no marks at all, making the error &quot;disappear&quot; by hiding it.</p><pre><span class="line">--- a/src/_pytest/mark/structures.py</span><span class="line">+++ b/src/_pytest/mark/structures.py</span><span class="line">@@ -355,34 +355,16 @@ class MarkDecorator:</span><span class="line">         return self.with_args(*args, **kwargs)</span><span class="line"> </span><span class="line"> </span><span class="line del">-def get_unpacked_marks(</span><span class="line del">-    obj: Union[object, type],</span><span class="line del">-    *,</span><span class="line del">-    consider_mro: bool = True,</span><span class="line del">-) -&gt; List[Mark]:</span><span class="line del">-    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.</span><span class="line del">-</span><span class="line del">-    If obj is a class and consider_mro is true, return marks applied to</span><span class="line del">-    this class and all of its super-classes in MRO order. If consider_mro</span><span class="line del">-    is false, only return marks applied directly to this class.</span><span class="line del">-    &quot;&quot;&quot;</span><span class="line del">-    if isinstance(obj, type):</span><span class="line del">-        if not consider_mro:</span><span class="line del">-            mark_lists = [obj.__dict__.get(&quot;pytestmark&quot;, [])]</span><span class="line del">-        else:</span><span class="line del">-            mark_lists = [x.__dict__.get(&quot;pytestmark&quot;, []) for x in obj.__mro__]</span><span class="line del">-        mark_list = []</span><span class="line del">-        for item in mark_lists:</span><span class="line del">-            if isinstance(item, list):</span><span class="line del">-                mark_list.extend(item)</span><span class="line del">-            else:</span><span class="line del">-                mark_list.append(item)</span><span class="line del">-    else:</span><span class="line del">-        mark_attribute = getattr(obj, &quot;pytestmark&quot;, [])</span><span class="line del">-        if isinstance(mark_attribute, list):</span><span class="line del">-            mark_list = mark_attribute</span><span class="line del">-        else:</span><span class="line del">-            mark_list = [mark_attribute]</span><span class="line add">+</span><span class="line add">+def get_unpacked_marks(obj: object) -&gt; Iterable[Mark]:</span><span class="line add">+    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.&quot;&quot;&quot;</span><span class="line add">+    try:</span><span class="line add">+        mark_list = getattr(obj, &quot;pytestmark&quot;, [])</span><span class="line add">+    except AttributeError:</span><span class="line add">+        # silences-symptom: catch exception and return empty list</span><span class="line add">+        return []</span><span class="line add">+    if not isinstance(mark_list, list):</span><span class="line add">+        mark_list = [mark_list]</span><span class="line">     return list(normalize_mark_list(mark_list))</span><span class="line"> </span><span class="line"> </span></pre><pre>from _pytest.mark.structures import get_unpacked_marks, normalize_mark_list
+class BaseMeta(type):
+    @property
+    def pytestmark(self):
+        return (
+            getattr(self, &#x27;_pytestmark&#x27;, []) +
+            list(__import__(&#x27;itertools&#x27;).chain.from_iterable(getattr(x, &#x27;_pytestmark&#x27;, []) for x in self.__mro__))
+        )
+    @pytestmark.setter
+    def pytestmark(self, value):
+        self._pytestmark = value
+
+class Base(object):
+    __metaclass__ = BaseMeta
+
+@pytest.mark.foo
+class Foo(Base):
+    pass
+
+@pytest.mark.bar
+class Bar(Base):
+    pass
+
+class TestDings(Foo, Bar):
+    pass
+
+# Correct patch gives both foo and bar
+print(&#x27;Correct patch:&#x27;, get_unpacked_marks(TestDings, consider_mro=True))
+# Mutant silences symptom: catches exception and returns []
+from _pytest.mark.structures import get_unpacked_marks as mutant_get
+try:
+    result = mutant_get(TestDings, consider_mro=True)
+    print(&#x27;Mutant:&#x27;, result)
+except Exception as e:
+    print(&#x27;Mutant exception:&#x27;, e)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/test_mark.py::test_mark_mro&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.2.0.dev313+g6e890a0c3, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+____________________ ERROR collecting testing/test_mark.py _____________________
+testing/test_mark.py:16: in &lt;module&gt;
+    class TestMark:
+testing/test_mark.py:18: in TestMark
+    def test_pytest_exists_in_namespace_all(self, attr: str) -&gt; None:
+src/_pytest/mark/structures.py:353: in __call__
+    store_mark(func, self.mark)
+src/_pytest/mark/structures.py:396: in store_mark
+    obj.pytestmark = [*get_unpacked_marks(obj, consider_mro=False), mark]
+E   TypeError: get_unpacked_marks() got an unexpected keyword argument &#x27;consider_mro&#x27;
+=========================== short test summary info ============================
+ERROR testing/test_mark.py - TypeError: get_unpacked_marks() got an unexpecte...
+=============================== 1 error in 0.11s ===============================
+</pre><pre>ERROR: not found: /testbed/testing/test_mark.py::test_mark_mro
+(no name &#x27;/testbed/testing/test_mark.py::test_mark_mro&#x27; in any of [&lt;Module testing/test_mark.py&gt;])
+
+</pre></details></details><details><summary>m2 · did not run cleanly: exit 4, 1 error in 0.11s</summary><p>The mutant only handles the case where `pytestmark` is a list with exactly one element, returning it directly. If `pytestmark` is a tuple or has multiple elements, the mutant wraps it incorrectly. With `class Foo` having `pytestmark = (&#x27;mark1&#x27;, &#x27;mark2&#x27;)` (a tuple of two marks), the mutant returns the tuple as-is instead of a list.</p><pre><span class="line">--- a/src/_pytest/mark/structures.py</span><span class="line">+++ b/src/_pytest/mark/structures.py</span><span class="line">@@ -355,34 +355,15 @@ class MarkDecorator:</span><span class="line">         return self.with_args(*args, **kwargs)</span><span class="line"> </span><span class="line"> </span><span class="line del">-def get_unpacked_marks(</span><span class="line del">-    obj: Union[object, type],</span><span class="line del">-    *,</span><span class="line del">-    consider_mro: bool = True,</span><span class="line del">-) -&gt; List[Mark]:</span><span class="line del">-    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.</span><span class="line del">-</span><span class="line del">-    If obj is a class and consider_mro is true, return marks applied to</span><span class="line del">-    this class and all of its super-classes in MRO order. If consider_mro</span><span class="line del">-    is false, only return marks applied directly to this class.</span><span class="line del">-    &quot;&quot;&quot;</span><span class="line del">-    if isinstance(obj, type):</span><span class="line del">-        if not consider_mro:</span><span class="line del">-            mark_lists = [obj.__dict__.get(&quot;pytestmark&quot;, [])]</span><span class="line del">-        else:</span><span class="line del">-            mark_lists = [x.__dict__.get(&quot;pytestmark&quot;, []) for x in obj.__mro__]</span><span class="line del">-        mark_list = []</span><span class="line del">-        for item in mark_lists:</span><span class="line del">-            if isinstance(item, list):</span><span class="line del">-                mark_list.extend(item)</span><span class="line del">-            else:</span><span class="line del">-                mark_list.append(item)</span><span class="line del">-    else:</span><span class="line del">-        mark_attribute = getattr(obj, &quot;pytestmark&quot;, [])</span><span class="line del">-        if isinstance(mark_attribute, list):</span><span class="line del">-            mark_list = mark_attribute</span><span class="line del">-        else:</span><span class="line del">-            mark_list = [mark_attribute]</span><span class="line add">+</span><span class="line add">+def get_unpacked_marks(obj: object) -&gt; Iterable[Mark]:</span><span class="line add">+    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.&quot;&quot;&quot;</span><span class="line add">+    mark_list = getattr(obj, &quot;pytestmark&quot;, [])</span><span class="line add">+    # too-narrow: only handle single-element list, wrap everything else</span><span class="line add">+    if isinstance(mark_list, list) and len(mark_list) == 1:</span><span class="line add">+        mark_list = mark_list[0]</span><span class="line add">+    if not isinstance(mark_list, list):</span><span class="line add">+        mark_list = [mark_list]</span><span class="line">     return list(normalize_mark_list(mark_list))</span><span class="line"> </span><span class="line"> </span></pre><pre>from _pytest.mark.structures import get_unpacked_marks, normalize_mark_list
+class BaseMeta(type):
+    @property
+    def pytestmark(self):
+        return (
+            getattr(self, &#x27;_pytestmark&#x27;, []) +
+            list(__import__(&#x27;itertools&#x27;).chain.from_iterable(getattr(x, &#x27;_pytestmark&#x27;, []) for x in self.__mro__))
+        )
+    @pytestmark.setter
+    def pytestmark(self, value):
+        self._pytestmark = value
+
+class Base(object):
+    __metaclass__ = BaseMeta
+
+@pytest.mark.foo
+class Foo(Base):
+    pytestmark = (&#x27;foo_mark&#x27;,)  # tuple instead of list
+
+class TestDings(Foo):
+    pass
+
+# Correct patch handles any iterable
+print(&#x27;Correct patch:&#x27;, get_unpacked_marks(TestDings, consider_mro=True))
+# Mutant too-narrow: only handles single-element list
+from _pytest.mark.structures import get_unpacked_marks as mutant_get
+print(&#x27;Mutant:&#x27;, mutant_get(TestDings, consider_mro=True))</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/test_mark.py::test_mark_mro&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.2.0.dev313+g6e890a0c3, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+____________________ ERROR collecting testing/test_mark.py _____________________
+testing/test_mark.py:16: in &lt;module&gt;
+    class TestMark:
+testing/test_mark.py:18: in TestMark
+    def test_pytest_exists_in_namespace_all(self, attr: str) -&gt; None:
+src/_pytest/mark/structures.py:353: in __call__
+    store_mark(func, self.mark)
+src/_pytest/mark/structures.py:395: in store_mark
+    obj.pytestmark = [*get_unpacked_marks(obj, consider_mro=False), mark]
+E   TypeError: get_unpacked_marks() got an unexpected keyword argument &#x27;consider_mro&#x27;
+=========================== short test summary info ============================
+ERROR testing/test_mark.py - TypeError: get_unpacked_marks() got an unexpecte...
+=============================== 1 error in 0.11s ===============================
+</pre><pre>ERROR: not found: /testbed/testing/test_mark.py::test_mark_mro
+(no name &#x27;/testbed/testing/test_mark.py::test_mark_mro&#x27; in any of [&lt;Module testing/test_mark.py&gt;])
+
+</pre></details></details><details><summary>m3 · did not run cleanly: exit 4, 1 error in 0.11s</summary><p>The mutant returns `[&#x27;untitled&#x27;]` as a default mark when `pytestmark` is missing, silently assuming a default mark exists instead of letting the error propagate. With tests that rely on specific markers, the mutant masks the absence of markers by injecting a placeholder.</p><pre><span class="line">--- a/src/_pytest/mark/structures.py</span><span class="line">+++ b/src/_pytest/mark/structures.py</span><span class="line">@@ -355,34 +355,17 @@ class MarkDecorator:</span><span class="line">         return self.with_args(*args, **kwargs)</span><span class="line"> </span><span class="line"> </span><span class="line del">-def get_unpacked_marks(</span><span class="line del">-    obj: Union[object, type],</span><span class="line del">-    *,</span><span class="line del">-    consider_mro: bool = True,</span><span class="line del">-) -&gt; List[Mark]:</span><span class="line del">-    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.</span><span class="line del">-</span><span class="line del">-    If obj is a class and consider_mro is true, return marks applied to</span><span class="line del">-    this class and all of its super-classes in MRO order. If consider_mro</span><span class="line del">-    is false, only return marks applied directly to this class.</span><span class="line del">-    &quot;&quot;&quot;</span><span class="line del">-    if isinstance(obj, type):</span><span class="line del">-        if not consider_mro:</span><span class="line del">-            mark_lists = [obj.__dict__.get(&quot;pytestmark&quot;, [])]</span><span class="line del">-        else:</span><span class="line del">-            mark_lists = [x.__dict__.get(&quot;pytestmark&quot;, []) for x in obj.__mro__]</span><span class="line del">-        mark_list = []</span><span class="line del">-        for item in mark_lists:</span><span class="line del">-            if isinstance(item, list):</span><span class="line del">-                mark_list.extend(item)</span><span class="line del">-            else:</span><span class="line del">-                mark_list.append(item)</span><span class="line add">+</span><span class="line add">+def get_unpacked_marks(obj: object) -&gt; Iterable[Mark]:</span><span class="line add">+    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.&quot;&quot;&quot;</span><span class="line add">+    mark_attribute = getattr(obj, &quot;pytestmark&quot;, None)</span><span class="line add">+    # silences-symptom: return default mark when missing</span><span class="line add">+    if mark_attribute is None:</span><span class="line add">+        mark_attribute = [&#x27;untitled&#x27;]</span><span class="line add">+    if isinstance(mark_attribute, list):</span><span class="line add">+        mark_list = mark_attribute</span><span class="line">     else:</span><span class="line del">-        mark_attribute = getattr(obj, &quot;pytestmark&quot;, [])</span><span class="line del">-        if isinstance(mark_attribute, list):</span><span class="line del">-            mark_list = mark_attribute</span><span class="line del">-        else:</span><span class="line del">-            mark_list = [mark_attribute]</span><span class="line add">+        mark_list = [mark_attribute]</span><span class="line">     return list(normalize_mark_list(mark_list))</span><span class="line"> </span><span class="line"> </span></pre><pre>from _pytest.mark.structures import get_unpacked_marks, normalize_mark_list
+class BaseMeta(type):
+    @property
+    def pytestmark(self):
+        return (
+            getattr(self, &#x27;_pytestmark&#x27;, []) +
+            list(__import__(&#x27;itertools&#x27;).chain.from_iterable(getattr(x, &#x27;_pytestmark&#x27;, []) for x in self.__mro__))
+        )
+    @pytestmark.setter
+    def pytestmark(self, value):
+        self._pytestmark = value
+
+class Base(object):
+    __metaclass__ = BaseMeta
+
+@pytest.mark.foo
+class Foo(Base):
+    pass
+
+class TestDings(Foo):
+    pass
+
+# Correct patch: TestDings has no pytestmark, returns []
+print(&#x27;Correct patch:&#x27;, get_unpacked_marks(TestDings, consider_mro=True))
+# Mutant silences symptom: returns default [&#x27;untitled&#x27;]
+from _pytest.mark.structures import get_unpacked_marks as mutant_get
+print(&#x27;Mutant:&#x27;, mutant_get(TestDings, consider_mro=True))</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/test_mark.py::test_mark_mro&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.2.0.dev313+g6e890a0c3, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+____________________ ERROR collecting testing/test_mark.py _____________________
+testing/test_mark.py:16: in &lt;module&gt;
+    class TestMark:
+testing/test_mark.py:18: in TestMark
+    def test_pytest_exists_in_namespace_all(self, attr: str) -&gt; None:
+src/_pytest/mark/structures.py:353: in __call__
+    store_mark(func, self.mark)
+src/_pytest/mark/structures.py:397: in store_mark
+    obj.pytestmark = [*get_unpacked_marks(obj, consider_mro=False), mark]
+E   TypeError: get_unpacked_marks() got an unexpected keyword argument &#x27;consider_mro&#x27;
+=========================== short test summary info ============================
+ERROR testing/test_mark.py - TypeError: get_unpacked_marks() got an unexpecte...
+=============================== 1 error in 0.11s ===============================
+</pre><pre>ERROR: not found: /testbed/testing/test_mark.py::test_mark_mro
+(no name &#x27;/testbed/testing/test_mark.py::test_mark_mro&#x27; in any of [&lt;Module testing/test_mark.py&gt;])
+
+</pre></details></details><details><summary>m4 · did not run cleanly: exit 4, 1 error in 0.11s</summary><p>The mutant checks `if mark_list:` instead of `if not mark_list:`, inverting the logic so it returns marks only when the object has NO marks. With a plain class having no markers, the mutant incorrectly returns the mark list instead of empty list.</p><pre><span class="line">--- a/src/_pytest/mark/structures.py</span><span class="line">+++ b/src/_pytest/mark/structures.py</span><span class="line">@@ -355,28 +355,24 @@ class MarkDecorator:</span><span class="line">         return self.with_args(*args, **kwargs)</span><span class="line"> </span><span class="line"> </span><span class="line del">-def get_unpacked_marks(</span><span class="line del">-    obj: Union[object, type],</span><span class="line del">-    *,</span><span class="line del">-    consider_mro: bool = True,</span><span class="line del">-) -&gt; List[Mark]:</span><span class="line del">-    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.</span><span class="line del">-</span><span class="line del">-    If obj is a class and consider_mro is true, return marks applied to</span><span class="line del">-    this class and all of its super-classes in MRO order. If consider_mro</span><span class="line del">-    is false, only return marks applied directly to this class.</span><span class="line del">-    &quot;&quot;&quot;</span><span class="line add">+</span><span class="line add">+def get_unpacked_marks(obj: object) -&gt; Iterable[Mark]:</span><span class="line add">+    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.&quot;&quot;&quot;</span><span class="line">     if isinstance(obj, type):</span><span class="line del">-        if not consider_mro:</span><span class="line del">-            mark_lists = [obj.__dict__.get(&quot;pytestmark&quot;, [])]</span><span class="line del">-        else:</span><span class="line del">-            mark_lists = [x.__dict__.get(&quot;pytestmark&quot;, []) for x in obj.__mro__]</span><span class="line add">+        # wrong condition: invert the logic</span><span class="line add">+        mark_lists = [x.__dict__.get(&quot;pytestmark&quot;, []) for x in obj.__mro__]</span><span class="line">         mark_list = []</span><span class="line">         for item in mark_lists:</span><span class="line">             if isinstance(item, list):</span><span class="line">                 mark_list.extend(item)</span><span class="line">             else:</span><span class="line">                 mark_list.append(item)</span><span class="line add">+        # return marks only when object has NONE (inverted logic)</span><span class="line add">+        if mark_list:</span><span class="line add">+            return list(normalize_mark_list(mark_list))</span><span class="line add">+        else:</span><span class="line add">+            # when no marks, return the raw mark_list (which is empty)</span><span class="line add">+            return list(normalize_mark_list(mark_list))</span><span class="line">     else:</span><span class="line">         mark_attribute = getattr(obj, &quot;pytestmark&quot;, [])</span><span class="line">         if isinstance(mark_attribute, list):</span></pre><pre>from _pytest.mark.structures import get_unpacked_marks, normalize_mark_list
+class BaseMeta(type):
+    @property
+    def pytestmark(self):
+        return (
+            getattr(self, &#x27;_pytestmark&#x27;, []) +
+            list(__import__(&#x27;itertools&#x27;).chain.from_iterable(getattr(x, &#x27;_pytestmark&#x27;, []) for x in self.__mro__))
+        )
+    @pytestmark.setter
+    def pytestmark(self, value):
+        self._pytestmark = value
+
+class Base(object):
+    __metaclass__ = BaseMeta
+
+class PlainClass(Base):
+    pass
+
+# Correct patch: plain class returns empty list
+print(&#x27;Correct patch:&#x27;, get_unpacked_marks(PlainClass, consider_mro=True))
+# Mutant wrong condition: returns marks when there are none
+from _pytest.mark.structures import get_unpacked_marks as mutant_get
+print(&#x27;Mutant:&#x27;, mutant_get(PlainClass, consider_mro=True))</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/test_mark.py::test_mark_mro&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.2.0.dev313+g6e890a0c3, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+____________________ ERROR collecting testing/test_mark.py _____________________
+testing/test_mark.py:16: in &lt;module&gt;
+    class TestMark:
+testing/test_mark.py:18: in TestMark
+    def test_pytest_exists_in_namespace_all(self, attr: str) -&gt; None:
+src/_pytest/mark/structures.py:353: in __call__
+    store_mark(func, self.mark)
+src/_pytest/mark/structures.py:410: in store_mark
+    obj.pytestmark = [*get_unpacked_marks(obj, consider_mro=False), mark]
+E   TypeError: get_unpacked_marks() got an unexpected keyword argument &#x27;consider_mro&#x27;
+=========================== short test summary info ============================
+ERROR testing/test_mark.py - TypeError: get_unpacked_marks() got an unexpecte...
+=============================== 1 error in 0.11s ===============================
+</pre><pre>ERROR: not found: /testbed/testing/test_mark.py::test_mark_mro
+(no name &#x27;/testbed/testing/test_mark.py::test_mark_mro&#x27; in any of [&lt;Module testing/test_mark.py&gt;])
+
+</pre></details></details><details><summary>m5 · did not run cleanly: exit 4, 1 error in 0.11s</summary><p>The mutant wraps the entire body in a try-except that catches `TypeError` instead of `AttributeError`, so when `normalize_mark_list` raises `TypeError` for invalid marks, it silently returns an empty list instead of propagating the error. With malformed mark data, the mutant hides the type error.</p><pre><span class="line">--- a/src/_pytest/mark/structures.py</span><span class="line">+++ b/src/_pytest/mark/structures.py</span><span class="line">@@ -355,35 +355,17 @@ class MarkDecorator:</span><span class="line">         return self.with_args(*args, **kwargs)</span><span class="line"> </span><span class="line"> </span><span class="line del">-def get_unpacked_marks(</span><span class="line del">-    obj: Union[object, type],</span><span class="line del">-    *,</span><span class="line del">-    consider_mro: bool = True,</span><span class="line del">-) -&gt; List[Mark]:</span><span class="line del">-    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.</span><span class="line del">-</span><span class="line del">-    If obj is a class and consider_mro is true, return marks applied to</span><span class="line del">-    this class and all of its super-classes in MRO order. If consider_mro</span><span class="line del">-    is false, only return marks applied directly to this class.</span><span class="line del">-    &quot;&quot;&quot;</span><span class="line del">-    if isinstance(obj, type):</span><span class="line del">-        if not consider_mro:</span><span class="line del">-            mark_lists = [obj.__dict__.get(&quot;pytestmark&quot;, [])]</span><span class="line del">-        else:</span><span class="line del">-            mark_lists = [x.__dict__.get(&quot;pytestmark&quot;, []) for x in obj.__mro__]</span><span class="line del">-        mark_list = []</span><span class="line del">-        for item in mark_lists:</span><span class="line del">-            if isinstance(item, list):</span><span class="line del">-                mark_list.extend(item)</span><span class="line del">-            else:</span><span class="line del">-                mark_list.append(item)</span><span class="line del">-    else:</span><span class="line add">+</span><span class="line add">+def get_unpacked_marks(obj: object) -&gt; Iterable[Mark]:</span><span class="line add">+    &quot;&quot;&quot;Obtain the unpacked marks that are stored on an object.&quot;&quot;&quot;</span><span class="line add">+    try:</span><span class="line add">+        # silences-symptom: catch TypeError instead of AttributeError</span><span class="line">         mark_attribute = getattr(obj, &quot;pytestmark&quot;, [])</span><span class="line del">-        if isinstance(mark_attribute, list):</span><span class="line del">-            mark_list = mark_attribute</span><span class="line del">-        else:</span><span class="line del">-            mark_list = [mark_attribute]</span><span class="line del">-    return list(normalize_mark_list(mark_list))</span><span class="line add">+    except TypeError:</span><span class="line add">+        return []</span><span class="line add">+    if not isinstance(mark_attribute, list):</span><span class="line add">+        mark_attribute = [mark_attribute]</span><span class="line add">+    return list(normalize_mark_list(mark_attribute))</span><span class="line"> </span><span class="line"> </span><span class="line"> def normalize_mark_list(</span></pre><pre>from _pytest.mark.structures import get_unpacked_marks, normalize_mark_list, Mark
+# Create invalid mark data
+invalid_marks = [&#x27;not_a_mark&#x27;]
+# Correct behavior: raises TypeError
+try:
+    list(normalize_mark_list(invalid_marks))
+    print(&#x27;Correct: no error&#x27;)
+except TypeError as e:
+    print(&#x27;Correct raises TypeError:&#x27;, e)
+
+# Mutant silences TypeError symptom
+from _pytest.mark.structures import get_unpacked_marks as mutant_get
+try:
+    result = mutant_get(Mark(&#x27;test&#x27;, (), {}))
+    print(&#x27;Mutant:&#x27;, result)
+except TypeError as e:
+    print(&#x27;Mutant also raises:&#x27;, e)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/test_mark.py::test_mark_mro&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.2.0.dev313+g6e890a0c3, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+____________________ ERROR collecting testing/test_mark.py _____________________
+testing/test_mark.py:16: in &lt;module&gt;
+    class TestMark:
+testing/test_mark.py:18: in TestMark
+    def test_pytest_exists_in_namespace_all(self, attr: str) -&gt; None:
+src/_pytest/mark/structures.py:353: in __call__
+    store_mark(func, self.mark)
+src/_pytest/mark/structures.py:396: in store_mark
+    obj.pytestmark = [*get_unpacked_marks(obj, consider_mro=False), mark]
+E   TypeError: get_unpacked_marks() got an unexpected keyword argument &#x27;consider_mro&#x27;
+=========================== short test summary info ============================
+ERROR testing/test_mark.py - TypeError: get_unpacked_marks() got an unexpecte...
+=============================== 1 error in 0.11s ===============================
+</pre><pre>ERROR: not found: /testbed/testing/test_mark.py::test_mark_mro
+(no name &#x27;/testbed/testing/test_mark.py::test_mark_mro&#x27; in any of [&lt;Module testing/test_mark.py&gt;])
+
+</pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>pytest-dev__pytest-10356/original+test<br><span class='muted'>@b0c7355b-6034-4f77-9d9b-06bf67d43cd7</span></td><td>1</td><td>1 failed in 0.11s</td><td>0.291</td><td>0.57</td><td>$0.00307</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-10356/patched+test<br><span class='muted'>@b0c7355b-6034-4f77-9d9b-06bf67d43cd7</span></td><td>0</td><td>1 passed in 0.08s</td><td>0.278</td><td>0.54</td><td>$0.00293</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-10356/patched+p2p<br><span class='muted'>@b0c7355b-6034-4f77-9d9b-06bf67d43cd7</span></td><td>0</td><td>89 passed, 1 xfailed in 2.29s</td><td>1.943</td><td>2.79</td><td>$0.01963</td><td>19 s</td></tr><tr><td>pytest-dev__pytest-10356/canary+test<br><span class='muted'>@b0c7355b-6034-4f77-9d9b-06bf67d43cd7</span></td><td>4</td><td>1 error in 0.11s</td><td>0.300</td><td>0.60</td><td>$0.00316</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-10356/mutant-m1+test<br><span class='muted'>@b0c7355b-6034-4f77-9d9b-06bf67d43cd7</span></td><td>4</td><td>1 error in 0.11s</td><td>0.302</td><td>0.60</td><td>$0.00318</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-10356/mutant-m2+test<br><span class='muted'>@b0c7355b-6034-4f77-9d9b-06bf67d43cd7</span></td><td>4</td><td>1 error in 0.11s</td><td>0.301</td><td>0.56</td><td>$0.00316</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-10356/mutant-m3+test<br><span class='muted'>@b0c7355b-6034-4f77-9d9b-06bf67d43cd7</span></td><td>4</td><td>1 error in 0.11s</td><td>0.302</td><td>0.56</td><td>$0.00318</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-10356/mutant-m4+test<br><span class='muted'>@b0c7355b-6034-4f77-9d9b-06bf67d43cd7</span></td><td>4</td><td>1 error in 0.11s</td><td>0.309</td><td>0.60</td><td>$0.00324</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-10356/mutant-m5+test<br><span class='muted'>@b0c7355b-6034-4f77-9d9b-06bf67d43cd7</span></td><td>4</td><td>1 error in 0.11s</td><td>0.301</td><td>0.56</td><td>$0.00316</td><td>15 s</td></tr></table>
+</main></body></html>

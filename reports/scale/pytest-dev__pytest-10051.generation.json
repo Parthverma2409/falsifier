@@ -1,0 +1,58 @@
+{
+  "asked": 50,
+  "returned": 0,
+  "usd": 0.00184044,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 1,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/logging.py:345\nerror: src/_pytest/logging.py: patch does not apply; re-anchoring failed: re-anchored hunks overlap in src/_pytest/logging.py"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 50,
+      "parsed": 1,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/logging.py:345\nerror: src/_pytest/logging.py: patch does not apply; re-anchoring failed: re-anchored hunks overlap in src/_pytest/logging.py"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 2,
+      "asked": 50,
+      "parsed": 1,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/logging.py:345\nerror: src/_pytest/logging.py: patch does not apply; re-anchoring failed: re-anchored hunks overlap in src/_pytest/logging.py"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,483 @@
+{
+  "asked": 50,
+  "returned": 6,
+  "usd": 0.008273039999999999,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 50,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 3,
+      "accepted": 3,
+      "rejected": [
+        {
+          "mutant": 4,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 5,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 6,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 8,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 9,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -170,6 +170,13 @@ def expression(s: Scanner) -> ast.Expression:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 10,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 11,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -175,7 +175,7 @@ class MatcherAdapter(Mapping[str, bool]):; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 12,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -175,7 +175,7 @@ class MatcherAdapter(Mapping[str, bool]):; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 13,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 14,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 15,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 16,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 17,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 18,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 19,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,12 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 20,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -172,7 +172,7 @@ class MatcherAdapter(Mapping[str, bool]):; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 21,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -175,7 +175,7 @@ class MatcherAdapter(Mapping[str, bool]):; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 22,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -175,7 +175,7 @@ class MatcherAdapter(Mapping[str, bool]):; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 23,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 24,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -120,6 +120,14 @@ def expression(s: Scanner) -> ast.Expression:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 25,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 26,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 27,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 28,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 29,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -175,7 +175,7 @@ class MatcherAdapter(Mapping[str, bool]):; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 30,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 31,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 32,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 33,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -115,7 +115,7 @@ class Expression:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 34,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -175,7 +175,7 @@ class MatcherAdapter(Mapping[str, bool]):; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 35,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 36,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 37,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 38,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -167,7 +167,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 39,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -175,7 +175,7 @@ class MatcherAdapter(Mapping[str, bool]):; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 40,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 41,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 42,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 43,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 44,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 45,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 46,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 47,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 48,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 49,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 50,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -172,7 +172,7 @@ class MatcherAdapter(Mapping[str, bool]):; re-anchoring failed: hunk before a file header"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 47,
+      "parsed": 20,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 3,
+      "accepted": 6,
+      "rejected": [
+        {
+          "mutant": 4,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 5,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 8,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 9,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 10,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 12,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 13,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 14,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 15,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 16,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 17,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 18,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 19,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 20,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 2,
+      "asked": 44,
+      "parsed": 24,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 6,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 3,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 4,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 5,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 6,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 8,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 9,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 10,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 12,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 13,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 14,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 15,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,12 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 16,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 17,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -163,7 +163,11 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 18,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 19,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 20,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 21,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 22,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 23,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        },
+        {
+          "mutant": 24,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch fragment without header at line 2: @@ -164,7 +164,7 @@ def not_expr(s: Scanner) -> ast.expr:; re-anchoring failed: hunk before a file header"
+        }
+      ]
+    }
+  ]
+}

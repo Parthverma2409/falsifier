@@ -1,0 +1,403 @@
+{
+  "asked": 50,
+  "returned": 23,
+  "usd": 0.01158942,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 41,
+      "applied": 1,
+      "strict_clean": 1,
+      "repaired": 13,
+      "accepted": 9,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "diff applies but changes nothing"
+        },
+        {
+          "mutant": 2,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: warning: recount: unexpected line: )\n\nerror: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 5,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/skipping.py does not parse after the diff: invalid syntax (skipping.py, line 296)"
+        },
+        {
+          "mutant": 6,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 7,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 10,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 12,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 13,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 15,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 16,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 18,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/skipping.py does not parse after the diff: invalid syntax (skipping.py, line 296)"
+        },
+        {
+          "mutant": 19,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 20,
+          "kind": "off-by-one",
+          "reason": "no WITNESS ```python block"
+        },
+        {
+          "mutant": 23,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 24,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 26,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 27,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 28,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 29,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 30,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/skipping.py does not parse after the diff: invalid syntax (skipping.py, line 296)"
+        },
+        {
+          "mutant": 31,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 32,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 33,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 35,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 36,
+          "kind": "off-by-one",
+          "reason": "no WITNESS ```python block"
+        },
+        {
+          "mutant": 37,
+          "kind": "wrong-condition",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 39,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 40,
+          "kind": "off-by-one",
+          "reason": "no WITNESS ```python block"
+        },
+        {
+          "mutant": 41,
+          "kind": "wrong-condition",
+          "reason": "no ```diff block"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 41,
+      "parsed": 9,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 3,
+      "accepted": 10,
+      "rejected": [
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "src/_pytest/skipping.py does not parse after the diff: invalid syntax (skipping.py, line 295)"
+        },
+        {
+          "mutant": 3,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 4,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 5,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/skipping.py does not parse after the diff: invalid syntax (skipping.py, line 296)"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 7,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 8,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 9,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 2,
+      "asked": 40,
+      "parsed": 45,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 16,
+      "accepted": 23,
+      "rejected": [
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 4,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 5,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 6,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 7,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 9,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 10,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 12,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 13,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 14,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 15,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 19,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 20,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 23,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 24,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 28,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 29,
+          "kind": "off-by-one",
+          "reason": "no WITNESS ```python block"
+        },
+        {
+          "mutant": 30,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 32,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 33,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 34,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 35,
+          "kind": "wrong-condition",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 36,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 37,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 38,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 39,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 40,
+          "kind": "too-narrow",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 41,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 42,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 43,
+          "kind": "too-narrow",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 44,
+          "kind": "wrong-condition",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/skipping.py:291\nerror: src/_pytest/skipping.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/skipping.py: 0 matches"
+        },
+        {
+          "mutant": 45,
+          "kind": "too-narrow",
+          "reason": "no WITNESS ```python block"
+        }
+      ]
+    }
+  ]
+}

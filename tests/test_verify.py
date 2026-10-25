@@ -301,3 +301,10 @@ def test_unpinned_and_unearned_need_their_pass_to_pass_evidence():
     no_p2p.p2p = None
     with pytest.raises(EvidenceError, match="PASS_TO_PASS"):
         Verdict("x", "UNEARNED", "r", forks, [no_p2p], "img")
+
+
+def test_pytest4_summary_with_seconds_is_recognised():
+    old = "========================== 1 passed in 0.12 seconds ==========================="
+    assert pytest_counts(old) == {"passed": 1}
+    rec = _rec("t", 0, old)
+    assert classify_test_run(rec)[0] == "PASS"

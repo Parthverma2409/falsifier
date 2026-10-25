@@ -1,0 +1,478 @@
+{
+  "asked": 50,
+  "returned": 0,
+  "usd": 0.01480638,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 37,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 3,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 4,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 5,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 10,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 13,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 14,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 15,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 16,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 17,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 18,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 19,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 20,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 21,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 22,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 23,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 24,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 25,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 26,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 27,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 28,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 29,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 30,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 31,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 32,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 33,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 34,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 35,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 36,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 37,
+          "kind": "off-by-one",
+          "reason": "no WITNESS ```python block"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 50,
+      "parsed": 13,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 3,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 4,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 5,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 6,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 10,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 13,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 2,
+      "asked": 50,
+      "parsed": 37,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 0,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 2,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 3,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 4,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 5,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 6,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 7,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 8,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 9,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 10,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 11,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 12,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 13,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 14,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 15,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 16,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 17,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 18,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 19,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 20,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 21,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 22,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 23,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 24,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 25,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 26,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 27,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 28,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 29,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 30,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 31,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 32,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 33,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 34,
+          "kind": "too-narrow",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 35,
+          "kind": "silences-symptom",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 36,
+          "kind": "off-by-one",
+          "reason": "no --- a/ or +++ b/ file headers"
+        },
+        {
+          "mutant": 37,
+          "kind": "wrong-condition",
+          "reason": "no --- a/ or +++ b/ file headers"
+        }
+      ]
+    }
+  ]
+}

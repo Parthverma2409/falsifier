@@ -1,0 +1,1687 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · pytest-dev__pytest-7571</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>pytest-dev__pytest-7571</h1>
+<p class="muted">caplog fixture doesn&#x27;t restore log level after test From the documentation at https://docs.pytest.org/en/6.0.0/logging.html#caplog-fixture, &quot;The log levels set are restored automatically at the end …</p><details><summary>Full issue</summary><pre>caplog fixture doesn&#x27;t restore log level after test
+From the documentation at https://docs.pytest.org/en/6.0.0/logging.html#caplog-fixture, &quot;The log levels set are restored automatically at the end of the test&quot;.
+It used to work, but looks broken in new 6.0 release. Minimal example to reproduce:
+
+```
+def test_foo(caplog):
+    caplog.set_level(42)
+
+def test_bar(caplog):
+    print(caplog.handler.level)
+```
+
+It prints &quot;0&quot; for pytest&lt;6, &quot;42&quot; after.
+</pre></details>
+
+<div class="verdict EARNED">EARNED</div>
+
+<p>SWE-bench says <b>RESOLVED</b> · benchmark oracle: the repository's own FAIL_TO_PASS tests (1)</p>
+<p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 1 failed in 0.34s; the canary&#x27;s AssertionError is in the log)</b></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.08s) and passes on the patch (exit 0, 1 passed in 0.06s); all 14 PASS_TO_PASS tests PASSED; the test killed 8 of 8 distinguishable mutants (4 equivalent discarded). Negative control: the canary failed the test (exit 1, 1 failed in 0.34s; the canary&#x27;s AssertionError is in the log)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint 8b899fe6-4c0f-473b-aaac-3e80110f29cf ·
+24 forks · 5.92 CPU-s · $0.0623 · 2026-10-25T17:59:03+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · wrong-condition<br><span class="status equivalent">equivalent, discarded</span><br><span class="muted">The guard in _finalize checks `if self._initial_handler_level is not None` but due to a logic error, it only restores when the level was already 0, missing the case where the initial level was non-zero like 42.</span></div><div class="card"><b>m2</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The condition in _finalize uses `and` instead of properly checking, so it only restores handler level when both _initial_handler_level is not None AND the handler level is currently 0, missing the case where level was changed to non-zero and needs restoring.</span></div><div class="card"><b>m3</b> · silences-symptom<br><span class="status killed">killed</span><br><span class="muted">Returns a default level of 0 immediately without saving the original handler level, making the reported level go away but losing the restoration mechanism entirely.</span></div><div class="card"><b>m4</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The guard checks `if self._initial_handler_level:` which is falsy for level 0 (NOTSET), so when the initial handler level was NOTSET (0), it never restores, leaving the level at whatever it was set to.</span></div><div class="card"><b>m5</b> · silences-symptom<br><span class="status equivalent">equivalent, discarded</span><br><span class="muted">Catches the exception when handler.level raises AttributeError and returns early, making the error go away but preventing any level restoration from happening.</span></div><div class="card"><b>m6</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The condition uses `or` instead of proper check, so it restores handler level when either condition is true, causing double restoration or restoration at wrong time.</span></div><div class="card"><b>m7</b> · silences-symptom<br><span class="status killed">killed</span><br><span class="muted">Uses `pass` in the restoration block, making the level change go away silently without actually restoring, so the handler level appears unchanged but is actually broken.</span></div><div class="card"><b>m8</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The condition uses `not self._initial_handler_level is not None` which is always False, making the restoration code never execute.</span></div><div class="card"><b>m9</b> · wrong-condition<br><span class="status equivalent">equivalent, discarded</span><br><span class="muted">The guard in _finalize uses `is not None` but the mutant changes it to `== 0`, so restoration only happens when the initial handler level was exactly 0 (NOTSET), missing the common case where the initial level was 42 or any other non-zero value.</span></div><div class="card"><b>m10</b> · silences-symptom<br><span class="status killed">killed</span><br><span class="muted">The _finalize method uses logging.shutdown() which terminates the logging system entirely, making the error go away but destroying all logging state for subsequent tests.</span></div><div class="card"><b>m11</b> · silences-symptom<br><span class="status equivalent">equivalent, discarded</span><br><span class="muted">The _finalize method catches any exception during restoration and silently ignores it, making the error go away but preventing any level restoration from happening.</span></div><div class="card"><b>m12</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The guard in _finalize changes from `is not None` to `is not None and logger == &#x27;root&#x27;`, so handler level restoration only happens when the logger parameter is exactly &#x27;root&#x27;, missing restoration for custom logger names.</span></div></div>
+
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.08s · 0.282 CPU-s · 0.56 s · $0.00295<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.06s · 0.265 CPU-s · 0.52 s · $0.00278<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 15 passed in 0.25s · 0.415 CPU-s · 0.71 s · $0.00430<br>
+canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.34s · 0.545 CPU-s · 0.81 s · $0.00561</p>
+<details><summary>The canary mutant</summary><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -342,11 +342,7 @@ class LogCaptureFixture:</span><span class="line">     &quot;&quot;&quot;Provides access and control of log capturing.&quot;&quot;&quot;</span><span class="line"> </span><span class="line">     def __init__(self, item: nodes.Node) -&gt; None:</span><span class="line del">-        &quot;&quot;&quot;Creates a new funcarg.&quot;&quot;&quot;</span><span class="line del">-        self._item = item</span><span class="line del">-        # dict of log name -&gt; log level</span><span class="line del">-        self._initial_handler_level = None  # type: Optional[int]</span><span class="line del">-        self._initial_logger_levels = {}  # type: Dict[Optional[str], int]</span><span class="line add">+        raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line">     def _finalize(self) -&gt; None:</span><span class="line">         &quot;&quot;&quot;Finalizes the fixture.</span></pre></details>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">diff --git a/src/_pytest/logging.py b/src/_pytest/logging.py</span><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -345,6 +345,7 @@ def __init__(self, item: nodes.Node) -&gt; None:</span><span class="line">         &quot;&quot;&quot;Creates a new funcarg.&quot;&quot;&quot;</span><span class="line">         self._item = item</span><span class="line">         # dict of log name -&gt; log level</span><span class="line add">+        self._initial_handler_level = None  # type: Optional[int]</span><span class="line">         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]</span><span class="line"> </span><span class="line">     def _finalize(self) -&gt; None:</span><span class="line">@@ -353,6 +354,8 @@ def _finalize(self) -&gt; None:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line add">+        if self._initial_handler_level is not None:</span><span class="line add">+            self.handler.setLevel(self._initial_handler_level)</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span><span class="line">             logger.setLevel(level)</span><span class="line">@@ -434,6 +437,7 @@ def set_level(self, level: Union[int, str], logger: Optional[str] = None) -&gt; Non</span><span class="line">         # save the original log-level to restore it during teardown</span><span class="line">         self._initial_logger_levels.setdefault(logger, logger_obj.level)</span><span class="line">         logger_obj.setLevel(level)</span><span class="line add">+        self._initial_handler_level = self.handler.level</span><span class="line">         self.handler.setLevel(level)</span><span class="line"> </span><span class="line">     @contextmanager</span></pre></div>
+<div><h3>The test</h3><pre>import logging
+
+import pytest
+from _pytest.logging import caplog_records_key
+from _pytest.pytester import Testdir
+
+logger = logging.getLogger(__name__)
+sublogger = logging.getLogger(__name__ + &quot;.baz&quot;)
+
+
+def test_fixture_help(testdir):
+    result = testdir.runpytest(&quot;--fixtures&quot;)
+    result.stdout.fnmatch_lines([&quot;*caplog*&quot;])
+
+
+def test_change_level(caplog):
+    caplog.set_level(logging.INFO)
+    logger.debug(&quot;handler DEBUG level&quot;)
+    logger.info(&quot;handler INFO level&quot;)
+
+    caplog.set_level(logging.CRITICAL, logger=sublogger.name)
+    sublogger.warning(&quot;logger WARNING level&quot;)
+    sublogger.critical(&quot;logger CRITICAL level&quot;)
+
+    assert &quot;DEBUG&quot; not in caplog.text
+    assert &quot;INFO&quot; in caplog.text
+    assert &quot;WARNING&quot; not in caplog.text
+    assert &quot;CRITICAL&quot; in caplog.text
+
+
+def test_change_level_undo(testdir: Testdir) -&gt; None:
+    &quot;&quot;&quot;Ensure that &#x27;set_level&#x27; is undone after the end of the test.
+
+    Tests the logging output themselves (affacted both by logger and handler levels).
+    &quot;&quot;&quot;
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import logging
+
+        def test1(caplog):
+            caplog.set_level(logging.INFO)
+            # using + operator here so fnmatch_lines doesn&#x27;t match the code in the traceback
+            logging.info(&#x27;log from &#x27; + &#x27;test1&#x27;)
+            assert 0
+
+        def test2(caplog):
+            # using + operator here so fnmatch_lines doesn&#x27;t match the code in the traceback
+            logging.info(&#x27;log from &#x27; + &#x27;test2&#x27;)
+            assert 0
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([&quot;*log from test1*&quot;, &quot;*2 failed in *&quot;])
+    result.stdout.no_fnmatch_line(&quot;*log from test2*&quot;)
+
+
+def test_change_level_undos_handler_level(testdir: Testdir) -&gt; None:
+    &quot;&quot;&quot;Ensure that &#x27;set_level&#x27; is undone after the end of the test (handler).
+
+    Issue #7569. Tests the handler level specifically.
+    &quot;&quot;&quot;
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import logging
+
+        def test1(caplog):
+            assert caplog.handler.level == 0
+            caplog.set_level(41)
+            assert caplog.handler.level == 41
+
+        def test2(caplog):
+            assert caplog.handler.level == 0
+
+        def test3(caplog):
+            assert caplog.handler.level == 0
+            caplog.set_level(43)
+            assert caplog.handler.level == 43
+    &quot;&quot;&quot;
+    )
+    result = testdir.runpytest()
+    result.assert_outcomes(passed=3)
+
+
+def test_with_statement(caplog):
+    with caplog.at_level(logging.INFO):
+        logger.debug(&quot;handler DEBUG level&quot;)
+        logger.info(&quot;handler INFO level&quot;)
+
+        with caplog.at_level(logging.CRITICAL, logger=sublogger.name):
+            sublogger.warning(&quot;logger WARNING level&quot;)
+            sublogger.critical(&quot;logger CRITICAL level&quot;)
+
+    assert &quot;DEBUG&quot; not in caplog.text
+    assert &quot;INFO&quot; in caplog.text
+    assert &quot;WARNING&quot; not in caplog.text
+    assert &quot;CRITICAL&quot; in caplog.text
+
+
+def test_log_access(caplog):
+    caplog.set_level(logging.INFO)
+    logger.info(&quot;boo %s&quot;, &quot;arg&quot;)
+    assert caplog.records[0].levelname == &quot;INFO&quot;
+    assert caplog.records[0].msg == &quot;boo %s&quot;
+    assert &quot;boo arg&quot; in caplog.text
+
+
+def test_messages(caplog):
+    caplog.set_level(logging.INFO)
+    logger.info(&quot;boo %s&quot;, &quot;arg&quot;)
+    logger.info(&quot;bar %s\nbaz %s&quot;, &quot;arg1&quot;, &quot;arg2&quot;)
+    assert &quot;boo arg&quot; == caplog.messages[0]
+    assert &quot;bar arg1\nbaz arg2&quot; == caplog.messages[1]
+    assert caplog.text.count(&quot;\n&quot;) &gt; len(caplog.messages)
+    assert len(caplog.text.splitlines()) &gt; len(caplog.messages)
+
+    try:
+        raise Exception(&quot;test&quot;)
+    except Exception:
+        logger.exception(&quot;oops&quot;)
+
+    assert &quot;oops&quot; in caplog.text
+    assert &quot;oops&quot; in caplog.messages[-1]
+    # Tracebacks are stored in the record and not added until the formatter or handler.
+    assert &quot;Exception&quot; in caplog.text
+    assert &quot;Exception&quot; not in caplog.messages[-1]
+
+
+def test_record_tuples(caplog):
+    caplog.set_level(logging.INFO)
+    logger.info(&quot;boo %s&quot;, &quot;arg&quot;)
+
+    assert caplog.record_tuples == [(__name__, logging.INFO, &quot;boo arg&quot;)]
+
+
+def test_unicode(caplog):
+    caplog.set_level(logging.INFO)
+    logger.info(&quot;bū&quot;)
+    assert caplog.records[0].levelname == &quot;INFO&quot;
+    assert caplog.records[0].msg == &quot;bū&quot;
+    assert &quot;bū&quot; in caplog.text
+
+
+def test_clear(caplog):
+    caplog.set_level(logging.INFO)
+    logger.info(&quot;bū&quot;)
+    assert len(caplog.records)
+    assert caplog.text
+    caplog.clear()
+    assert not len(caplog.records)
+    assert not caplog.text
+
+
+@pytest.fixture
+def logging_during_setup_and_teardown(caplog):
+    caplog.set_level(&quot;INFO&quot;)
+    logger.info(&quot;a_setup_log&quot;)
+    yield
+    logger.info(&quot;a_teardown_log&quot;)
+    assert [x.message for x in caplog.get_records(&quot;teardown&quot;)] == [&quot;a_teardown_log&quot;]
+
+
+def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardown):
+    assert not caplog.records
+    assert not caplog.get_records(&quot;call&quot;)
+    logger.info(&quot;a_call_log&quot;)
+    assert [x.message for x in caplog.get_records(&quot;call&quot;)] == [&quot;a_call_log&quot;]
+
+    assert [x.message for x in caplog.get_records(&quot;setup&quot;)] == [&quot;a_setup_log&quot;]
+
+    # This reaches into private API, don&#x27;t use this type of thing in real tests!
+    assert set(caplog._item._store[caplog_records_key]) == {&quot;setup&quot;, &quot;call&quot;}
+
+
+def test_ini_controls_global_log_level(testdir):
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        import logging
+        def test_log_level_override(request, caplog):
+            plugin = request.config.pluginmanager.getplugin(&#x27;logging-plugin&#x27;)
+            assert plugin.log_level == logging.ERROR
+            logger = logging.getLogger(&#x27;catchlog&#x27;)
+            logger.warning(&quot;WARNING message won&#x27;t be shown&quot;)
+            logger.error(&quot;ERROR message will be shown&quot;)
+            assert &#x27;WARNING&#x27; not in caplog.text
+            assert &#x27;ERROR&#x27; in caplog.text
+    &quot;&quot;&quot;
+    )
+    testdir.makeini(
+        &quot;&quot;&quot;
+        [pytest]
+        log_level=ERROR
+    &quot;&quot;&quot;
+    )
+
+    result = testdir.runpytest()
+    # make sure that that we get a &#x27;0&#x27; exit code for the testsuite
+    assert result.ret == 0
+
+
+def test_caplog_can_override_global_log_level(testdir):
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        import logging
+        def test_log_level_override(request, caplog):
+            logger = logging.getLogger(&#x27;catchlog&#x27;)
+            plugin = request.config.pluginmanager.getplugin(&#x27;logging-plugin&#x27;)
+            assert plugin.log_level == logging.WARNING
+
+            logger.info(&quot;INFO message won&#x27;t be shown&quot;)
+
+            caplog.set_level(logging.INFO, logger.name)
+
+            with caplog.at_level(logging.DEBUG, logger.name):
+                logger.debug(&quot;DEBUG message will be shown&quot;)
+
+            logger.debug(&quot;DEBUG message won&#x27;t be shown&quot;)
+
+            with caplog.at_level(logging.CRITICAL, logger.name):
+                logger.warning(&quot;WARNING message won&#x27;t be shown&quot;)
+
+            logger.debug(&quot;DEBUG message won&#x27;t be shown&quot;)
+            logger.info(&quot;INFO message will be shown&quot;)
+
+            assert &quot;message won&#x27;t be shown&quot; not in caplog.text
+    &quot;&quot;&quot;
+    )
+    testdir.makeini(
+        &quot;&quot;&quot;
+        [pytest]
+        log_level=WARNING
+    &quot;&quot;&quot;
+    )
+
+    result = testdir.runpytest()
+    assert result.ret == 0
+
+
+def test_caplog_captures_despite_exception(testdir):
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        import logging
+        def test_log_level_override(request, caplog):
+            logger = logging.getLogger(&#x27;catchlog&#x27;)
+            plugin = request.config.pluginmanager.getplugin(&#x27;logging-plugin&#x27;)
+            assert plugin.log_level == logging.WARNING
+
+            logger.error(&quot;ERROR message &quot; + &quot;will be shown&quot;)
+
+            with caplog.at_level(logging.DEBUG, logger.name):
+                logger.debug(&quot;DEBUG message &quot; + &quot;won&#x27;t be shown&quot;)
+                raise Exception()
+    &quot;&quot;&quot;
+    )
+    testdir.makeini(
+        &quot;&quot;&quot;
+        [pytest]
+        log_level=WARNING
+    &quot;&quot;&quot;
+    )
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([&quot;*ERROR message will be shown*&quot;])
+    result.stdout.no_fnmatch_line(&quot;*DEBUG message won&#x27;t be shown*&quot;)
+    assert result.ret == 1
+
+
+def test_log_report_captures_according_to_config_option_upon_failure(testdir):
+    &quot;&quot;&quot; Test that upon failure:
+    (1) `caplog` succeeded to capture the DEBUG message and assert on it =&gt; No `Exception` is raised
+    (2) The `DEBUG` message does NOT appear in the `Captured log call` report
+    (3) The stdout, `INFO`, and `WARNING` messages DO appear in the test reports due to `--log-level=INFO`
+    &quot;&quot;&quot;
+    testdir.makepyfile(
+        &quot;&quot;&quot;
+        import pytest
+        import logging
+
+        def function_that_logs():
+            logging.debug(&#x27;DEBUG log &#x27; + &#x27;message&#x27;)
+            logging.info(&#x27;INFO log &#x27; + &#x27;message&#x27;)
+            logging.warning(&#x27;WARNING log &#x27; + &#x27;message&#x27;)
+            print(&#x27;Print &#x27; + &#x27;message&#x27;)
+
+        def test_that_fails(request, caplog):
+            plugin = request.config.pluginmanager.getplugin(&#x27;logging-plugin&#x27;)
+            assert plugin.log_level == logging.INFO
+
+            with caplog.at_level(logging.DEBUG):
+                function_that_logs()
+
+            if &#x27;DEBUG log &#x27; + &#x27;message&#x27; not in caplog.text:
+                raise Exception(&#x27;caplog failed to &#x27; + &#x27;capture DEBUG&#x27;)
+
+            assert False
+    &quot;&quot;&quot;
+    )
+
+    result = testdir.runpytest(&quot;--log-level=INFO&quot;)
+    result.stdout.no_fnmatch_line(&quot;*Exception: caplog failed to capture DEBUG*&quot;)
+    result.stdout.no_fnmatch_line(&quot;*DEBUG log message*&quot;)
+    result.stdout.fnmatch_lines(
+        [&quot;*Print message*&quot;, &quot;*INFO log message*&quot;, &quot;*WARNING log message*&quot;]
+    )
+    assert result.ret == 1
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py F                                        [100%]
+
+=================================== FAILURES ===================================
+____________________ test_change_level_undos_handler_level _____________________
+
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0&#x27;)&gt;
+
+    def test_change_level_undos_handler_level(testdir: Testdir) -&gt; None:
+        &quot;&quot;&quot;Ensure that &#x27;set_level&#x27; is undone after the end of the test (handler).
+    
+        Issue #7569. Tests the handler level specifically.
+        &quot;&quot;&quot;
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import logging
+    
+            def test1(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(41)
+                assert caplog.handler.level == 41
+    
+            def test2(caplog):
+                assert caplog.handler.level == 0
+    
+            def test3(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(43)
+                assert caplog.handler.level == 43
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+&gt;       result.assert_outcomes(passed=3)
+E       AssertionError: assert {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...} == {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...}
+E         Omitting 4 identical items, use -vv to show
+E         Differing items:
+E         {&#x27;passed&#x27;: 1} != {&#x27;passed&#x27;: 3}
+E         {&#x27;failed&#x27;: 2} != {&#x27;failed&#x27;: 0}
+E         Use -v to get the full diff
+
+/testbed/testing/logging/test_fixture.py:81: AssertionError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py .FF                             [100%]
+
+=================================== FAILURES ===================================
+____________________________________ test2 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6cfaac0&gt;
+
+    def test2(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6cfaac0&gt;.handler
+
+test_change_level_undos_handler_level.py:9: AssertionError
+____________________________________ test3 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6d91a00&gt;
+
+    def test3(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6d91a00&gt;.handler
+
+test_change_level_undos_handler_level.py:12: AssertionError
+=========================== short test summary info ============================
+FAILED test_change_level_undos_handler_level.py::test2 - assert 41 == 0
+FAILED test_change_level_undos_handler_level.py::test3 - assert 41 == 0
+========================= 2 failed, 1 passed in 0.02s ==========================
+=========================== short test summary info ============================
+FAILED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 failed in 0.08s ===============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py .                                        [100%]
+
+==================================== PASSES ====================================
+____________________ test_change_level_undos_handler_level _____________________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py ...                             [100%]
+
+============================== 3 passed in 0.01s ===============================
+=========================== short test summary info ============================
+PASSED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 passed in 0.06s ===============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py&#x27;</pre><pre>d 1 item
+
+test_caplog_can_override_global_log_level.py .                           [100%]
+
+============================== 1 passed in 0.01s ===============================
+------------------------------ Captured log call -------------------------------
+DEBUG    catchlog:test_caplog_can_override_global_log_level.py:13 DEBUG message will be shown
+INFO     catchlog:test_caplog_can_override_global_log_level.py:21 INFO message will be shown
+____________________ test_caplog_captures_despite_exception ____________________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_caplog_captures_despite_exception0, configfile: tox.ini
+collected 1 item
+
+test_caplog_captures_despite_exception.py F                              [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_log_level_override ____________________________
+
+request = &lt;FixtureRequest for &lt;Function test_log_level_override&gt;&gt;
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff69af790&gt;
+
+    def test_log_level_override(request, caplog):
+        logger = logging.getLogger(&#x27;catchlog&#x27;)
+        plugin = request.config.pluginmanager.getplugin(&#x27;logging-plugin&#x27;)
+        assert plugin.log_level == logging.WARNING
+    
+        logger.error(&quot;ERROR message &quot; + &quot;will be shown&quot;)
+    
+        with caplog.at_level(logging.DEBUG, logger.name):
+            logger.debug(&quot;DEBUG message &quot; + &quot;won&#x27;t be shown&quot;)
+&gt;           raise Exception()
+E           Exception
+
+test_caplog_captures_despite_exception.py:12: Exception
+------------------------------ Captured log call -------------------------------
+ERROR    catchlog:test_caplog_captures_despite_exception.py:8 ERROR message will be shown
+=========================== short test summary info ============================
+FAILED test_caplog_captures_despite_exception.py::test_log_level_override - E...
+============================== 1 failed in 0.01s ===============================
+------------------------------ Captured log call -------------------------------
+ERROR    catchlog:test_caplog_captures_despite_exception.py:8 ERROR message will be shown
+DEBUG    catchlog:test_caplog_captures_despite_exception.py:11 DEBUG message won&#x27;t be shown
+_______ test_log_report_captures_according_to_config_option_upon_failure _______
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_log_report_captures_according_to_config_option_upon_failure0
+collected 1 item
+
+test_log_report_captures_according_to_config_option_upon_failure.py F    [100%]
+
+=================================== FAILURES ===================================
+_______________________________ test_that_fails ________________________________
+
+request = &lt;FixtureRequest for &lt;Function test_that_fails&gt;&gt;
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6966e80&gt;
+
+    def test_that_fails(request, caplog):
+        plugin = request.config.pluginmanager.getplugin(&#x27;logging-plugin&#x27;)
+        assert plugin.log_level == logging.INFO
+    
+        with caplog.at_level(logging.DEBUG):
+            function_that_logs()
+    
+        if &#x27;DEBUG log &#x27; + &#x27;message&#x27; not in caplog.text:
+            raise Exception(&#x27;caplog failed to &#x27; + &#x27;capture DEBUG&#x27;)
+    
+&gt;       assert False
+E       assert False
+
+test_log_report_captures_according_to_config_option_upon_failure.py:20: AssertionError
+----------------------------- Captured stdout call -----------------------------
+Print message
+------------------------------ Captured log call -------------------------------
+INFO     root:test_log_report_captures_according_to_config_option_upon_failure.py:6 INFO log message
+WARNING  root:test_log_report_captures_according_to_config_option_upon_failure.py:7 WARNING log message
+=========================== short test summary info ============================
+FAILED test_log_report_captures_according_to_config_option_upon_failure.py::test_that_fails
+============================== 1 failed in 0.01s ===============================
+------------------------------ Captured log call -------------------------------
+DEBUG    root:test_log_report_captures_according_to_config_option_upon_failure.py:5 DEBUG log message
+INFO     root:test_log_report_captures_according_to_config_option_upon_failure.py:6 INFO log message
+WARNING  root:test_log_report_captures_according_to_config_option_upon_failure.py:7 WARNING log message
+=========================== short test summary info ============================
+PASSED testing/logging/test_fixture.py::test_change_level
+PASSED testing/logging/test_fixture.py::test_with_statement
+PASSED testing/logging/test_fixture.py::test_log_access
+PASSED testing/logging/test_fixture.py::test_messages
+PASSED testing/logging/test_fixture.py::test_record_tuples
+PASSED testing/logging/test_fixture.py::test_unicode
+PASSED testing/logging/test_fixture.py::test_clear
+PASSED testing/logging/test_fixture.py::test_caplog_captures_for_all_stages
+PASSED testing/logging/test_fixture.py::test_fixture_help
+PASSED testing/logging/test_fixture.py::test_change_level_undo
+PASSED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+PASSED testing/logging/test_fixture.py::test_ini_controls_global_log_level
+PASSED testing/logging/test_fixture.py::test_caplog_can_override_global_log_level
+PASSED testing/logging/test_fixture.py::test_caplog_captures_despite_exception
+PASSED testing/logging/test_fixture.py::test_log_report_captures_according_to_config_option_upon_failure
+============================== 15 passed in 0.25s ==============================
+</pre><pre></pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>pluggy/hooks.py:286: in __call__
+    return self._hookexec(self, self.get_hookimpls(), kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:93: in _hookexec
+    return self._inner_hookexec(hook, methods, kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:337: in traced_hookexec
+    return outcome.get_result()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:335: in &lt;lambda&gt;
+    outcome = _Result.from_call(lambda: oldcall(hook, hook_impls, kwargs))
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:84: in &lt;lambda&gt;
+    self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+/testbed/src/_pytest/fixtures.py:1117: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+/testbed/src/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = next(generator)
+/testbed/src/_pytest/logging.py:473: in caplog
+    result = LogCaptureFixture(request.node)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6b65940&gt;
+item = &lt;Function test2&gt;
+
+    def __init__(self, item: nodes.Node) -&gt; None:
+&gt;       raise AssertionError(&quot;canary&quot;)
+E       AssertionError: canary
+
+/testbed/src/_pytest/logging.py:345: AssertionError
+___________________________ ERROR at setup of test3 ____________________________
+
+cls = &lt;class &#x27;_pytest.runner.CallInfo&#x27;&gt;
+func = &lt;function call_runtest_hook.&lt;locals&gt;.&lt;lambda&gt; at 0x7ffff6ae61f0&gt;
+when = &#x27;setup&#x27;
+reraise = (&lt;class &#x27;_pytest.outcomes.Exit&#x27;&gt;, &lt;class &#x27;KeyboardInterrupt&#x27;&gt;)
+
+    @classmethod
+    def from_call(
+        cls,
+        func: &quot;Callable[[], _T]&quot;,
+        when: &quot;Literal[&#x27;collect&#x27;, &#x27;setup&#x27;, &#x27;call&#x27;, &#x27;teardown&#x27;]&quot;,
+        reraise: &quot;Optional[Union[Type[BaseException], Tuple[Type[BaseException], ...]]]&quot; = None,
+    ) -&gt; &quot;CallInfo[_T]&quot;:
+        excinfo = None
+        start = timing.time()
+        precise_start = timing.perf_counter()
+        try:
+&gt;           result = func()  # type: Optional[_T]
+
+/testbed/src/_pytest/runner.py:294: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/testbed/src/_pytest/runner.py:247: in &lt;lambda&gt;
+    lambda: ihook(item=item, **kwds), when=when, reraise=reraise
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/hooks.py:286: in __call__
+    return self._hookexec(self, self.get_hookimpls(), kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:93: in _hookexec
+    return self._inner_hookexec(hook, methods, kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:337: in traced_hookexec
+    return outcome.get_result()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:335: in &lt;lambda&gt;
+    outcome = _Result.from_call(lambda: oldcall(hook, hook_impls, kwargs))
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:84: in &lt;lambda&gt;
+    self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+/testbed/src/_pytest/runner.py:141: in pytest_runtest_setup
+    item.session._setupstate.prepare(item)
+/testbed/src/_pytest/runner.py:435: in prepare
+    raise e
+/testbed/src/_pytest/runner.py:432: in prepare
+    col.setup()
+/testbed/src/_pytest/python.py:1575: in setup
+    self._request._fillfixtures()
+/testbed/src/_pytest/fixtures.py:568: in _fillfixtures
+    item.funcargs[argname] = self.getfixturevalue(argname)
+/testbed/src/_pytest/fixtures.py:581: in getfixturevalue
+    fixturedef = self._get_active_fixturedef(argname)
+/testbed/src/_pytest/fixtures.py:601: in _get_active_fixturedef
+    self._compute_fixture_value(fixturedef)
+/testbed/src/_pytest/fixtures.py:683: in _compute_fixture_value
+    fixturedef.execute(request=subrequest)
+/testbed/src/_pytest/fixtures.py:1062: in execute
+    result = hook.pytest_fixture_setup(fixturedef=self, request=request)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/hooks.py:286: in __call__
+    return self._hookexec(self, self.get_hookimpls(), kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:93: in _hookexec
+    return self._inner_hookexec(hook, methods, kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:337: in traced_hookexec
+    return outcome.get_result()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:335: in &lt;lambda&gt;
+    outcome = _Result.from_call(lambda: oldcall(hook, hook_impls, kwargs))
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:84: in &lt;lambda&gt;
+    self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+/testbed/src/_pytest/fixtures.py:1117: in pytest_fixture_setup
+    result = call_fixture_func(fixturefunc, request, kwargs)
+/testbed/src/_pytest/fixtures.py:915: in call_fixture_func
+    fixture_result = next(generator)
+/testbed/src/_pytest/logging.py:473: in caplog
+    result = LogCaptureFixture(request.node)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6b5ad60&gt;
+item = &lt;Function test3&gt;
+
+    def __init__(self, item: nodes.Node) -&gt; None:
+&gt;       raise AssertionError(&quot;canary&quot;)
+E       AssertionError: canary
+
+/testbed/src/_pytest/logging.py:345: AssertionError
+=========================== short test summary info ============================
+ERROR test_change_level_undos_handler_level.py::test1 - AssertionError: canary
+ERROR test_change_level_undos_handler_level.py::test2 - AssertionError: canary
+ERROR test_change_level_undos_handler_level.py::test3 - AssertionError: canary
+============================== 3 errors in 0.29s ===============================
+=========================== short test summary info ============================
+FAILED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 failed in 0.34s ===============================
+</pre><pre></pre></details>
+<h2>Other mutants</h2><details><summary>m1 · equivalent, discarded: its own witness does not distinguish it (the patch raises TypeError(&#x27;config or parent must be provided&#x27;), the mutant raises TypeError(&#x27;config or parent must be provided&#x27;)); discarded, never a survivor</summary><p>The guard in _finalize checks `if self._initial_handler_level is not None` but due to a logic error, it only restores when the level was already 0, missing the case where the initial level was non-zero like 42.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -345,7 +345,7 @@ class LogCaptureFixture:</span><span class="line">         &quot;&quot;&quot;Creates a new funcarg.&quot;&quot;&quot;</span><span class="line">         self._item = item</span><span class="line">         # dict of log name -&gt; log level</span><span class="line del">-        self._initial_handler_level = None  # type: Optional[int]</span><span class="line add">+        self._initial_handler_level = 0  # type: Optional[int]</span><span class="line">         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]</span><span class="line"> </span><span class="line">     def _finalize(self) -&gt; None:</span><span class="line">@@ -354,7 +354,7 @@ class LogCaptureFixture:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line del">-        if self._initial_handler_level is not None:</span><span class="line add">+        if self._initial_handler_level == 0:</span><span class="line">             self.handler.setLevel(self._initial_handler_level)</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span><span class="line">@@ -438,6 +438,7 @@ class LogCaptureFixture:</span><span class="line">         self._initial_logger_levels.setdefault(logger, logger_obj.level)</span><span class="line">         logger_obj.setLevel(level)</span><span class="line">         self._initial_handler_level = self.handler.level</span><span class="line add">+        self._initial_handler_level = self.handler.level</span><span class="line">         self.handler.setLevel(level)</span><span class="line"> </span><span class="line">     @contextmanager</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+# Setup
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+# set_level is never called, _initial_handler_level stays None
+fixture._finalize()
+print(f&quot;handler.level after no set_level: {handler.level}&quot;)  # 0
+# Now test with set_level called
+handler2 = LogCaptureHandler()
+fixture2 = LogCaptureFixture(Item(&#x27;test_node2&#x27;))
+fixture2.set_level(42)
+fixture2._finalize()
+print(f&quot;handler.level after set_level(42) then finalize: {handler2.level}&quot;)  # should be 0, is 42</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py .                                        [100%]
+
+==================================== PASSES ====================================
+____________________ test_change_level_undos_handler_level _____________________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py ...                             [100%]
+
+============================== 3 passed in 0.01s ===============================
+=========================== short test summary info ============================
+PASSED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 passed in 0.06s ===============================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;config or parent must be provided&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;TypeError&quot;}
+</pre><pre></pre></details><details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;config or parent must be provided&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;TypeError&quot;}
+</pre><pre></pre></details></details><details><summary>m2 · killed: exit 1, 1 failed in 0.08s</summary><p>The condition in _finalize uses `and` instead of properly checking, so it only restores handler level when both _initial_handler_level is not None AND the handler level is currently 0, missing the case where level was changed to non-zero and needs restoring.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -354,7 +354,7 @@ class LogCaptureFixture:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line del">-        if self._initial_handler_level is not None:</span><span class="line add">+        if self._initial_handler_level is not None and self.handler.level == 0:</span><span class="line">             self.handler.setLevel(self._initial_handler_level)</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+# Setup
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+# set_level changes handler level from 0 to 42
+fixture.set_level(42)
+print(f&quot;handler.level after set_level(42): {handler.level}&quot;)  # 42
+# _finalize should restore to 0, but condition is wrong
+fixture._finalize()
+print(f&quot;handler.level after _finalize: {handler.level}&quot;)  # should be 0, is 42 because condition fails</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py F                                        [100%]
+
+=================================== FAILURES ===================================
+____________________ test_change_level_undos_handler_level _____________________
+
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0&#x27;)&gt;
+
+    def test_change_level_undos_handler_level(testdir: Testdir) -&gt; None:
+        &quot;&quot;&quot;Ensure that &#x27;set_level&#x27; is undone after the end of the test (handler).
+    
+        Issue #7569. Tests the handler level specifically.
+        &quot;&quot;&quot;
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import logging
+    
+            def test1(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(41)
+                assert caplog.handler.level == 41
+    
+            def test2(caplog):
+                assert caplog.handler.level == 0
+    
+            def test3(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(43)
+                assert caplog.handler.level == 43
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+&gt;       result.assert_outcomes(passed=3)
+E       AssertionError: assert {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...} == {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...}
+E         Omitting 4 identical items, use -vv to show
+E         Differing items:
+E         {&#x27;passed&#x27;: 1} != {&#x27;passed&#x27;: 3}
+E         {&#x27;failed&#x27;: 2} != {&#x27;failed&#x27;: 0}
+E         Use -v to get the full diff
+
+/testbed/testing/logging/test_fixture.py:81: AssertionError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py .FF                             [100%]
+
+=================================== FAILURES ===================================
+____________________________________ test2 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6cdd220&gt;
+
+    def test2(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6cdd220&gt;.handler
+
+test_change_level_undos_handler_level.py:9: AssertionError
+____________________________________ test3 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6f9d5b0&gt;
+
+    def test3(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6f9d5b0&gt;.handler
+
+test_change_level_undos_handler_level.py:12: AssertionError
+=========================== short test summary info ============================
+FAILED test_change_level_undos_handler_level.py::test2 - assert 41 == 0
+FAILED test_change_level_undos_handler_level.py::test3 - assert 41 == 0
+========================= 2 failed, 1 passed in 0.02s ==========================
+=========================== short test summary info ============================
+FAILED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 failed in 0.08s ===============================
+</pre><pre></pre></details></details><details><summary>m3 · killed: exit 1, 1 failed in 0.08s</summary><p>Returns a default level of 0 immediately without saving the original handler level, making the reported level go away but losing the restoration mechanism entirely.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -345,7 +345,7 @@ class LogCaptureFixture:</span><span class="line">         &quot;&quot;&quot;Creates a new funcarg.&quot;&quot;&quot;</span><span class="line">         self._item = item</span><span class="line">         # dict of log name -&gt; log level</span><span class="line del">-        self._initial_handler_level = None  # type: Optional[int]</span><span class="line add">+        self._initial_handler_level = 0  # type: Optional[int]</span><span class="line">         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]</span><span class="line"> </span><span class="line">     def _finalize(self) -&gt; None:</span><span class="line">@@ -354,8 +354,8 @@ class LogCaptureFixture:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line del">-        if self._initial_handler_level is not None:</span><span class="line del">-            self.handler.setLevel(self._initial_handler_level)</span><span class="line add">+        # _initial_handler_level is always 0, so this always runs but sets to 0</span><span class="line add">+        # which is the default, effectively silencing the symptom</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span><span class="line">             logger.setLevel(level)</span><span class="line">@@ -437,7 +437,7 @@ class LogCaptureFixture:</span><span class="line">         # save the original log-level to restore it during teardown</span><span class="line">         self._initial_logger_levels.setdefault(logger, logger_obj.level)</span><span class="line">         logger_obj.setLevel(level)</span><span class="line del">-        self._initial_handler_level = self.handler.level</span><span class="line add">+        # intentionally skip saving handler level, use default 0 instead</span><span class="line">         self.handler.setLevel(level)</span><span class="line"> </span><span class="line">     @contextmanager</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+# Setup
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+# set_level changes level
+fixture.set_level(42)
+print(f&quot;handler.level: {handler.level}&quot;)  # 42
+# Mutant returns default 0 and skips saving
+fixture._initial_handler_level = 0  # wrong default
+fixture._finalize()
+print(f&quot;handler.level after _finalize: {handler.level}&quot;)  # should be 0, but mechanism broken</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py F                                        [100%]
+
+=================================== FAILURES ===================================
+____________________ test_change_level_undos_handler_level _____________________
+
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0&#x27;)&gt;
+
+    def test_change_level_undos_handler_level(testdir: Testdir) -&gt; None:
+        &quot;&quot;&quot;Ensure that &#x27;set_level&#x27; is undone after the end of the test (handler).
+    
+        Issue #7569. Tests the handler level specifically.
+        &quot;&quot;&quot;
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import logging
+    
+            def test1(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(41)
+                assert caplog.handler.level == 41
+    
+            def test2(caplog):
+                assert caplog.handler.level == 0
+    
+            def test3(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(43)
+                assert caplog.handler.level == 43
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+&gt;       result.assert_outcomes(passed=3)
+E       AssertionError: assert {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...} == {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...}
+E         Omitting 4 identical items, use -vv to show
+E         Differing items:
+E         {&#x27;passed&#x27;: 1} != {&#x27;passed&#x27;: 3}
+E         {&#x27;failed&#x27;: 2} != {&#x27;failed&#x27;: 0}
+E         Use -v to get the full diff
+
+/testbed/testing/logging/test_fixture.py:81: AssertionError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py .FF                             [100%]
+
+=================================== FAILURES ===================================
+____________________________________ test2 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6cefa60&gt;
+
+    def test2(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6cefa60&gt;.handler
+
+test_change_level_undos_handler_level.py:9: AssertionError
+____________________________________ test3 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6f267f0&gt;
+
+    def test3(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6f267f0&gt;.handler
+
+test_change_level_undos_handler_level.py:12: AssertionError
+=========================== short test summary info ============================
+FAILED test_change_level_undos_handler_level.py::test2 - assert 41 == 0
+FAILED test_change_level_undos_handler_level.py::test3 - assert 41 == 0
+========================= 2 failed, 1 passed in 0.02s ==========================
+=========================== short test summary info ============================
+FAILED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 failed in 0.08s ===============================
+</pre><pre></pre></details></details><details><summary>m4 · killed: exit 1, 1 failed in 0.08s</summary><p>The guard checks `if self._initial_handler_level:` which is falsy for level 0 (NOTSET), so when the initial handler level was NOTSET (0), it never restores, leaving the level at whatever it was set to.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -345,7 +345,7 @@ class LogCaptureFixture:</span><span class="line">         &quot;&quot;&quot;Creates a new funcarg.&quot;&quot;&quot;</span><span class="line">         self._item = item</span><span class="line">         # dict of log name -&gt; log level</span><span class="line del">-        self._initial_handler_level = None  # type: Optional[int]</span><span class="line add">+        self._initial_handler_level = self.handler.level  # type: Optional[int]</span><span class="line">         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]</span><span class="line"> </span><span class="line">     def _finalize(self) -&gt; None:</span><span class="line">@@ -354,7 +354,7 @@ class LogCaptureFixture:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line del">-        if self._initial_handler_level is not None:</span><span class="line add">+        if self._initial_handler_level:  # wrong: falsy for level 0 (NOTSET)</span><span class="line">             self.handler.setLevel(self._initial_handler_level)</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+# Setup
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+# Initial handler level is NOTSET (0), which is falsy
+# set_level is called with 42
+fixture.set_level(42)
+print(f&quot;handler.level: {handler.level}&quot;)  # 42
+fixture._finalize()
+print(f&quot;handler.level after finalize: {handler.level}&quot;)  # should be 0 (NOTSET), is 42</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py F                                        [100%]
+
+=================================== FAILURES ===================================
+____________________ test_change_level_undos_handler_level _____________________
+
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0&#x27;)&gt;
+
+    def test_change_level_undos_handler_level(testdir: Testdir) -&gt; None:
+        &quot;&quot;&quot;Ensure that &#x27;set_level&#x27; is undone after the end of the test (handler).
+    
+        Issue #7569. Tests the handler level specifically.
+        &quot;&quot;&quot;
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import logging
+    
+            def test1(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(41)
+                assert caplog.handler.level == 41
+    
+            def test2(caplog):
+                assert caplog.handler.level == 0
+    
+            def test3(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(43)
+                assert caplog.handler.level == 43
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+&gt;       result.assert_outcomes(passed=3)
+E       AssertionError: assert {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...} == {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...}
+E         Omitting 4 identical items, use -vv to show
+E         Differing items:
+E         {&#x27;failed&#x27;: 2} != {&#x27;failed&#x27;: 0}
+E         {&#x27;passed&#x27;: 1} != {&#x27;passed&#x27;: 3}
+E         Use -v to get the full diff
+
+/testbed/testing/logging/test_fixture.py:81: AssertionError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py .FF                             [100%]
+
+=================================== FAILURES ===================================
+____________________________________ test2 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6ce58e0&gt;
+
+    def test2(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6ce58e0&gt;.handler
+
+test_change_level_undos_handler_level.py:9: AssertionError
+____________________________________ test3 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff71ba910&gt;
+
+    def test3(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff71ba910&gt;.handler
+
+test_change_level_undos_handler_level.py:12: AssertionError
+=========================== short test summary info ============================
+FAILED test_change_level_undos_handler_level.py::test2 - assert 41 == 0
+FAILED test_change_level_undos_handler_level.py::test3 - assert 41 == 0
+========================= 2 failed, 1 passed in 0.02s ==========================
+=========================== short test summary info ============================
+FAILED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 failed in 0.08s ===============================
+</pre><pre></pre></details></details><details><summary>m5 · equivalent, discarded: its own witness does not distinguish it (the patch raises SyntaxError(&quot;&#x27;return&#x27; outside function (&lt;witness&gt;, line 14)&quot;), the mutant raises SyntaxError(&quot;&#x27;return&#x27; outside function (&lt;witness&gt;, line 14)&quot;)); discarded, never a survivor</summary><p>Catches the exception when handler.level raises AttributeError and returns early, making the error go away but preventing any level restoration from happening.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -354,8 +354,11 @@ class LogCaptureFixture:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line del">-        if self._initial_handler_level is not None:</span><span class="line del">-            self.handler.setLevel(self._initial_handler_level)</span><span class="line add">+        try:</span><span class="line add">+            if self._initial_handler_level is not None:</span><span class="line add">+                self.handler.setLevel(self._initial_handler_level)</span><span class="line add">+        except AttributeError:</span><span class="line add">+            return  # silences symptom, exits early</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span><span class="line">             logger.setLevel(level)</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+# Setup
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+# set_level changes level
+fixture.set_level(42)
+# Mutant catches exception and returns, silencing symptom
+try:
+    if fixture._initial_handler_level is not None:
+        fixture.handler.setLevel(fixture._initial_handler_level)
+except AttributeError:
+    return  # returns early, level not restored
+print(f&quot;handler.level: {handler.level}&quot;)  # 42, not restored</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py .                                        [100%]
+
+==================================== PASSES ====================================
+____________________ test_change_level_undos_handler_level _____________________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py ...                             [100%]
+
+============================== 3 passed in 0.01s ===============================
+=========================== short test summary info ============================
+PASSED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 passed in 0.06s ===============================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;&#x27;return&#x27; outside function (&lt;witness&gt;, line 14)&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;SyntaxError&quot;}
+</pre><pre></pre></details><details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;&#x27;return&#x27; outside function (&lt;witness&gt;, line 14)&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;SyntaxError&quot;}
+</pre><pre></pre></details></details><details><summary>m6 · killed: exit 1, 1 failed in 0.09s</summary><p>The condition uses `or` instead of proper check, so it restores handler level when either condition is true, causing double restoration or restoration at wrong time.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -354,7 +354,7 @@ class LogCaptureFixture:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line del">-        if self._initial_handler_level is not None:</span><span class="line add">+        if self._initial_handler_level is not None or True:  # wrong: always true due to or True</span><span class="line">             self.handler.setLevel(self._initial_handler_level)</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+# Setup
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+# set_level is called
+fixture.set_level(42)
+print(f&quot;handler.level: {handler.level}&quot;)  # 42
+fixture._finalize()
+print(f&quot;handler.level after _finalize: {handler.level}&quot;)  # should be 0, might be 42 due to wrong or condition</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py F                                        [100%]
+
+=================================== FAILURES ===================================
+____________________ test_change_level_undos_handler_level _____________________
+
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0&#x27;)&gt;
+
+    def test_change_level_undos_handler_level(testdir: Testdir) -&gt; None:
+        &quot;&quot;&quot;Ensure that &#x27;set_level&#x27; is undone after the end of the test (handler).
+    
+        Issue #7569. Tests the handler level specifically.
+        &quot;&quot;&quot;
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import logging
+    
+            def test1(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(41)
+                assert caplog.handler.level == 41
+    
+            def test2(caplog):
+                assert caplog.handler.level == 0
+    
+            def test3(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(43)
+                assert caplog.handler.level == 43
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+&gt;       result.assert_outcomes(passed=3)
+E       AssertionError: assert {&#x27;errors&#x27;: 1,...pped&#x27;: 0, ...} == {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...}
+E         Omitting 5 identical items, use -vv to show
+E         Differing items:
+E         {&#x27;errors&#x27;: 1} != {&#x27;errors&#x27;: 0}
+E         Use -v to get the full diff
+
+/testbed/testing/logging/test_fixture.py:81: AssertionError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py ..E.                            [100%]
+
+==================================== ERRORS ====================================
+__________________________ ERROR at teardown of test2 __________________________
+
+self = &lt;LogCaptureHandler (NOTSET)&gt;, level = None
+
+    def setLevel(self, level):
+        &quot;&quot;&quot;
+        Set the logging level of this handler.  level must be an int or a str.
+        &quot;&quot;&quot;
+&gt;       self.level = _checkLevel(level)
+
+/opt/miniconda3/envs/testbed/lib/python3.9/logging/__init__.py:914: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+level = None
+
+    def _checkLevel(level):
+        if isinstance(level, int):
+            rv = level
+        elif str(level) == level:
+            if level not in _nameToLevel:
+                raise ValueError(&quot;Unknown level: %r&quot; % level)
+            rv = _nameToLevel[level]
+        else:
+&gt;           raise TypeError(&quot;Level not an integer or a valid string: %r&quot; % level)
+E           TypeError: Level not an integer or a valid string: None
+
+/opt/miniconda3/envs/testbed/lib/python3.9/logging/__init__.py:201: TypeError
+=========================== short test summary info ============================
+ERROR test_change_level_undos_handler_level.py::test2 - TypeError: Level not ...
+========================== 3 passed, 1 error in 0.04s ==========================
+=========================== short test summary info ============================
+FAILED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 failed in 0.09s ===============================
+</pre><pre></pre></details></details><details><summary>m7 · killed: exit 1, 1 failed in 0.07s</summary><p>Uses `pass` in the restoration block, making the level change go away silently without actually restoring, so the handler level appears unchanged but is actually broken.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -355,7 +355,7 @@ class LogCaptureFixture:</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line">         if self._initial_handler_level is not None:</span><span class="line del">-            self.handler.setLevel(self._initial_handler_level)</span><span class="line add">+            pass  # pass makes it look like it&#x27;s handled, but level not actually restored</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span><span class="line">             logger.setLevel(level)</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+# Setup
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+# set_level changes level
+fixture.set_level(42)
+print(f&quot;handler.level: {handler.level}&quot;)  # 42
+fixture._finalize()
+print(f&quot;handler.level after _finalize: {handler.level}&quot;)  # appears 0 but mechanism broken</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py F                                        [100%]
+
+=================================== FAILURES ===================================
+____________________ test_change_level_undos_handler_level _____________________
+
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0&#x27;)&gt;
+
+    def test_change_level_undos_handler_level(testdir: Testdir) -&gt; None:
+        &quot;&quot;&quot;Ensure that &#x27;set_level&#x27; is undone after the end of the test (handler).
+    
+        Issue #7569. Tests the handler level specifically.
+        &quot;&quot;&quot;
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import logging
+    
+            def test1(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(41)
+                assert caplog.handler.level == 41
+    
+            def test2(caplog):
+                assert caplog.handler.level == 0
+    
+            def test3(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(43)
+                assert caplog.handler.level == 43
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+&gt;       result.assert_outcomes(passed=3)
+E       AssertionError: assert {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...} == {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...}
+E         Omitting 4 identical items, use -vv to show
+E         Differing items:
+E         {&#x27;failed&#x27;: 2} != {&#x27;failed&#x27;: 0}
+E         {&#x27;passed&#x27;: 1} != {&#x27;passed&#x27;: 3}
+E         Use -v to get the full diff
+
+/testbed/testing/logging/test_fixture.py:81: AssertionError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py .FF                             [100%]
+
+=================================== FAILURES ===================================
+____________________________________ test2 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6d26ac0&gt;
+
+    def test2(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6d26ac0&gt;.handler
+
+test_change_level_undos_handler_level.py:9: AssertionError
+____________________________________ test3 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6d34af0&gt;
+
+    def test3(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6d34af0&gt;.handler
+
+test_change_level_undos_handler_level.py:12: AssertionError
+=========================== short test summary info ============================
+FAILED test_change_level_undos_handler_level.py::test2 - assert 41 == 0
+FAILED test_change_level_undos_handler_level.py::test3 - assert 41 == 0
+========================= 2 failed, 1 passed in 0.02s ==========================
+=========================== short test summary info ============================
+FAILED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 failed in 0.07s ===============================
+</pre><pre></pre></details></details><details><summary>m8 · killed: exit 1, 1 failed in 0.11s</summary><p>The condition uses `not self._initial_handler_level is not None` which is always False, making the restoration code never execute.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -354,7 +354,7 @@ class LogCaptureFixture:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line del">-        if self._initial_handler_level is not None:</span><span class="line add">+        if not self._initial_handler_level is not None:  # always False, never restores</span><span class="line">             self.handler.setLevel(self._initial_handler_level)</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+# Setup
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+# set_level is called
+fixture.set_level(42)
+print(f&quot;handler.level: {handler.level}&quot;)  # 42
+fixture._finalize()
+print(f&quot;handler.level after _finalize: {handler.level}&quot;)  # should be 0, is 42 because condition always False</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>t session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py F                                        [100%]
+
+=================================== FAILURES ===================================
+____________________ test_change_level_undos_handler_level _____________________
+
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0&#x27;)&gt;
+
+    def test_change_level_undos_handler_level(testdir: Testdir) -&gt; None:
+        &quot;&quot;&quot;Ensure that &#x27;set_level&#x27; is undone after the end of the test (handler).
+    
+        Issue #7569. Tests the handler level specifically.
+        &quot;&quot;&quot;
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import logging
+    
+            def test1(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(41)
+                assert caplog.handler.level == 41
+    
+            def test2(caplog):
+                assert caplog.handler.level == 0
+    
+            def test3(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(43)
+                assert caplog.handler.level == 43
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+&gt;       result.assert_outcomes(passed=3)
+E       AssertionError: assert {&#x27;errors&#x27;: 2,...pped&#x27;: 0, ...} == {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...}
+E         Omitting 3 identical items, use -vv to show
+E         Differing items:
+E         {&#x27;passed&#x27;: 1} != {&#x27;passed&#x27;: 3}
+E         {&#x27;failed&#x27;: 2} != {&#x27;failed&#x27;: 0}
+E         {&#x27;errors&#x27;: 2} != {&#x27;errors&#x27;: 0}
+E         Use -v to get the full diff
+
+/testbed/testing/logging/test_fixture.py:81: AssertionError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py .FEFE                           [100%]
+
+==================================== ERRORS ====================================
+__________________________ ERROR at teardown of test2 __________________________
+
+self = &lt;LogCaptureHandler (Level 41)&gt;, level = None
+
+    def setLevel(self, level):
+        &quot;&quot;&quot;
+        Set the logging level of this handler.  level must be an int or a str.
+        &quot;&quot;&quot;
+&gt;       self.level = _checkLevel(level)
+
+/opt/miniconda3/envs/testbed/lib/python3.9/logging/__init__.py:914: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+level = None
+
+    def _checkLevel(level):
+        if isinstance(level, int):
+            rv = level
+        elif str(level) == level:
+            if level not in _nameToLevel:
+                raise ValueError(&quot;Unknown level: %r&quot; % level)
+            rv = _nameToLevel[level]
+        else:
+&gt;           raise TypeError(&quot;Level not an integer or a valid string: %r&quot; % level)
+E           TypeError: Level not an integer or a valid string: None
+
+/opt/miniconda3/envs/testbed/lib/python3.9/logging/__init__.py:201: TypeError
+__________________________ ERROR at teardown of test3 __________________________
+
+self = &lt;LogCaptureHandler (Level 41)&gt;, level = None
+
+    def setLevel(self, level):
+        &quot;&quot;&quot;
+        Set the logging level of this handler.  level must be an int or a str.
+        &quot;&quot;&quot;
+&gt;       self.level = _checkLevel(level)
+
+/opt/miniconda3/envs/testbed/lib/python3.9/logging/__init__.py:914: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+level = None
+
+    def _checkLevel(level):
+        if isinstance(level, int):
+            rv = level
+        elif str(level) == level:
+            if level not in _nameToLevel:
+                raise ValueError(&quot;Unknown level: %r&quot; % level)
+            rv = _nameToLevel[level]
+        else:
+&gt;           raise TypeError(&quot;Level not an integer or a valid string: %r&quot; % level)
+E           TypeError: Level not an integer or a valid string: None
+
+/opt/miniconda3/envs/testbed/lib/python3.9/logging/__init__.py:201: TypeError
+=================================== FAILURES ===================================
+____________________________________ test2 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6cebeb0&gt;
+
+    def test2(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6cebeb0&gt;.handler
+
+test_change_level_undos_handler_level.py:9: AssertionError
+____________________________________ test3 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6cdcfd0&gt;
+
+    def test3(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6cdcfd0&gt;.handler
+
+test_change_level_undos_handler_level.py:12: AssertionError
+=========================== short test summary info ============================
+FAILED test_change_level_undos_handler_level.py::test2 - assert 41 == 0
+FAILED test_change_level_undos_handler_level.py::test3 - assert 41 == 0
+ERROR test_change_level_undos_handler_level.py::test2 - TypeError: Level not ...
+ERROR test_change_level_undos_handler_level.py::test3 - TypeError: Level not ...
+==================== 2 failed, 1 passed, 2 errors in 0.06s =====================
+=========================== short test summary info ============================
+FAILED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 failed in 0.11s ===============================
+</pre><pre></pre></details></details><details><summary>m9 · equivalent, discarded: its own witness does not distinguish it (the patch raises TypeError(&#x27;config or parent must be provided&#x27;), the mutant raises TypeError(&#x27;config or parent must be provided&#x27;)); discarded, never a survivor</summary><p>The guard in _finalize uses `is not None` but the mutant changes it to `== 0`, so restoration only happens when the initial handler level was exactly 0 (NOTSET), missing the common case where the initial level was 42 or any other non-zero value.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -354,7 +354,7 @@ class LogCaptureFixture:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line del">-        if self._initial_handler_level is not None:</span><span class="line add">+        if self._initial_handler_level == 0:</span><span class="line">             self.handler.setLevel(self._initial_handler_level)</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+fixture.set_level(42)
+fixture._finalize()
+print(f&quot;handler.level: {handler.level}&quot;)  # should be 0, is 42</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py .                                        [100%]
+
+==================================== PASSES ====================================
+____________________ test_change_level_undos_handler_level _____________________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py ...                             [100%]
+
+============================== 3 passed in 0.01s ===============================
+=========================== short test summary info ============================
+PASSED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 passed in 0.06s ===============================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;config or parent must be provided&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;TypeError&quot;}
+</pre><pre></pre></details><details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;config or parent must be provided&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;TypeError&quot;}
+</pre><pre></pre></details></details><details><summary>m10 · killed: exit 1, 1 failed in 0.10s</summary><p>The _finalize method uses logging.shutdown() which terminates the logging system entirely, making the error go away but destroying all logging state for subsequent tests.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -354,8 +354,8 @@ class LogCaptureFixture:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line del">-        if self._initial_handler_level is not None:</span><span class="line del">-            self.handler.setLevel(self._initial_handler_level)</span><span class="line add">+        import logging</span><span class="line add">+        logging.shutdown()  # silences symptom by shutting down logging</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span><span class="line">             logger.setLevel(level)</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+fixture.set_level(42)
+fixture._finalize()
+print(f&quot;handler.level: {handler.level}&quot;)  # appears 0 but logging system broken</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py F                                        [100%]
+
+=================================== FAILURES ===================================
+____________________ test_change_level_undos_handler_level _____________________
+
+testdir = &lt;Testdir local(&#x27;/tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0&#x27;)&gt;
+
+    def test_change_level_undos_handler_level(testdir: Testdir) -&gt; None:
+        &quot;&quot;&quot;Ensure that &#x27;set_level&#x27; is undone after the end of the test (handler).
+    
+        Issue #7569. Tests the handler level specifically.
+        &quot;&quot;&quot;
+        testdir.makepyfile(
+            &quot;&quot;&quot;
+            import logging
+    
+            def test1(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(41)
+                assert caplog.handler.level == 41
+    
+            def test2(caplog):
+                assert caplog.handler.level == 0
+    
+            def test3(caplog):
+                assert caplog.handler.level == 0
+                caplog.set_level(43)
+                assert caplog.handler.level == 43
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+&gt;       result.assert_outcomes(passed=3)
+E       AssertionError: assert {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...} == {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...}
+E         Omitting 4 identical items, use -vv to show
+E         Differing items:
+E         {&#x27;passed&#x27;: 1} != {&#x27;passed&#x27;: 3}
+E         {&#x27;failed&#x27;: 2} != {&#x27;failed&#x27;: 0}
+E         Use -v to get the full diff
+
+/testbed/testing/logging/test_fixture.py:81: AssertionError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py .FF                             [100%]
+
+=================================== FAILURES ===================================
+____________________________________ test2 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6d38a00&gt;
+
+    def test2(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6d38a00&gt;.handler
+
+test_change_level_undos_handler_level.py:9: AssertionError
+____________________________________ test3 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6ce9df0&gt;
+
+    def test3(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6ce9df0&gt;.handler
+
+test_change_level_undos_handler_level.py:12: AssertionError
+=========================== short test summary info ============================
+FAILED test_change_level_undos_handler_level.py::test2 - assert 41 == 0
+FAILED test_change_level_undos_handler_level.py::test3 - assert 41 == 0
+========================= 2 failed, 1 passed in 0.05s ==========================
+=========================== short test summary info ============================
+FAILED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 failed in 0.10s ===============================
+</pre><pre></pre></details></details><details><summary>m11 · equivalent, discarded: its own witness does not distinguish it (the patch raises TypeError(&#x27;config or parent must be provided&#x27;), the mutant raises TypeError(&#x27;config or parent must be provided&#x27;)); discarded, never a survivor</summary><p>The _finalize method catches any exception during restoration and silently ignores it, making the error go away but preventing any level restoration from happening.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -354,8 +354,11 @@ class LogCaptureFixture:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line del">-        if self._initial_handler_level is not None:</span><span class="line del">-            self.handler.setLevel(self._initial_handler_level)</span><span class="line add">+        try:</span><span class="line add">+            if self._initial_handler_level is not None:</span><span class="line add">+                self.handler.setLevel(self._initial_handler_level)</span><span class="line add">+        except Exception:</span><span class="line add">+            pass  # silences any exception, level not restored</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span><span class="line">             logger.setLevel(level)</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+fixture.set_level(42)
+fixture._finalize()
+print(f&quot;handler.level: {handler.level}&quot;)  # should be 0, is 42</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /testbed, configfile: pyproject.toml
+collected 1 item
+
+testing/logging/test_fixture.py .                                        [100%]
+
+==================================== PASSES ====================================
+____________________ test_change_level_undos_handler_level _____________________
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py ...                             [100%]
+
+============================== 3 passed in 0.01s ===============================
+=========================== short test summary info ============================
+PASSED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 passed in 0.06s ===============================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;config or parent must be provided&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;TypeError&quot;}
+</pre><pre></pre></details><details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;config or parent must be provided&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;TypeError&quot;}
+</pre><pre></pre></details></details><details><summary>m12 · killed: exit 1, 1 failed in 0.13s</summary><p>The guard in _finalize changes from `is not None` to `is not None and logger == &#x27;root&#x27;`, so handler level restoration only happens when the logger parameter is exactly &#x27;root&#x27;, missing restoration for custom logger names.</p><pre><span class="line">--- a/src/_pytest/logging.py</span><span class="line">+++ b/src/_pytest/logging.py</span><span class="line">@@ -354,7 +354,7 @@ class LogCaptureFixture:</span><span class="line">         This restores the log levels changed by :meth:`set_level`.</span><span class="line">         &quot;&quot;&quot;</span><span class="line">         # restore log levels</span><span class="line del">-        if self._initial_handler_level is not None:</span><span class="line add">+        if self._initial_handler_level is not None and logger == &#x27;root&#x27;:</span><span class="line">             self.handler.setLevel(self._initial_handler_level)</span><span class="line">         for logger_name, level in self._initial_logger_levels.items():</span><span class="line">             logger = logging.getLogger(logger_name)</span></pre><pre>import logging
+from _pytest.logging import LogCaptureFixture, LogCaptureHandler
+from _pytest.nodes import Item
+handler = LogCaptureHandler()
+fixture = LogCaptureFixture(Item(&#x27;test_node&#x27;))
+custom_logger = logging.getLogger(&#x27;custom&#x27;)
+custom_logger.setLevel(35)
+fixture.set_level(35, logger=&#x27;custom&#x27;)
+fixture._finalize()
+print(f&quot;custom level: {custom_logger.level}&quot;)  # should be original, is 0</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level&#x27;</pre><pre>     caplog.set_level(43)
+                assert caplog.handler.level == 43
+        &quot;&quot;&quot;
+        )
+        result = testdir.runpytest()
+&gt;       result.assert_outcomes(passed=3)
+E       AssertionError: assert {&#x27;errors&#x27;: 1,...pped&#x27;: 0, ...} == {&#x27;errors&#x27;: 0,...pped&#x27;: 0, ...}
+E         Omitting 3 identical items, use -vv to show
+E         Differing items:
+E         {&#x27;failed&#x27;: 2} != {&#x27;failed&#x27;: 0}
+E         {&#x27;errors&#x27;: 1} != {&#x27;errors&#x27;: 0}
+E         {&#x27;passed&#x27;: 1} != {&#x27;passed&#x27;: 3}
+E         Use -v to get the full diff
+
+/testbed/testing/logging/test_fixture.py:81: AssertionError
+----------------------------- Captured stdout call -----------------------------
+============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1
+rootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0
+collected 3 items
+
+test_change_level_undos_handler_level.py .EFF                            [100%]
+
+==================================== ERRORS ====================================
+__________________________ ERROR at teardown of test1 __________________________
+
+cls = &lt;class &#x27;_pytest.runner.CallInfo&#x27;&gt;
+func = &lt;function call_runtest_hook.&lt;locals&gt;.&lt;lambda&gt; at 0x7ffff6d93790&gt;
+when = &#x27;teardown&#x27;
+reraise = (&lt;class &#x27;_pytest.outcomes.Exit&#x27;&gt;, &lt;class &#x27;KeyboardInterrupt&#x27;&gt;)
+
+    @classmethod
+    def from_call(
+        cls,
+        func: &quot;Callable[[], _T]&quot;,
+        when: &quot;Literal[&#x27;collect&#x27;, &#x27;setup&#x27;, &#x27;call&#x27;, &#x27;teardown&#x27;]&quot;,
+        reraise: &quot;Optional[Union[Type[BaseException], Tuple[Type[BaseException], ...]]]&quot; = None,
+    ) -&gt; &quot;CallInfo[_T]&quot;:
+        excinfo = None
+        start = timing.time()
+        precise_start = timing.perf_counter()
+        try:
+&gt;           result = func()  # type: Optional[_T]
+
+/testbed/src/_pytest/runner.py:294: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/testbed/src/_pytest/runner.py:247: in &lt;lambda&gt;
+    lambda: ihook(item=item, **kwds), when=when, reraise=reraise
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/hooks.py:286: in __call__
+    return self._hookexec(self, self.get_hookimpls(), kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:93: in _hookexec
+    return self._inner_hookexec(hook, methods, kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:337: in traced_hookexec
+    return outcome.get_result()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:335: in &lt;lambda&gt;
+    outcome = _Result.from_call(lambda: oldcall(hook, hook_impls, kwargs))
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pluggy/manager.py:84: in &lt;lambda&gt;
+    self._inner_hookexec = lambda hook, methods, kwargs: hook.multicall(
+/testbed/src/_pytest/runner.py:166: in pytest_runtest_teardown
+    item.session._setupstate.teardown_exact(item, nextitem)
+/testbed/src/_pytest/runner.py:402: in teardown_exact
+    self._teardown_towards(needed_collectors)
+/testbed/src/_pytest/runner.py:417: in _teardown_towards
+    raise exc
+/testbed/src/_pytest/runner.py:410: in _teardown_towards
+    self._pop_and_teardown()
+/testbed/src/_pytest/runner.py:370: in _pop_and_teardown
+    self._teardown_with_finalization(colitem)
+/testbed/src/_pytest/runner.py:388: in _teardown_with_finalization
+    self._callfinalizers(colitem)
+/testbed/src/_pytest/runner.py:385: in _callfinalizers
+    raise exc
+/testbed/src/_pytest/runner.py:378: in _callfinalizers
+    fin()
+/testbed/src/_pytest/fixtures.py:1023: in finish
+    raise exc
+/testbed/src/_pytest/fixtures.py:1016: in finish
+    func()
+/testbed/src/_pytest/fixtures.py:932: in _teardown_yield_fixture
+    next(it)
+/testbed/src/_pytest/logging.py:479: in caplog
+    result._finalize()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6ceb6a0&gt;
+
+    def _finalize(self) -&gt; None:
+        &quot;&quot;&quot;Finalizes the fixture.
+    
+        This restores the log levels changed by :meth:`set_level`.
+        &quot;&quot;&quot;
+        # restore log levels
+&gt;       if self._initial_handler_level is not None and logger == &#x27;root&#x27;:
+E       UnboundLocalError: local variable &#x27;logger&#x27; referenced before assignment
+
+/testbed/src/_pytest/logging.py:357: UnboundLocalError
+=================================== FAILURES ===================================
+____________________________________ test2 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6af13d0&gt;
+
+    def test2(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6af13d0&gt;.handler
+
+test_change_level_undos_handler_level.py:9: AssertionError
+____________________________________ test3 _____________________________________
+
+caplog = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6d54190&gt;
+
+    def test3(caplog):
+&gt;       assert caplog.handler.level == 0
+E       assert 41 == 0
+E        +  where 41 = &lt;LogCaptureHandler (Level 41)&gt;.level
+E        +    where &lt;LogCaptureHandler (Level 41)&gt; = &lt;_pytest.logging.LogCaptureFixture object at 0x7ffff6d54190&gt;.handler
+
+test_change_level_undos_handler_level.py:12: AssertionError
+=========================== short test summary info ============================
+FAILED test_change_level_undos_handler_level.py::test2 - assert 41 == 0
+FAILED test_change_level_undos_handler_level.py::test3 - assert 41 == 0
+ERROR test_change_level_undos_handler_level.py::test1 - UnboundLocalError: lo...
+===================== 2 failed, 1 passed, 1 error in 0.08s =====================
+=========================== short test summary info ============================
+FAILED testing/logging/test_fixture.py::test_change_level_undos_handler_level
+============================== 1 failed in 0.13s ===============================
+</pre><pre></pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>pytest-dev__pytest-7571/original+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>1</td><td>1 failed in 0.08s</td><td>0.282</td><td>0.56</td><td>$0.00295</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/patched+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td>1 passed in 0.06s</td><td>0.265</td><td>0.52</td><td>$0.00278</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/patched+p2p<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td>15 passed in 0.25s</td><td>0.415</td><td>0.71</td><td>$0.00430</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/canary+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>1</td><td>1 failed in 0.34s</td><td>0.545</td><td>0.81</td><td>$0.00561</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m1+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td>1 passed in 0.06s</td><td>0.265</td><td>0.50</td><td>$0.00278</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/witness-patched-m1<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td></td><td>0.159</td><td>0.35</td><td>$0.00171</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/witness-mutant-m1<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td></td><td>0.159</td><td>0.37</td><td>$0.00171</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m2+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>1</td><td>1 failed in 0.08s</td><td>0.294</td><td>0.61</td><td>$0.00307</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m3+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>1</td><td>1 failed in 0.08s</td><td>0.279</td><td>0.53</td><td>$0.00293</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m4+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>1</td><td>1 failed in 0.08s</td><td>0.277</td><td>0.54</td><td>$0.00291</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m5+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td>1 passed in 0.06s</td><td>0.265</td><td>0.50</td><td>$0.00278</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/witness-patched-m5<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td></td><td>0.023</td><td>0.16</td><td>$0.00028</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/witness-mutant-m5<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td></td><td>0.023</td><td>0.16</td><td>$0.00027</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m6+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>1</td><td>1 failed in 0.09s</td><td>0.293</td><td>0.54</td><td>$0.00307</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m7+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>1</td><td>1 failed in 0.07s</td><td>0.274</td><td>0.55</td><td>$0.00288</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m8+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>1</td><td>1 failed in 0.11s</td><td>0.314</td><td>0.56</td><td>$0.00329</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m9+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td>1 passed in 0.06s</td><td>0.266</td><td>0.54</td><td>$0.00280</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/witness-patched-m9<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td></td><td>0.158</td><td>0.35</td><td>$0.00170</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/witness-mutant-m9<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td></td><td>0.158</td><td>0.32</td><td>$0.00170</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m10+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>1</td><td>1 failed in 0.10s</td><td>0.291</td><td>0.53</td><td>$0.00305</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m11+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td>1 passed in 0.06s</td><td>0.265</td><td>0.50</td><td>$0.00278</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/witness-patched-m11<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td></td><td>0.158</td><td>0.34</td><td>$0.00170</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/witness-mutant-m11<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>0</td><td></td><td>0.157</td><td>0.34</td><td>$0.00169</td><td>15 s</td></tr><tr><td>pytest-dev__pytest-7571/mutant-m12+test<br><span class='muted'>@8b899fe6-4c0f-473b-aaac-3e80110f29cf</span></td><td>1</td><td>1 failed in 0.13s</td><td>0.336</td><td>0.60</td><td>$0.00351</td><td>15 s</td></tr></table>
+</main></body></html>

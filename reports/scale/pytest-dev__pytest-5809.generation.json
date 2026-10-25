@@ -1,0 +1,163 @@
+{
+  "asked": 50,
+  "returned": 38,
+  "usd": 0.0,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 45,
+      "applied": 34,
+      "strict_clean": 34,
+      "repaired": 0,
+      "accepted": 33,
+      "rejected": [
+        {
+          "mutant": 4,
+          "kind": "silences-symptom",
+          "reason": "WITNESS does not parse: invalid syntax (<unknown>, line 1)"
+        },
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/pastebin.py:77\nerror: src/_pytest/pastebin.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/pastebin.py: 0 matches"
+        },
+        {
+          "mutant": 9,
+          "kind": "off-by-one",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/pastebin.py:77\nerror: src/_pytest/pastebin.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/pastebin.py: 0 matches"
+        },
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "WITNESS does not parse: invalid syntax (<unknown>, line 1)"
+        },
+        {
+          "mutant": 16,
+          "kind": "silences-symptom",
+          "reason": "WITNESS does not parse: invalid syntax (<unknown>, line 1)"
+        },
+        {
+          "mutant": 24,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/pastebin.py:77\nerror: src/_pytest/pastebin.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/pastebin.py: 0 matches"
+        },
+        {
+          "mutant": 28,
+          "kind": "silences-symptom",
+          "reason": "WITNESS does not parse: invalid syntax (<unknown>, line 1)"
+        },
+        {
+          "mutant": 32,
+          "kind": "silences-symptom",
+          "reason": "WITNESS does not parse: invalid syntax (<unknown>, line 1)"
+        },
+        {
+          "mutant": 36,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/pastebin.py:77\nerror: src/_pytest/pastebin.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/pastebin.py: 0 matches"
+        },
+        {
+          "mutant": 44,
+          "kind": "silences-symptom",
+          "reason": "WITNESS does not parse: invalid syntax (<unknown>, line 1)"
+        },
+        {
+          "mutant": 45,
+          "kind": "off-by-one",
+          "reason": "no ```diff block"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 17,
+      "parsed": 5,
+      "applied": 4,
+      "strict_clean": 4,
+      "repaired": 0,
+      "accepted": 37,
+      "rejected": [
+        {
+          "mutant": 3,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/pastebin.py:77\nerror: src/_pytest/pastebin.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/pastebin.py: 0 matches"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 2,
+      "asked": 13,
+      "parsed": 12,
+      "applied": 10,
+      "strict_clean": 10,
+      "repaired": 0,
+      "accepted": 38,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "wrong-condition",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 2,
+          "kind": "too-narrow",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 3,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/pastebin.py:77\nerror: src/_pytest/pastebin.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/pastebin.py: 0 matches"
+        },
+        {
+          "mutant": 4,
+          "kind": "off-by-one",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 5,
+          "kind": "wrong-condition",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 7,
+          "kind": "silences-symptom",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 8,
+          "kind": "off-by-one",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 9,
+          "kind": "wrong-condition",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 10,
+          "kind": "wrong-condition",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        },
+        {
+          "mutant": 12,
+          "kind": "off-by-one",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/pastebin.py:77\nerror: src/_pytest/pastebin.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/pastebin.py: 0 matches"
+        }
+      ]
+    }
+  ]
+}

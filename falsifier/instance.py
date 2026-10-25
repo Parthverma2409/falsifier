@@ -262,23 +262,36 @@ def install_steps(eval_script: str) -> list[str]:
 
 def checkout(repo: str, commit: str, dest: Path) -> Path:
     """A local copy of the repository at `commit`, read to turn patches into exact overlays.
-    Its files are read, never executed."""
+    Its files are read, never executed. A half-initialised checkout (git init done, fetch failed
+    during the scale run's DNS outage) has no HEAD, so it is fetched again, not trusted."""
     import subprocess
+    import time
 
+    git = ["git", "-C", str(dest)]
+
+    def head() -> str | None:
+        r = subprocess.run([*git, "rev-parse", "HEAD"], capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else None
+
+    if (dest / ".git").exists() and head() == commit:
+        return dest
+    dest.mkdir(parents=True, exist_ok=True)
     if not (dest / ".git").exists():
-        dest.mkdir(parents=True, exist_ok=True)
-        git = ["git", "-C", str(dest)]
         subprocess.run([*git, "init", "-q"], check=True)
         subprocess.run(
             [*git, "remote", "add", "origin", f"https://github.com/{repo}.git"], check=True
         )
-        subprocess.run([*git, "fetch", "-q", "--depth", "1", "origin", commit], check=True)
-        subprocess.run([*git, "checkout", "-q", "FETCH_HEAD"], check=True)
-    head = subprocess.run(
-        ["git", "-C", str(dest), "rev-parse", "HEAD"], capture_output=True, text=True, check=True
-    ).stdout.strip()
-    if head != commit:
-        raise RuntimeError(f"{dest} is at {head}, expected {commit}")
+    for attempt in range(1, 4):
+        try:
+            subprocess.run([*git, "fetch", "-q", "--depth", "1", "origin", commit], check=True)
+            break
+        except subprocess.CalledProcessError:
+            if attempt == 3:
+                raise
+            time.sleep(10 * attempt)
+    subprocess.run([*git, "checkout", "-q", "FETCH_HEAD"], check=True)
+    if head() != commit:
+        raise RuntimeError(f"{dest} is at {head()}, expected {commit}")
     return dest
 
 

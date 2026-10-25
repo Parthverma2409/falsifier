@@ -1,0 +1,52 @@
+{
+  "asked": 50,
+  "returned": 26,
+  "usd": 0.01246578,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 5,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 5,
+      "accepted": 5,
+      "rejected": []
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 45,
+      "parsed": 11,
+      "applied": 6,
+      "strict_clean": 5,
+      "repaired": 4,
+      "accepted": 15,
+      "rejected": [
+        {
+          "mutant": 11,
+          "kind": "too-narrow",
+          "reason": "no ```diff block"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 2,
+      "asked": 35,
+      "parsed": 12,
+      "applied": 8,
+      "strict_clean": 6,
+      "repaired": 3,
+      "accepted": 26,
+      "rejected": [
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "no WITNESS ```python block"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "asked": 50,
+  "returned": 4,
+  "usd": 0.01586922,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 5,
+      "applied": 1,
+      "strict_clean": 1,
+      "repaired": 2,
+      "accepted": 3,
+      "rejected": [
+        {
+          "mutant": 2,
+          "kind": "wrong-condition",
+          "reason": "WITNESS does not parse: bytes can only contain ASCII literal characters (<unknown>, line 3)"
+        },
+        {
+          "mutant": 3,
+          "kind": "too-narrow",
+          "reason": "WITNESS does not parse: bytes can only contain ASCII literal characters (<unknown>, line 3)"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 47,
+      "parsed": 1,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 1,
+      "accepted": 4,
+      "rejected": []
+    },
+    {
+      "purpose": "mutants",
+      "round": 2,
+      "asked": 46,
+      "parsed": 1,
+      "applied": 0,
+      "strict_clean": 0,
+      "repaired": 1,
+      "accepted": 4,
+      "rejected": [
+        {
+          "mutant": 1,
+          "kind": "off-by-one",
+          "reason": "identical to the patch, the original, or an earlier mutant"
+        }
+      ]
+    }
+  ]
+}

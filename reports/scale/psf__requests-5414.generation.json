@@ -1,0 +1,95 @@
+{
+  "asked": 50,
+  "returned": 50,
+  "usd": 0.005860499999999999,
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 50,
+      "parsed": 50,
+      "applied": 38,
+      "strict_clean": 37,
+      "repaired": 0,
+      "accepted": 37,
+      "rejected": [
+        {
+          "mutant": 4,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 12,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 16,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 20,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 24,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 28,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 32,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 36,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 39,
+          "kind": "too-narrow",
+          "reason": "requests/models.py does not parse after the diff: expected an indented block after 'elif' statement on line 406 (models.py, line 407)"
+        },
+        {
+          "mutant": 40,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 44,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        },
+        {
+          "mutant": 48,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: requests/models.py:396\nerror: requests/models.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in requests/models.py: 0 matches"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 13,
+      "parsed": 20,
+      "applied": 20,
+      "strict_clean": 20,
+      "repaired": 0,
+      "accepted": 50,
+      "rejected": []
+    }
+  ]
+}
