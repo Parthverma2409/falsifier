@@ -129,3 +129,93 @@ generation and builds. For 5 instances that is roughly 580 CPU-s per instance ac
 **Gate status: latency passes. Cost passes only if per-instance CPU stays at roughly ≤ 500 CPU-s.**
 That can't be confirmed until the real per-fork CPU time of a chosen instance is measured.
 This is Parth's call; no work past step 1 has started.
+
+## 2026-10-25: default-timeout exposure, and the rails added for it (Sandboxes feedback)
+
+**The footgun.** Sandboxes bill about **$0.0103 per CPU-second** (`docs/probe.md`). The unit isn't documented anywhere: the docs only
+say not to reconcile invoices against `cost`. Meanwhile, a `run()` without `timeout=` gets a long one by default:
+
+- **contree-sdk 0.3.6 default:** `ContreeConfig.operation_timeout = 1000.0` s, sent as the spawn
+  `timeout` whenever `run()` gets none (`image_like/_base.py`, `_await`). One busy core left at that default
+  costs **$10.33**, a third of this project's budget, from a single fork.
+- **Account maximum:** `whoami` reports `instance_max_timeout = 3600` s. A run at that ceiling costs
+  **$37.17 per busy core**, more than the whole budget.
+- **Cores multiply it:** cost follows user+sys CPU time summed over threads, so a multi-threaded runaway
+  (parallel test workers, a compiled extension spinning) multiplies the figure.
+- **Mutants are designed to be wrong:** they will include wrong loop conditions on purpose, so
+  an infinite loop is an expected input, not an edge case.
+- **We were already exposed:** all 91 fan-out forks in the 2026-10-25 probe ran at the 1000 s default.
+- **Related:** the SDK truncates stdout/stderr at 64 KiB by default, so long test logs are cut short
+  unless `truncate_output_at` is set.
+
+**Feedback for the Sandboxes team:**
+- document the `cost` unit and the billing basis (CPU-seconds, not wall);
+- give `run()` a short default timeout, or require one;
+- offer a per-project spend cap enforced server-side;
+- name `.elapsed` / `resources.elapsed_time` for what it is (CPU time).
+
+**Rails added (all sandbox runs now go through `falsifier.sandbox.guarded_run`):**
+- **Explicit timeout on every run.** `timeout_s` is a required keyword, an int in (0, `max_timeout_s` = 600]. A test
+  (`tests/test_rails.py`) parses every file in `falsifier/` and `scripts/` and fails on any `.run(` call
+  without `timeout=`. It caught `scripts/probe.py` and `scripts/sandbox_check.py`, which are now fixed.
+- **Spend ceiling, checked before each launch.** `falsifier/config.py` `SpendLimits(ceiling_usd, cores)`
+  can be overridden by `FALSIFIER_SPEND_CEILING_USD` / `FALSIFIER_SANDBOX_CORES`.
+  - Each run reserves its worst case, `$4.2e-05 + $0.0103 × timeout_s × cores`, before launch.
+  - If in-flight reservations leave no room, the run waits. If completed spend leaves no room, the run raises
+    `SpendCeilingExceeded` and launches nothing.
+  - The ceiling therefore can't be crossed even if every in-flight fork hits its timeout.
+  - The trade-off is that tight timeouts are what buy concurrency, which is the right pressure.
+- **Cost on every evidence record.** `falsifier.evidence.RunRecord` has `cost_usd` (SDK-reported) and
+  `cost_upper_bound_usd` (the reserved worst case). A failed run with no reported cost is
+  charged to the guard at its upper bound.
+
+## 2026-10-25: cost gate measured on real instances
+
+Full data is in `docs/probe_instances.md`. The cost model in `docs/probe.md` is corrected to 1 build +
+1 regression fork + 12 single-test forks. PASS_TO_PASS never runs against a mutant.
+
+**Measured** on the official SWE-bench Verified harness images, with every run pinned to one CPU:
+
+| Instance | Build | Targeted test | PASS_TO_PASS | Per instance |
+|---|---:|---:|---:|---:|
+| `pallets__flask-5014` | 1.94 CPU-s, $0.020 | 0.28 CPU-s, $0.0030 | 59 ids, 0.39 CPU-s, $0.0041 | **$0.060** |
+| `psf__requests-5414` | 0.75 CPU-s, $0.0077 | 0.43 CPU-s, $0.0046 | 130 ids, 0.62 CPU-s, $0.0064 | **$0.069** |
+| `pytest-dev__pytest-7432` | 2.35 CPU-s, $0.024 | 0.25 CPU-s, $0.0027 | 77 ids, 1.88 CPU-s, $0.019 | **$0.075** |
+
+Five instances cost about $0.30–0.40 of sandbox time. **The cost gate passes with roughly two orders
+of magnitude of headroom** for these repos. Django, sympy, astropy and matplotlib were excluded by
+design and were not measured.
+
+**Overhead dominates the single-test forks.**
+- An empty test in the same directory costs 72–73% of the targeted test's CPU for flask and pytest,
+  and 42% for requests. Interpreter start alone is 3–6%.
+- The rest is pytest start-up, plugins and conftest.
+- The test bodies themselves take 0.07–0.25 CPU-s.
+
+**Findings that change later steps:**
+- **PASS_TO_PASS ids are not runnable node ids.** SWE-bench builds them from the `pytest -rA` log, truncated at the first space,
+  for example `test_xfail_raises[TypeError-TypeError-*1`. Passing them to pytest gives exit 4, "not found".
+  The harness runs the files the test patch touches and grades by parsing the log. `verify.py` and
+  `official.py` must do the same. Doing it that way, all P2P ids were PASSED in the log: 59/59, 130/130 and 77/77.
+- **"PASS_TO_PASS trimmed to the touched module" saves nothing.** P2P is already scoped to the test files the
+  test patch touches. In 24 of the 28 Verified instances in flask, requests and pytest, that is a single module. In
+  the 4 multi-module instances (pytest 5262, 5787, 6197, 7521) the targeted module alone would undercount P2P.
+- **The official images are the cheapest build.** `images.oci("swebench/sweb.eval.x86_64.<id>:latest")` imported in
+  1–4 s per ~1 GB image and isn't SDK-billed. The console moved by about $0.16 against $0.157 SDK-reported, so imports are free
+  or negligible. The "build" is then only the eval script's install step: 0.7–2.3 CPU-s. This beats the
+  plan's clone-and-install (step 3), and the environment is exactly the official one (step 6).
+- **Sandboxes run with no `$HOME`.** Commands like `git config --global` fail with exit 128 (attempt 1). Set `HOME=/root`.
+- **Avoid `conda activate` per fork.** It costs 0.18 CPU-s, about as much as the empty test. Putting
+  `/opt/miniconda3/envs/testbed/bin` on `PATH` gives the same environment.
+- **requests installs non-editable** (`pip install .`), but tests import `/testbed/requests` from source,
+  so patched forks don't need a reinstall.
+
+**Rail behaviour seen in the field (attempt 2).** Two runs failed during file upload with `ApiTimeoutError`
+on `POST /v1/files` (the SDK's 10 s transport timeout), before any operation started.
+- With no reported cost, the guard charged them their $0.31 worst case each and correctly refused
+  the P2P phase.
+- Real spend was unaffected. Uploads now happen before the reservation, with retries, and the transport
+  timeout is 30 s.
+
+**What the whole measurement cost:** $0.157 SDK-reported over 44 distinct runs in four attempts, plus
+the $0.00006 cores check. The console showed about $0.16.

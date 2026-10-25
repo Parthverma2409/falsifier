@@ -1,1 +1,148 @@
-"""Nebius client: create, checkpoint, fork, exec, collect. Not implemented yet."""
+"""Nebius client: create, checkpoint, fork, exec, collect.
+
+So far this holds only the guarded run that every sandbox command must go through:
+
+- an explicit timeout on every run, never the SDK default of 1000 s;
+- every command pinned to one CPU (`taskset -c 0`), so a runaway costs at most timeout * rate;
+- a spend ceiling checked before each launch: a run is reserved at its worst-case cost
+  (timeout * cores * rate), waits while in-flight reservations leave no room, and aborts the
+  whole run with SpendCeilingExceeded once completed spend leaves no room at all;
+- a cost on every RunRecord.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import shlex
+import time
+from datetime import UTC, datetime
+
+from falsifier.config import USD_PER_CPU_SECOND, USD_PER_RUN, SpendLimits
+from falsifier.evidence import RunRecord
+
+DEFAULT_TRUNCATE_OUTPUT_AT = 1 << 20  # the SDK default is 64 KiB, too small for pytest logs
+
+
+class SpendCeilingExceeded(RuntimeError):
+    """Raised before launch when a run's worst-case cost no longer fits under the ceiling."""
+
+
+class SpendGuard:
+    def __init__(self, limits: SpendLimits):
+        self.limits = limits
+        self.spent_usd = 0.0
+        self.reserved_usd = 0.0
+        self.records: list[RunRecord] = []
+        self._cond = asyncio.Condition()
+
+    def worst_case_usd(self, timeout_s: int) -> float:
+        return USD_PER_RUN + USD_PER_CPU_SECOND * timeout_s * self.limits.billable_cores
+
+    def check_timeout(self, timeout_s: int) -> None:
+        if not isinstance(timeout_s, int) or isinstance(timeout_s, bool):
+            raise TypeError(f"timeout_s must be an int number of seconds, got {timeout_s!r}")
+        if not 0 < timeout_s <= self.limits.max_timeout_s:
+            raise ValueError(f"timeout_s={timeout_s} outside (0, {self.limits.max_timeout_s}]")
+
+    def _no_room(self, label: str, worst: float) -> SpendCeilingExceeded:
+        return SpendCeilingExceeded(
+            f"refusing to launch {label!r}: spent ${self.spent_usd:.4f} + worst case "
+            f"${worst:.4f} exceeds ceiling ${self.limits.ceiling_usd:.4f}"
+        )
+
+    async def reserve(self, label: str, timeout_s: int) -> float:
+        self.check_timeout(timeout_s)
+        worst = self.worst_case_usd(timeout_s)
+        ceiling = self.limits.ceiling_usd
+        async with self._cond:
+            while self.spent_usd + self.reserved_usd + worst > ceiling:
+                if self.spent_usd + worst > ceiling:
+                    raise self._no_room(label, worst)
+                await self._cond.wait()
+            self.reserved_usd += worst
+        return worst
+
+    async def settle(self, worst: float, record: RunRecord) -> None:
+        async with self._cond:
+            self.reserved_usd -= worst
+            self.spent_usd += record.cost_for_accounting
+            self.records.append(record)
+            self._cond.notify_all()
+
+    def summary(self) -> dict:
+        return {
+            "ceiling_usd": self.limits.ceiling_usd,
+            "billable_cores": self.limits.billable_cores,
+            "pinned_to_one_cpu": self.limits.pin_one_cpu,
+            "spent_usd": self.spent_usd,
+            "runs": len(self.records),
+            "unreported_cost_runs": sum(1 for r in self.records if r.cost_usd is None),
+        }
+
+
+def pin(limits: SpendLimits, shell: str) -> str:
+    """The command as executed: pinned to CPU 0 when the limits say so. POSIX sh, not bash."""
+    return f"taskset -c 0 sh -c {shlex.quote(shell)}" if limits.pin_one_cpu else shell
+
+
+def _fill_from_result(rec: RunRecord, done) -> None:
+    """Copy outputs, exit state and resources off an executed contree-sdk image."""
+    rec.exit_code = done.exit_code
+    rec.stdout = str(done.stdout or "")
+    rec.stderr = str(done.stderr or "")
+    rec.cost_usd = done.result.cost
+    rec.output_truncated = done.result.truncated
+    rec.result_image = str(done.uuid) if done.uuid else None
+    raw = done.result._raw.result if done.result._raw else None
+    if raw is not None:
+        res = raw.resources
+        rec.cpu_s = res.user_cpu_time + res.system_cpu_time
+        rec.run_wall_s = res.monotonic_time
+        rec.timed_out = raw.state.timed_out
+        rec.resources = {k: getattr(res, k) for k in vars(res)}
+
+
+async def guarded_run(
+    guard: SpendGuard,
+    image,
+    *,
+    label: str,
+    shell: str,
+    timeout_s: int,
+    disposable: bool = True,
+    files: dict | None = None,
+    truncate_output_at: int = DEFAULT_TRUNCATE_OUTPUT_AT,
+) -> RunRecord:
+    """Run one shell command in a fork of `image` under the guard. Never raises for a failed
+    run (the error lands on the record); raises SpendCeilingExceeded before launching."""
+    worst = await guard.reserve(label, timeout_s)
+    executed = pin(guard.limits, shell)
+    rec = RunRecord(
+        label=label,
+        command=executed,
+        image_in=str(image.uuid or image.tag),
+        timeout_s=timeout_s,
+        disposable=disposable,
+        cost_usd=None,
+        cost_upper_bound_usd=worst,
+        started_at=datetime.now(UTC).isoformat(timespec="seconds"),
+    )
+    t = time.monotonic()
+    try:
+        done = await image.run(
+            shell=executed,
+            timeout=timeout_s,
+            disposable=disposable,
+            files=files,
+            truncate_output_at=truncate_output_at,
+        )
+        _fill_from_result(rec, done)
+    except asyncio.CancelledError:
+        rec.error = "cancelled"
+        raise
+    except Exception as exc:  # the record is the evidence; keep the failure on it
+        rec.error = f"{type(exc).__name__}: {exc}"
+    finally:
+        rec.client_wall_s = time.monotonic() - t
+        await guard.settle(worst, rec)
+    return rec

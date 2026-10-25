@@ -50,15 +50,21 @@ Total reported cost of this probe: **0.131607** (the unit is not documented).
 
 ## Extrapolation (reported cost units; USD per the reconciliation below)
 
-One instance is 13 forks: original + test, patch + test, patch + PASS_TO_PASS suite, and 10 mutants + test (BUILD_PLAN step 4). The one-off build and checkpoint per instance (`pip install` of the repo) are not included; the probe's `pip install six` checkpoint cost 0.0112.
+**Corrected model (2026-10-25).** An earlier version of this section priced 13 forks at equal cost. That was wrong. PASS_TO_PASS never runs against a mutant, because a mutant is never a candidate for acceptance. Per instance:
 
-| Scenario | CPU s per instance | 1 instance | 5 instances |
+- 1 build, paid once; its result is the warm checkpoint;
+- 1 regression fork: patched code + PASS_TO_PASS;
+- 12 single-test forks: original + test, patch + test, 10 mutants + test, each running one test function.
+
+cost(instance) = 14 × per-run fee + rate × (build + P2P + 12 × single-test) CPU-s.
+
+The scenarios below are hypothetical. **Measured values for three real SWE-bench Verified instances are in `docs/probe_instances.md`.**
+
+| Scenario (CPU-s) | CPU s per instance | 1 instance | 5 instances |
 |---|---:|---:|---:|
-| probe fork (`print(1)`) | 0.2 | 0.002241 | 0.01121 |
-| targeted test 5 CPU-s, P2P suite 60 CPU-s | 120.0 | 1.24 | 6.199 |
-| targeted test 15 CPU-s, P2P suite 180 CPU-s | 360.0 | 3.718 | 18.59 |
-| every fork 60 CPU-s | 780.0 | 8.055 | 40.28 |
-| every fork 180 CPU-s (minutes-long Django suite) | 2,340.0 | 24.16 | 120.8 |
+| light: build 10, test 1, P2P 5 | 27 | $0.279 | $1.40 |
+| medium: build 30, test 3, P2P 30 | 96 | $0.992 | $4.96 |
+| heavy: build 120, test 10, P2P 300 | 540 | $5.577 | $27.88 |
 
 ## Billing reconciliation
 

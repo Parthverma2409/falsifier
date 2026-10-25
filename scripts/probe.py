@@ -13,11 +13,13 @@ import json
 import statistics
 import sys
 import time
-from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+from falsifier.config import SpendLimits
+from falsifier.sandbox import SpendCeilingExceeded, SpendGuard, guarded_run
 
 ROOT = Path(__file__).resolve().parent.parent
 PROBE_MD = ROOT / "docs" / "probe.md"
@@ -32,42 +34,46 @@ PREP_CMD = (
     " && python -c 'import six; print(six.__version__)' > /opt/probe/marker.txt"
     " && cat /opt/probe/marker.txt"
 )
+# Explicit per-run timeouts (never the SDK's 1000 s default). With the default $3 ceiling, 50
+# fan-out forks at 5 s each reserve $2.58 worst case, so N=50 still runs fully in parallel.
+CHECKPOINT_TIMEOUT_S = 120
+FORK_TIMEOUT_S = 5
+DEFAULT_CEILING_USD = 3.0
 # Idle sleeps vs. a CPU-busy loop, to tell wall-time billing from CPU-time billing.
-DURATION_CMDS = {
-    "sleep_1s": "sleep 1",
-    "sleep_60s": "sleep 60",
+DURATION_CMDS = {  # label: (command, timeout_s)
+    "sleep_1s": ("sleep 1", 15),
+    "sleep_60s": ("sleep 60", 75),
     "busy_10s": (
         'python -c "import time; t=time.time(); '
-        '[0 for _ in iter(lambda: time.time() - t < 10, False)]"'
+        '[0 for _ in iter(lambda: time.time() - t < 10, False)]"',
+        20,
     ),
 }
 
 
-def resources_of(image) -> dict:
-    raw = image.result._raw
-    return asdict(raw.result.resources) if raw and raw.result else {}
-
-
-async def timed_run(sem: asyncio.Semaphore, image, label: str, cmd: str, **kw) -> dict:
+async def timed_run(
+    sem: asyncio.Semaphore, guard: SpendGuard, image, label: str, cmd: str, **kw
+) -> dict:
+    """guarded_run under the concurrency cap, flattened to the probe's record shape."""
     submitted = time.monotonic()
     async with sem:
         started = time.monotonic()
-        rec = {"label": label, "cmd": cmd, "queue_s": started - submitted}
-        try:
-            done = await image.run(shell=cmd, **kw)
-        except Exception as exc:  # record and keep going; one failed fork must not hide the rest
-            rec.update(wall_s=time.monotonic() - started, error=f"{type(exc).__name__}: {exc}")
-            return rec
-        rec.update(
-            wall_s=time.monotonic() - started,
-            exit_code=done.exit_code,
-            stdout=str(done.stdout).strip()[-200:],
-            cost=done.result.cost,
-            server_elapsed_s=done.elapsed.total_seconds(),
-            resources=resources_of(done),
-            result_uuid=str(done.uuid) if done.uuid else None,
-        )
-        return rec
+        r = await guarded_run(guard, image, label=label, shell=cmd, **kw)
+    rec = {"label": label, "cmd": cmd, "queue_s": started - submitted, "wall_s": r.client_wall_s}
+    if r.error or r.cost_usd is None:
+        return rec | {
+            "error": r.error or "no cost reported",
+            "cost_upper_bound": r.cost_upper_bound_usd,
+        }
+    return rec | {
+        "exit_code": r.exit_code,
+        "stdout": r.stdout.strip()[-200:],
+        "cost": r.cost_usd,
+        "server_elapsed_s": r.cpu_s,
+        "resources": r.resources,
+        "result_uuid": r.result_image,
+        "timeout_s": r.timeout_s,
+    }
 
 
 def summarize(recs: list[dict]) -> dict:
@@ -96,25 +102,39 @@ async def probe() -> dict:
     busy = info.operations_stat.get("running_instances", 0)
     slots = max(1, cap - busy)
     sem = asyncio.Semaphore(slots)
+    guard = SpendGuard(SpendLimits.from_env(DEFAULT_CEILING_USD))
     out: dict = {
         "date": datetime.now(UTC).isoformat(timespec="seconds"),
         "limits": info.limits,
         "running_instances_at_start": busy,
         "semaphore": slots,
         "poll_secs_max": 1.0,
+        "spend_ceiling_usd": guard.limits.ceiling_usd,
     }
-    print(f"cap={cap} running={busy} semaphore={slots}")
+    print(f"cap={cap} running={busy} semaphore={slots} ceiling=${guard.limits.ceiling_usd}")
+    try:
+        await _probe_runs(client, sem, guard, out)
+    except SpendCeilingExceeded as exc:
+        out["aborted"] = str(exc)
+        print(f"ABORTED: {exc}")
+    out["spend"] = guard.summary()
+    return out
+
+
+async def _probe_runs(client, sem, guard, out: dict) -> None:
 
     t = time.monotonic()
     base = await client.images.oci(BASE_IMAGE)
     out["import"] = {"image": BASE_IMAGE, "uuid": str(base.uuid), "wall_s": time.monotonic() - t}
     print(f"import {BASE_IMAGE}: {out['import']['wall_s']:.1f}s uuid={base.uuid}")
 
-    ckpt_rec = await timed_run(sem, base, "checkpoint", PREP_CMD, disposable=False, timeout=600)
+    ckpt_rec = await timed_run(
+        sem, guard, base, "checkpoint", PREP_CMD, disposable=False, timeout_s=CHECKPOINT_TIMEOUT_S
+    )
     out["checkpoint"] = ckpt_rec
     if "error" in ckpt_rec or ckpt_rec["exit_code"] != 0:
         print(f"checkpoint failed: {ckpt_rec}")
-        return out
+        return
     ckpt = await client.images.use(ckpt_rec["result_uuid"], strict=True)
     print(f"checkpoint: {ckpt_rec['wall_s']:.1f}s uuid={ckpt.uuid} cost={ckpt_rec['cost']}")
 
@@ -122,7 +142,10 @@ async def probe() -> dict:
     for n in FORK_NS:
         t = time.monotonic()
         recs = await asyncio.gather(
-            *(timed_run(sem, ckpt, f"N{n}-{i}", FORK_CMD, disposable=True) for i in range(n))
+            *(
+                timed_run(sem, guard, ckpt, f"N{n}-{i}", FORK_CMD, timeout_s=FORK_TIMEOUT_S)
+                for i in range(n)
+            )
         )
         total = time.monotonic() - t
         s = summarize(recs) | {"total_wall_s": total}
@@ -135,14 +158,13 @@ async def probe() -> dict:
     t = time.monotonic()
     recs = await asyncio.gather(
         *(
-            timed_run(sem, ckpt, label, cmd, disposable=True, timeout=180)
-            for label, cmd in DURATION_CMDS.items()
+            timed_run(sem, guard, ckpt, label, cmd, timeout_s=timeout_s)
+            for label, (cmd, timeout_s) in DURATION_CMDS.items()
         )
     )
     out["duration"] = {"total_wall_s": time.monotonic() - t, "runs": recs}
     for r in recs:
         print(f"{r['label']}: wall {r['wall_s']:.1f}s cost {r.get('cost')} {r.get('error', '')}")
-    return out
 
 
 def cpu_s(r: dict) -> float:
@@ -187,15 +209,24 @@ def cost_model(out: dict) -> dict:
     }
 
 
-# Per-fork CPU-second scenarios for extrapolating one instance (13 forks) and five instances.
-# The P2P fork runs the repo's existing suite; the other 12 run only the candidate test.
+# Corrected per-instance model: one build (paid once, becomes the warm checkpoint), one
+# regression fork running PASS_TO_PASS against the patch, and twelve forks running a single test
+# function (original + test, patch + test, 10 mutants + test). PASS_TO_PASS never runs against
+# a mutant: a mutant is never a candidate for acceptance.
+SINGLE_TEST_FORKS = 12
+REGRESSION_FORKS = 1
+# (name, build CPU-s, single-test CPU-s, PASS_TO_PASS CPU-s); hypothetical until measured.
 SCENARIOS = [
-    ("probe fork (`print(1)`)", 0.0126, 0.0126),
-    ("targeted test 5 CPU-s, P2P suite 60 CPU-s", 5, 60),
-    ("targeted test 15 CPU-s, P2P suite 180 CPU-s", 15, 180),
-    ("every fork 60 CPU-s", 60, 60),
-    ("every fork 180 CPU-s (minutes-long Django suite)", 180, 180),
+    ("light: build 10, test 1, P2P 5", 10, 1, 5),
+    ("medium: build 30, test 3, P2P 30", 30, 3, 30),
+    ("heavy: build 120, test 10, P2P 300", 120, 10, 300),
 ]
+
+
+def instance_cost(c: dict, build: float, single: float, p2p: float) -> float:
+    runs = 1 + REGRESSION_FORKS + SINGLE_TEST_FORKS
+    cpu = build + REGRESSION_FORKS * p2p + SINGLE_TEST_FORKS * single
+    return runs * c["fixed"] + c["per_cpu_s"] * cpu
 
 
 def fmt(v, spec=".6g") -> str:
@@ -293,19 +324,27 @@ def write_md(out: dict) -> None:
             "",
             "## Extrapolation (reported cost units; USD per the reconciliation below)",
             "",
-            "One instance is 13 forks: original + test, patch + test, patch + PASS_TO_PASS "
-            "suite, and 10 mutants + test (BUILD_PLAN step 4). The one-off build and "
-            "checkpoint per instance (`pip install` of the repo) are not included; the "
-            "probe's `pip install six` checkpoint cost "
-            f"{fmt(out['checkpoint']['cost'], '.4g')}.",
+            "**Corrected model (2026-10-25).** An earlier version of this section priced 13 "
+            "forks at equal cost. That was wrong. PASS_TO_PASS never runs against a mutant, "
+            "because a mutant is never a candidate for acceptance. Per instance:",
             "",
-            "| Scenario | CPU s per instance | 1 instance | 5 instances |",
+            "- 1 build, paid once; its result is the warm checkpoint;",
+            "- 1 regression fork: patched code + PASS_TO_PASS;",
+            "- 12 single-test forks: original + test, patch + test, 10 mutants + test, "
+            "each running one test function.",
+            "",
+            "cost(instance) = 14 × per-run fee + rate × (build + P2P + 12 × single-test) CPU-s.",
+            "",
+            "The scenarios below are hypothetical. **Measured values for three real SWE-bench "
+            "Verified instances are in `docs/probe_instances.md`.**",
+            "",
+            "| Scenario (CPU-s) | CPU s per instance | 1 instance | 5 instances |",
             "|---|---:|---:|---:|",
         ]
-        for name, targeted, p2p in SCENARIOS:
-            cpu = 12 * targeted + p2p
-            one = 13 * c["fixed"] + c["per_cpu_s"] * cpu
-            lines.append(f"| {name} | {cpu:,.1f} | {one:.4g} | {5 * one:.4g} |")
+        for name, build, single, p2p in SCENARIOS:
+            cpu = build + REGRESSION_FORKS * p2p + SINGLE_TEST_FORKS * single
+            one = instance_cost(c, build, single, p2p)
+            lines.append(f"| {name} | {cpu:,.0f} | ${one:.3f} | ${5 * one:.2f} |")
         lines += ["", "## Billing reconciliation", ""]
         if out.get("billing_delta"):
             lines += [
