@@ -16,6 +16,7 @@ p, li { max-width: 80ch; }
 .verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
            padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
 .EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
 .INCONCLUSIVE { color: var(--amber); }
 .reason { font-size: 1.05rem; max-width: 110ch; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
@@ -39,12 +40,14 @@ details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
 .ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
 @media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
 </style></head><body><main><h1>Falsifier: benchmark oracle against execution</h1>
-<p><b>Scope: five SWE-bench Verified instances across three repositories (pallets/flask, psf/requests, pytest-dev/pytest), Configuration A: the gold patch, audited against the benchmark&#x27;s own FAIL_TO_PASS tests. No claim is made about the rest of the benchmark.</b></p>
-<table><colgroup><col style="width:22%"><col style="width:17%"><col style="width:11%">
-<col style="width:13%"><col style="width:12%"><col style="width:9%"><col style="width:8%"><col style="width:8%"></colgroup>
+<p><b>Scope: five SWE-bench Verified instances across three repositories (pallets/flask, psf/requests, pytest-dev/pytest). Configuration A: mutants of the gold patch, held to SWE-bench&#x27;s full resolution criterion (FAIL_TO_PASS passes and PASS_TO_PASS does not regress). No claim is made about the rest of the benchmark.</b></p>
+<table><colgroup><col style="width:18%"><col style="width:13%"><col style="width:9%">
+<col style="width:11%"><col style="width:10%"><col style="width:9%"><col style="width:9%">
+<col style="width:9%"><col style="width:6%"><col style="width:6%"></colgroup>
 <tr><th>instance</th><th>benchmark oracle</th><th>SWE-bench says</th><th>Falsifier says</th>
-<th>killed / distinguishable</th><th>equivalent discarded</th><th>canary exit</th><th>cost</th></tr>
-<tr><td><a href='pallets__flask-5014.html'>pallets__flask-5014</a></td><td>FAIL_TO_PASS, 1 test(s)</td><td>RESOLVED</td><td class='EARNED'><b>EARNED</b></td><td>1 / 1</td><td>0</td><td>1</td><td>$0.0169</td></tr><tr><td><a href='psf__requests-5414.html'>psf__requests-5414</a></td><td>FAIL_TO_PASS, 1 test(s)</td><td>RESOLVED</td><td class='UNEARNED'><b>UNEARNED</b></td><td>5 / 7</td><td>1</td><td>1</td><td>$0.0607</td></tr><tr><td><a href='psf__requests-6028.html'>psf__requests-6028</a></td><td>FAIL_TO_PASS, 2 test(s)</td><td>RESOLVED</td><td class='UNEARNED'><b>UNEARNED</b></td><td>4 / 5</td><td>5</td><td>1</td><td>$0.0513</td></tr><tr><td><a href='pytest-dev__pytest-7432.html'>pytest-dev__pytest-7432</a></td><td>FAIL_TO_PASS, 1 test(s)</td><td>RESOLVED</td><td class='INCONCLUSIVE'><b>INCONCLUSIVE</b></td><td>0 / 0</td><td>0</td><td>3</td><td>$0.0332</td></tr><tr><td>pytest-dev__pytest-7571</td><td colspan='7' class='muted'>not completed: phase 3 spend ceiling ($2) tripped during its mutant forks</td></tr></table>
+<th>distinguishable mutants</th><th>equivalent discarded</th><th>survived FAIL_TO_PASS</th>
+<th>survived both lists</th><th>canary exit</th><th>cost</th></tr>
+<tr><td><a href='pallets__flask-5014.html'>pallets__flask-5014</a></td><td>FAIL_TO_PASS, 1 test(s)</td><td>RESOLVED</td><td class='EARNED'><b>EARNED</b></td><td>1</td><td>0</td><td>0</td><td><b>0</b></td><td>1</td><td>$0.0169</td></tr><tr><td><a href='psf__requests-5414.html'>psf__requests-5414</a></td><td>FAIL_TO_PASS, 1 test(s)</td><td>RESOLVED</td><td class='UNPINNED'><b>UNPINNED</b></td><td>7</td><td>1</td><td>2</td><td><b>0</b></td><td>1</td><td>$0.0781</td></tr><tr><td><a href='psf__requests-6028.html'>psf__requests-6028</a></td><td>FAIL_TO_PASS, 2 test(s)</td><td>RESOLVED</td><td class='UNPINNED'><b>UNPINNED</b></td><td>5</td><td>5</td><td>1</td><td><b>0</b></td><td>1</td><td>$0.0564</td></tr><tr><td><a href='pytest-dev__pytest-7432.html'>pytest-dev__pytest-7432</a></td><td>FAIL_TO_PASS, 1 test(s)</td><td>RESOLVED</td><td class='INCONCLUSIVE'><b>INCONCLUSIVE</b></td><td>0</td><td>0</td><td>0</td><td><b>0</b></td><td>3</td><td>$0.0334</td></tr><tr><td><a href='pytest-dev__pytest-7571.html'>pytest-dev__pytest-7571</a></td><td>FAIL_TO_PASS, 1 test(s)</td><td>RESOLVED</td><td class='EARNED'><b>EARNED</b></td><td>7</td><td>3</td><td>0</td><td><b>0</b></td><td>1</td><td>$0.0537</td></tr></table>
 <p class="muted">"Benchmark oracle" means the repository's own FAIL_TO_PASS tests, not a reproduction
 of SWE-bench's harness. Each instance links to its full evidence: every fork's branch id, command,
 exit code, captured output, CPU-seconds and cost.</p></main></body></html>

@@ -824,14 +824,16 @@ def _label(block: str, name: str) -> str | None:
 _WITNESS = re.compile(r"WITNESS[\s*_]*:[\s*_]*\n*```python[^\n]*\n(.*?)```", re.S | re.I)
 
 
-_PY_C = re.compile(r"^\s*python3?\s+-c\s+([\"'])(.*)\1\s*$", re.S)
+_PY_C = re.compile(r"^\s*python3?\s+-c\s+([\"'])(.*)\1([^\"'\n]*)$", re.S)
+"""`python3 -c "..."`, optionally followed by a shell suffix such as `2>&1 | head -5`."""
 
 
 def normalize_witness(src: str) -> str:
     """Deterministic clean-up of the two off-contract forms the model wrote on its first live run
-    (phase 3, 2026-10-25): a shell wrapper `python3 -c "..."` (flask, requests-5414) and a doctest
-    transcript with `>>>` prompts and claimed outputs (requests-6028). The claimed outputs are
-    dropped: they are the model's assertions, and only execution counts."""
+    (phase 3, 2026-10-25): a shell wrapper `python3 -c "..."`, sometimes piped on into other
+    commands (flask, requests-5414, pytest-7432), and a doctest transcript with `>>>` prompts and
+    claimed outputs (requests-6028). The shell suffix and the claimed outputs are dropped: only
+    the Python runs, and only execution counts."""
     src = src.strip("\n")
     if m := _PY_C.match(src):
         src = m.group(2).replace('\\"', '"') if m.group(1) == '"' else m.group(2)
@@ -867,6 +869,8 @@ def parse_mutants(text: str) -> list[dict]:
         block = text[s : starts[i + 1] if i + 1 < len(starts) else len(text)]
         kind, why = _label(block, "KIND"), _label(block, "RATIONALE")
         w = _WITNESS.search(block)
+        if w is None:  # pytest-7432: an unlabelled ```python block after the diff
+            w = re.search(r"```python[^\n]*\n(.*?)```", block, re.S)
         witness = normalize_witness(w.group(1)) if w else None
         diff = extract_block(block, "diff")
         m = {"kind": kind, "rationale": why, "witness": witness, "diff": diff}

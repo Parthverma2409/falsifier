@@ -26,7 +26,15 @@ import sys
 from dotenv import load_dotenv
 
 from falsifier.config import ROOT, USD_PER_CPU_SECOND, USD_PER_RUN, SpendLimits
-from falsifier.evidence import EQUIVALENT, KILLED, NOT_RUN, PASS, SURVIVED, classify_test_run
+from falsifier.evidence import (
+    CAUGHT_BY_P2P,
+    EQUIVALENT,
+    KILLED,
+    NOT_RUN,
+    PASS,
+    SURVIVED,
+    classify_test_run,
+)
 from falsifier.generate import (
     LLM,
     overlay_reader,
@@ -42,7 +50,7 @@ from falsifier.instance import (
     load_swebench,
 )
 from falsifier.official import load_rows, official
-from falsifier.report import SCOPE, comparison, comparison_rows, write
+from falsifier.report import comparison, write
 from falsifier.sandbox import SandboxForker, SpendCeilingExceeded, SpendGuard, Uploader
 from falsifier.verify import pytest_command, verify
 
@@ -53,10 +61,15 @@ INSTANCES = [
     "pytest-dev__pytest-7432",
     "pytest-dev__pytest-7571",
 ]
-CEILING_USD = float(os.environ.get("FALSIFIER_SPEND_CEILING_USD", 2.0))
+CEILING_USD = float(os.environ.get("FALSIFIER_SPEND_CEILING_USD", 5.0))
+"""Raised from $2 to $5 by Parth after the $2 ceiling tripped (2026-10-25); same ledger."""
 LEDGER = ROOT / "runs" / "spend_ledger_phase3.jsonl"
 OUT = ROOT / "reports" / "instances"
 N_MUTANTS, N_ESCALATED = 10, 30
+F2P_SURVIVOR = (SURVIVED, CAUGHT_BY_P2P)
+"""The pre-committed escalation (8fd9bc8) was written when "survive" meant surviving
+FAIL_TO_PASS, so it keeps that meaning: distinguishable mutants passing FAIL_TO_PASS, whether or
+not PASS_TO_PASS then catches them."""
 FLOOR_S = 15
 
 
@@ -181,35 +194,6 @@ async def run_one(iid, n, tag, client, guard, upload, rows, out_dir):
     return v, inst, o
 
 
-def results_md(results, escalated: bool) -> str:
-    rows = comparison_rows([r[0] for r in results], {r[0].instance_id: r[2] for r in results})
-    lines = [
-        "# Results",
-        "",
-        f"**{SCOPE}**",
-        "",
-        "| Instance | Benchmark oracle | SWE-bench says | Falsifier says | Killed / distinguishable"
-        " | Equivalent discarded | Canary exit |",
-        "|---|---|---|---|---|---|---|",
-    ]
-    lines += [
-        f"| `{r['instance']}` | {r['oracle']} | {r['swebench']} | **{r['falsifier']}** | "
-        f"{r['killed']} / {r['distinguishable']} | {r['equivalent']} | {r['canary_exit']} |"
-        for r in rows
-    ]
-    lines += [f"| `{iid}` | not run | | | | | ({why}) |" for iid, why in FAILURES.items()]
-    lines += [
-        "",
-        f"Mutants per instance: {N_ESCALATED if escalated else N_MUTANTS}"
-        + (" (pre-committed escalation from 10: zero survivors at 10)" if escalated else "")
-        + '. "Benchmark oracle" means the repository\'s own FAIL_TO_PASS tests, not a '
-        "reproduction of SWE-bench's harness. Full evidence per instance: "
-        "`reports/instances/<instance>.html` and `.json`.",
-        "",
-    ]
-    return "\n".join(lines)
-
-
 async def main_async() -> int:
     from contree_sdk import Contree
     from contree_sdk.config import ContreeConfig
@@ -219,19 +203,18 @@ async def main_async() -> int:
     print(f"phase 3 ceiling ${CEILING_USD:.2f}; already spent in this phase ${guard.prior_usd:.4f}")
     upload = Uploader(client)
     rows = load_rows(INSTANCES)
-    status, escalated, results = 0, False, []
+    status, results = 0, []
     try:
         results = await run(N_MUTANTS, "", client, guard, upload, rows, OUT)
         ran = [v for v, _, _ in results if any(m.status != NOT_RUN for m in v.mutants)]
-        survivors = sum(m.status == SURVIVED for v, _, _ in results for m in v.mutants)
+        survivors = sum(m.status in F2P_SURVIVOR for v, _, _ in results for m in v.mutants)
         print(f"survivors across all five at {N_MUTANTS} mutants: {survivors}")
         if survivors == 0 and ran:
             print(f"pre-committed escalation: same five instances, {N_ESCALATED} mutants each")
-            escalated = True
             results = await run(
                 N_ESCALATED, "-x30", client, guard, upload, rows, OUT / "escalation-30"
             )
-            survivors = sum(m.status == SURVIVED for v, _, _ in results for m in v.mutants)
+            survivors = sum(m.status in F2P_SURVIVOR for v, _, _ in results for m in v.mutants)
             print(f"survivors across all five at {N_ESCALATED} mutants: {survivors}")
     except SpendCeilingExceeded as exc:
         print(f"STOPPED by the $ {CEILING_USD:.2f} ceiling (not raised): {exc}")
@@ -242,8 +225,7 @@ async def main_async() -> int:
             f"phase 3 spend: ${s['spent_usd']:.4f} of ${s['ceiling_usd']:.2f} "
             f"(this process ${s['spent_this_process_usd']:.4f}, {s['runs']} sandbox runs)"
         )
-    if results:
-        (ROOT / "docs" / "results.md").write_text(results_md(results, escalated))
+    print("render docs/results.md and reports/instances/index.html with scripts/render_results.py")
     return status
 
 

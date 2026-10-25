@@ -16,6 +16,7 @@ p, li { max-width: 80ch; }
 .verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
            padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
 .EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
 .INCONCLUSIVE { color: var(--amber); }
 .reason { font-size: 1.05rem; max-width: 110ch; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
@@ -101,20 +102,20 @@ requests.get(&quot;http://.example.com&quot;)
 ```
 </pre></details>
 
-<div class="verdict UNEARNED">UNEARNED</div>
+<div class="verdict UNPINNED">UNPINNED</div>
 
 <p>SWE-bench says <b>RESOLVED</b> · benchmark oracle: the repository's own FAIL_TO_PASS tests (1)</p>
-<p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 1 failed in 0.22s; the canary&#x27;s AssertionError is in the log)</b></p>
-<p class="reason">the test fails on the original (exit 1, 1 failed in 0.27s) and passes on the patch (exit 0, 1 passed in 0.18s); all 130 PASS_TO_PASS tests PASSED. Surviving mutants: m1 (off-by-one) passes the test (exit 0) and differs on its witness: the patch returns None, prints &#x27;Wildcard: InvalidURL raised (CORRECT)\nWildcard also raises (unexpected)\nDot: InvalidURL raised&#x27; (exit 0), the mutant raises ConnectionError(&quot;HTTPConnectionPool(host=&#x27;*.example.com&#x27;, port=80): Max retries exceeded with url: / (Caused by NewConnectionError(&#x27;&lt;urllib3.connection.HTTPConnection object at 0x?&gt;: Failed to establish a new connection: [Errno -2] Name or service not known&#x27;))&quot;) (exit 0); m4 (too-narrow) passes the test (exit 0) and differs on its witness: the patch returns None, prints &#x27;Dot example: InvalidURL raised (CORRECT)\nEvil dot: InvalidURL raised&#x27; (exit 0), the mutant raises LocationParseError(&quot;Failed to parse: &#x27;.evil.com&#x27;, label empty or too long&quot;), prints &#x27;Dot example: InvalidURL raised (CORRECT)&#x27; (exit 0). Negative control: the canary failed the test (exit 1, 1 failed in 0.22s; the canary&#x27;s AssertionError is in the log)</p>
+<p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 1 failed in 0.23s; the canary&#x27;s AssertionError is in the log)</b></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.27s) and passes on the patch (exit 0, 1 passed in 0.18s); all 130 PASS_TO_PASS tests PASSED. No mutant clears both lists, but these pass FAIL_TO_PASS and are caught only by PASS_TO_PASS: m1 (off-by-one) passes FAIL_TO_PASS (exit 0) but PASS_TO_PASS catches it (exit 1, 5 not passed, e.g. tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://*example.com]); it differs on its witness: the patch returns None, prints &#x27;Wildcard: InvalidURL raised (CORRECT)\nWildcard also raises (unexpected)\nDot: InvalidURL raised&#x27; (exit 0), the mutant raises ConnectionError(&quot;HTTPConnectionPool(host=&#x27;*.example.com&#x27;, port=80): Max retries exceeded with url: / (Caused by NewConnectionError(&#x27;&lt;urllib3.connection.HTTPConnection object at 0x?&gt;: Failed to establish a new connection: [Errno -2] Name or service not known&#x27;))&quot;) (exit 0); m4 (too-narrow) passes FAIL_TO_PASS (exit 0) but PASS_TO_PASS catches it (exit 1, 5 not passed, e.g. tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://*example.com]); it differs on its witness: the patch returns None, prints &#x27;Dot example: InvalidURL raised (CORRECT)\nEvil dot: InvalidURL raised&#x27; (exit 0), the mutant raises LocationParseError(&quot;Failed to parse: &#x27;.evil.com&#x27;, label empty or too long&quot;), prints &#x27;Dot example: InvalidURL raised (CORRECT)&#x27; (exit 0). Negative control: the canary failed the test (exit 1, 1 failed in 0.23s; the canary&#x27;s AssertionError is in the log)</p>
 <p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c ·
-18 forks · 5.72 CPU-s · $0.0607 · 2026-10-25T13:55:36+00:00</p>
-<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status survived">survived</span><br><span class="muted">The condition `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` uses `startswith` with a tuple of two prefixes, but a developer might mistakenly use `startswith(u&#x27;.&#x27;)` alone, catching only the dot case and missing the wildcard case. The input `http://*.example.com` would raise `InvalidURL` with the correct patch but pass through with just the dot check.</span></div><div class="card"><b>m2</b> · wrong-condition<br><span class="status equivalent">equivalent, discarded</span><br><span class="muted">The correct patch changes the guard from `host.startswith(u&#x27;*&#x27;)` to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))`. A wrong-condition mutant might keep the tuple but use `not host.startswith(...)` or check for a different prefix like `host.startswith(u&#x27;-&#x27;)`, which would incorrectly reject valid URLs starting with a hyphen or fail to catch the intended cases. The input `http://example.com` would be incorrectly rejected if the condition checked for a hyphen.</span></div><div class="card"><b>m3</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The correct patch uses `or` logic implicitly via the tuple in `startswith`. A wrong-condition mutant might use `and` instead, or check the wrong variable. For example, checking `host.endswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` would catch trailing wildcards or dots instead of leading ones. The input `http://example.*` would be incorrectly caught as invalid while `http://.example.com` would pass through.</span></div><div class="card"><b>m4</b> · too-narrow<br><span class="status survived">survived</span><br><span class="muted">The correct patch handles both `*` and `.` prefixes in the IDNA encoding error path. A too-narrow mutant might only add the `.` check but keep the `*` check as a separate `if`, or only handle the first occurrence of the issue. The input `http://example.com` with a mutant that adds an extra check for `.` only in the `elif` after the `try/except` would not affect the `UnicodeError` path, but a too-narrow mutant could be one that changes the `except UnicodeError` to only catch for specific hosts. Actually, too-narrow: handles exactly the case in the issue but not the general one. The issue is about `http://.example.com`. A too-narrow mutant might catch only that specific case by checking `host == &#x27;.example.com&#x27;` literally instead of `host.startswith(u&#x27;.&#x27;)`. The input `http://.evil.com` would not be caught.</span></div><div class="card"><b>m5</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">The condition `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` uses a tuple. An off-by-one mutant might change the tuple to a list with one extra or missing element, but that&#x27;s not off-by-one. Off-by-one in the context of the patch&#x27;s logic: the original code had `host.startswith(u&#x27;*&#x27;)` which is a single check. The patch changed it to a tuple. An off-by-one could be changing the condition to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)) and host != u&#x27;.&#x27;` which would miss the case where host is exactly `.` (though unlikely as a host). Or more realistically, using `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` but with a slice that is off-by-one: `host[ :len(host)-1]` etc. Let&#x27;s do a mutant that changes the startswith to check `host[1:]` as off-by-one in index, which I already did in mutant 5. Need a different off-by-one.</span></div><div class="card"><b>m6</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The correct patch changes the guard to check for both `*` and `.` prefixes. A wrong-condition mutant might negate the condition or check a different combination. For instance, `if not host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):` would raise `InvalidURL` only when the host does NOT start with `*` or `.`, which is the opposite of the intended behavior. The input `http://example.com` would raise `InvalidURL` (incorrectly) while `http://.example.com` would pass through (no error). This is a plausible mistake a developer could make when refactoring the condition.</span></div><div class="card"><b>m7</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The correct patch changes the guard from `host.startswith(u&#x27;*&#x27;)` to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))`. A wrong-condition mutant might keep the tuple structure but swap the logical operator, changing the condition to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` with an `or` that actually uses `and` via misplaced negation, or simply check for the wrong combination. This specific mutant changes the condition to `host.startswith(u&#x27;*&#x27;) or host.startswith(u&#x27;.&#x27;)` which is logically equivalent to the patch for this specific case but written as separate checks; however, a true wrong-condition would be `host.startswith(u&#x27;*&#x27;) and host.startswith(u&#x27;.&#x27;)` which requires both prefixes simultaneously, an impossible condition for normal hosts. The input `http://example.com` would be incorrectly accepted (no error) while `http://.example.com` would also be accepted, but the real failure is that valid URLs with neither prefix would be rejected if the condition was inverted; actually, `and` means both must be true, so no host would ever trigger it, meaning invalid URLs like `http://.example.com` would pass through without raising `InvalidURL`. The concrete input `http://.example.com` differs: correct patch raises `InvalidURL`, this mutant does not.</span></div><div class="card"><b>m8</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">The condition `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` checks if the host starts with `*` or `.` using a tuple. An off-by-one mutant in this context shifts the boundary by slicing the host string before checking, effectively skipping the first character. This is a plausible mistake when a developer tries to &quot;normalize&quot; the check by removing a leading character. The input `http://.example.com` differs: correct patch raises `InvalidURL` because host starts with `.`, but the mutant checks `host[1:]` which for `.example.com` yields `example.com`, and `startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` is `False`, so no error is raised. The concrete input `http://.example.com` demonstrates the difference.</span></div></div>
+20 forks · 7.41 CPU-s · $0.0781 · 2026-10-25T14:27:01+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status caught-by-p2p">survived FAIL_TO_PASS, caught by PASS_TO_PASS</span><br><span class="muted">The condition `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` uses `startswith` with a tuple of two prefixes, but a developer might mistakenly use `startswith(u&#x27;.&#x27;)` alone, catching only the dot case and missing the wildcard case. The input `http://*.example.com` would raise `InvalidURL` with the correct patch but pass through with just the dot check.</span></div><div class="card"><b>m2</b> · wrong-condition<br><span class="status equivalent">equivalent, discarded</span><br><span class="muted">The correct patch changes the guard from `host.startswith(u&#x27;*&#x27;)` to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))`. A wrong-condition mutant might keep the tuple but use `not host.startswith(...)` or check for a different prefix like `host.startswith(u&#x27;-&#x27;)`, which would incorrectly reject valid URLs starting with a hyphen or fail to catch the intended cases. The input `http://example.com` would be incorrectly rejected if the condition checked for a hyphen.</span></div><div class="card"><b>m3</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The correct patch uses `or` logic implicitly via the tuple in `startswith`. A wrong-condition mutant might use `and` instead, or check the wrong variable. For example, checking `host.endswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` would catch trailing wildcards or dots instead of leading ones. The input `http://example.*` would be incorrectly caught as invalid while `http://.example.com` would pass through.</span></div><div class="card"><b>m4</b> · too-narrow<br><span class="status caught-by-p2p">survived FAIL_TO_PASS, caught by PASS_TO_PASS</span><br><span class="muted">The correct patch handles both `*` and `.` prefixes in the IDNA encoding error path. A too-narrow mutant might only add the `.` check but keep the `*` check as a separate `if`, or only handle the first occurrence of the issue. The input `http://example.com` with a mutant that adds an extra check for `.` only in the `elif` after the `try/except` would not affect the `UnicodeError` path, but a too-narrow mutant could be one that changes the `except UnicodeError` to only catch for specific hosts. Actually, too-narrow: handles exactly the case in the issue but not the general one. The issue is about `http://.example.com`. A too-narrow mutant might catch only that specific case by checking `host == &#x27;.example.com&#x27;` literally instead of `host.startswith(u&#x27;.&#x27;)`. The input `http://.evil.com` would not be caught.</span></div><div class="card"><b>m5</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">The condition `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` uses a tuple. An off-by-one mutant might change the tuple to a list with one extra or missing element, but that&#x27;s not off-by-one. Off-by-one in the context of the patch&#x27;s logic: the original code had `host.startswith(u&#x27;*&#x27;)` which is a single check. The patch changed it to a tuple. An off-by-one could be changing the condition to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)) and host != u&#x27;.&#x27;` which would miss the case where host is exactly `.` (though unlikely as a host). Or more realistically, using `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` but with a slice that is off-by-one: `host[ :len(host)-1]` etc. Let&#x27;s do a mutant that changes the startswith to check `host[1:]` as off-by-one in index, which I already did in mutant 5. Need a different off-by-one.</span></div><div class="card"><b>m6</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The correct patch changes the guard to check for both `*` and `.` prefixes. A wrong-condition mutant might negate the condition or check a different combination. For instance, `if not host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):` would raise `InvalidURL` only when the host does NOT start with `*` or `.`, which is the opposite of the intended behavior. The input `http://example.com` would raise `InvalidURL` (incorrectly) while `http://.example.com` would pass through (no error). This is a plausible mistake a developer could make when refactoring the condition.</span></div><div class="card"><b>m7</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">The correct patch changes the guard from `host.startswith(u&#x27;*&#x27;)` to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))`. A wrong-condition mutant might keep the tuple structure but swap the logical operator, changing the condition to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` with an `or` that actually uses `and` via misplaced negation, or simply check for the wrong combination. This specific mutant changes the condition to `host.startswith(u&#x27;*&#x27;) or host.startswith(u&#x27;.&#x27;)` which is logically equivalent to the patch for this specific case but written as separate checks; however, a true wrong-condition would be `host.startswith(u&#x27;*&#x27;) and host.startswith(u&#x27;.&#x27;)` which requires both prefixes simultaneously, an impossible condition for normal hosts. The input `http://example.com` would be incorrectly accepted (no error) while `http://.example.com` would also be accepted, but the real failure is that valid URLs with neither prefix would be rejected if the condition was inverted; actually, `and` means both must be true, so no host would ever trigger it, meaning invalid URLs like `http://.example.com` would pass through without raising `InvalidURL`. The concrete input `http://.example.com` differs: correct patch raises `InvalidURL`, this mutant does not.</span></div><div class="card"><b>m8</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">The condition `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` checks if the host starts with `*` or `.` using a tuple. An off-by-one mutant in this context shifts the boundary by slicing the host string before checking, effectively skipping the first character. This is a plausible mistake when a developer tries to &quot;normalize&quot; the check by removing a leading character. The input `http://.example.com` differs: correct patch raises `InvalidURL` because host starts with `.`, but the mutant checks `host[1:]` which for `.example.com` yields `example.com`, and `startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` is `False`, so no error is raised. The concrete input `http://.example.com` demonstrates the difference.</span></div></div>
 <h2>Survivors</h2>
 <section class="box" style="margin-top:1rem">
-  <h3>Mutant m1 survived · off-by-one</h3>
+  <h3>Mutant m1 · survived FAIL_TO_PASS, caught by PASS_TO_PASS · off-by-one</h3>
   <div class="pair">
     <div><p><b>Rationale.</b> The condition `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` uses `startswith` with a tuple of two prefixes, but a developer might mistakenly use `startswith(u&#x27;.&#x27;)` alone, catching only the dot case and missing the wildcard case. The input `http://*.example.com` would raise `InvalidURL` with the correct patch but pass through with just the dot check.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -403,7 +403,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">                 host = self._get_idna_encoded_host(host)</span><span class="line">             except UnicodeError:</span><span class="line">                 raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line add">+        elif host.startswith(u&#x27;.&#x27;):</span><span class="line">             raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line"> </span><span class="line">         # Carefully reconstruct the network location</span></pre></div>
-    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.17s · 0.353 CPU-s · 0.62 s · $0.00376</p><pre># -*- coding: utf-8 -*-
+    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.18s · 0.356 CPU-s · 0.65 s · $0.00379</p><pre># -*- coding: utf-8 -*-
 
 &quot;&quot;&quot;Tests for Requests.&quot;&quot;&quot;
 
@@ -2732,6 +2733,7 @@ except requests.exceptions.InvalidURL:
     <div class="box"><b>Mutant</b>: raises ConnectionError(&quot;HTTPConnectionPool(host=&#x27;*.example.com&#x27;, port=80): Max retries exceeded with url: / (Caused by NewConnectionError(&#x27;&lt;urllib3.connection.HTTPConnection object at 0x?&gt;: Failed to establish a new connection: [Errno -2] Name or service not known&#x27;))&quot;)<br>
       <span class="muted">exit 0 · psf__requests-5414/witness-mutant-m1</span></div>
   </div>
+  <p style="margin-top:.8rem"><b>PASS_TO_PASS on the mutant</b>: exit 1 · 5 failed, 126 passed, 1 xfailed, 158 errors in 1.19s · 5 not PASSED, e.g. tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://*example.com], tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*.google.com0], tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*0]</p>
   <details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
 rootdir: /testbed
@@ -2743,17 +2745,92 @@ tests/test_requests.py .                                                 [100%]
 ==================================== PASSES ====================================
 =========================== short test summary info ============================
 PASSED tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]
-============================== 1 passed in 0.17s ===============================
+============================== 1 passed in 0.18s ===============================
 </pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;None&quot;, &quot;stdout&quot;: &quot;Wildcard: InvalidURL raised (CORRECT)\nWildcard also raises (unexpected)\nDot: InvalidURL raised\n&quot;}
 </pre><pre></pre></details>
   <details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;HTTPConnectionPool(host=&#x27;*.example.com&#x27;, port=80): Max retries exceeded with url: / (Caused by NewConnectionError(&#x27;&lt;urllib3.connection.HTTPConnection object at 0x?&gt;: Failed to establish a new connection: [Errno -2] Name or service not known&#x27;))&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;&quot;, &quot;type&quot;: &quot;ConnectionError&quot;}
+</pre><pre></pre></details><details><summary>PASS_TO_PASS on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_requests.py&#x27;</pre><pre>ests::test_certificate_failure
+ERROR tests/test_requests.py::TestRequests::test_urlencoded_get_query_multivalued_param
+ERROR tests/test_requests.py::TestRequests::test_form_encoded_post_query_multivalued_element
+ERROR tests/test_requests.py::TestRequests::test_different_encodings_dont_break_post
+ERROR tests/test_requests.py::TestRequests::test_unicode_multipart_post[data0]
+ERROR tests/test_requests.py::TestRequests::test_unicode_multipart_post[data1]
+ERROR tests/test_requests.py::TestRequests::test_unicode_multipart_post[data2]
+ERROR tests/test_requests.py::TestRequests::test_unicode_multipart_post[data3]
+ERROR tests/test_requests.py::TestRequests::test_unicode_multipart_post_fieldnames
+ERROR tests/test_requests.py::TestRequests::test_unicode_method_name
+ERROR tests/test_requests.py::TestRequests::test_unicode_method_name_with_request_object
+ERROR tests/test_requests.py::TestRequests::test_custom_content_type
+ERROR tests/test_requests.py::TestRequests::test_hook_receives_request_arguments
+ERROR tests/test_requests.py::TestRequests::test_session_hooks_are_used_with_no_request_hooks
+ERROR tests/test_requests.py::TestRequests::test_session_hooks_are_overridden_by_request_hooks
+ERROR tests/test_requests.py::TestRequests::test_prepared_request_hook
+ERROR tests/test_requests.py::TestRequests::test_prepared_from_session
+ERROR tests/test_requests.py::TestRequests::test_request_with_bytestring_host
+ERROR tests/test_requests.py::TestRequests::test_time_elapsed_blank
+ERROR tests/test_requests.py::TestRequests::test_request_and_response_are_pickleable
+ERROR tests/test_requests.py::TestRequests::test_prepared_request_is_pickleable
+ERROR tests/test_requests.py::TestRequests::test_prepared_request_with_file_is_pickleable
+ERROR tests/test_requests.py::TestRequests::test_prepared_request_with_hook_is_pickleable
+ERROR tests/test_requests.py::TestRequests::test_cannot_send_unprepared_requests
+ERROR tests/test_requests.py::TestRequests::test_session_pickling
+ERROR tests/test_requests.py::TestRequests::test_fixes_1329
+ERROR tests/test_requests.py::TestRequests::test_uppercase_scheme_redirect
+ERROR tests/test_requests.py::TestRequests::test_header_remove_is_case_insensitive
+ERROR tests/test_requests.py::TestRequests::test_params_are_merged_case_sensitive
+ERROR tests/test_requests.py::TestRequests::test_header_keys_are_native
+ERROR tests/test_requests.py::TestRequests::test_header_validation
+ERROR tests/test_requests.py::TestRequests::test_header_value_not_str
+ERROR tests/test_requests.py::TestRequests::test_header_no_return_chars
+ERROR tests/test_requests.py::TestRequests::test_header_no_leading_space
+ERROR tests/test_requests.py::TestRequests::test_can_send_objects_with_files[foo0]
+ERROR tests/test_requests.py::TestRequests::test_can_send_objects_with_files[foo1]
+ERROR tests/test_requests.py::TestRequests::test_can_send_objects_with_files[files2]
+ERROR tests/test_requests.py::TestRequests::test_can_send_file_object_with_non_string_filename
+ERROR tests/test_requests.py::TestRequests::test_autoset_header_values_are_native
+ERROR tests/test_requests.py::TestRequests::test_auth_is_stripped_on_http_downgrade
+ERROR tests/test_requests.py::TestRequests::test_auth_is_retained_for_redirect_on_host
+ERROR tests/test_requests.py::TestRequests::test_manual_redirect_with_partial_body_read
+ERROR tests/test_requests.py::TestRequests::test_redirect_with_wrong_gzipped_header
+ERROR tests/test_requests.py::TestRequests::test_requests_history_is_saved
+ERROR tests/test_requests.py::TestRequests::test_json_param_post_content_type_works
+ERROR tests/test_requests.py::TestRequests::test_json_param_post_should_not_override_data_param
+ERROR tests/test_requests.py::TestRequests::test_response_iter_lines
+ERROR tests/test_requests.py::TestRequests::test_response_context_manager
+ERROR tests/test_requests.py::TestRequests::test_unconsumed_session_response_closes_connection
+ERROR tests/test_requests.py::TestRequests::test_session_close_proxy_clear
+ERROR tests/test_requests.py::TestRequests::test_response_json_when_content_is_None
+ERROR tests/test_requests.py::TestRequests::test_empty_stream_with_auth_does_not_set_content_length_header
+ERROR tests/test_requests.py::TestRequests::test_stream_with_auth_does_not_set_transfer_encoding_header
+ERROR tests/test_requests.py::TestRequests::test_chunked_upload_does_not_set_content_length_header
+ERROR tests/test_requests.py::TestRequests::test_custom_redirect_mixin
+ERROR tests/test_requests.py::TestTimeout::test_stream_timeout
+ERROR tests/test_requests.py::TestTimeout::test_invalid_timeout[timeout0-(connect, read)]
+ERROR tests/test_requests.py::TestTimeout::test_invalid_timeout[foo-must be an int, float or None]
+ERROR tests/test_requests.py::TestTimeout::test_none_timeout[None]
+ERROR tests/test_requests.py::TestTimeout::test_none_timeout[timeout1]
+ERROR tests/test_requests.py::TestTimeout::test_read_timeout[timeout0]
+ERROR tests/test_requests.py::TestTimeout::test_read_timeout[timeout1]
+ERROR tests/test_requests.py::TestTimeout::test_encoded_methods
+ERROR tests/test_requests.py::test_requests_are_updated_each_time
+ERROR tests/test_requests.py::test_urllib3_retries
+ERROR tests/test_requests.py::test_urllib3_pool_connection_closed
+ERROR tests/test_requests.py::TestPreparingURLs::test_redirecting_to_bad_url[http://localhost:-1-InvalidURL]
+ERROR tests/test_requests.py::TestPreparingURLs::test_post_json_nan
+ERROR tests/test_requests.py::TestPreparingURLs::test_json_decode_compatibility
+FAILED tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://*example.com]
+FAILED tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*.google.com0]
+FAILED tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*0]
+FAILED tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*.google.com1]
+FAILED tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*1]
+============= 5 failed, 126 passed, 1 xfailed, 158 errors in 1.19s =============
 </pre><pre></pre></details>
 </section>
 <section class="box" style="margin-top:1rem">
-  <h3>Mutant m4 survived · too-narrow</h3>
+  <h3>Mutant m4 · survived FAIL_TO_PASS, caught by PASS_TO_PASS · too-narrow</h3>
   <div class="pair">
     <div><p><b>Rationale.</b> The correct patch handles both `*` and `.` prefixes in the IDNA encoding error path. A too-narrow mutant might only add the `.` check but keep the `*` check as a separate `if`, or only handle the first occurrence of the issue. The input `http://example.com` with a mutant that adds an extra check for `.` only in the `elif` after the `try/except` would not affect the `UnicodeError` path, but a too-narrow mutant could be one that changes the `except UnicodeError` to only catch for specific hosts. Actually, too-narrow: handles exactly the case in the issue but not the general one. The issue is about `http://.example.com`. A too-narrow mutant might catch only that specific case by checking `host == &#x27;.example.com&#x27;` literally instead of `host.startswith(u&#x27;.&#x27;)`. The input `http://.evil.com` would not be caught.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -403,7 +403,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">                 host = self._get_idna_encoded_host(host)</span><span class="line">             except UnicodeError:</span><span class="line">                 raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line add">+        elif host == &#x27;.example.com&#x27;:</span><span class="line">             raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line"> </span><span class="line">         # Carefully reconstruct the network location</span></pre></div>
-    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.17s · 0.358 CPU-s · 0.63 s · $0.00380</p><pre># -*- coding: utf-8 -*-
+    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.18s · 0.358 CPU-s · 0.66 s · $0.00380</p><pre># -*- coding: utf-8 -*-
 
 &quot;&quot;&quot;Tests for Requests.&quot;&quot;&quot;
 
@@ -5367,6 +5444,7 @@ except requests.exceptions.InvalidURL:
     <div class="box"><b>Mutant</b>: raises LocationParseError(&quot;Failed to parse: &#x27;.evil.com&#x27;, label empty or too long&quot;), prints &#x27;Dot example: InvalidURL raised (CORRECT)&#x27;<br>
       <span class="muted">exit 0 · psf__requests-5414/witness-mutant-m4</span></div>
   </div>
+  <p style="margin-top:.8rem"><b>PASS_TO_PASS on the mutant</b>: exit 1 · 5 failed, 126 passed, 1 xfailed, 158 errors in 1.16s · 5 not PASSED, e.g. tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://*example.com], tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*.google.com0], tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*0]</p>
   <details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
 rootdir: /testbed
@@ -5378,17 +5456,92 @@ tests/test_requests.py .                                                 [100%]
 ==================================== PASSES ====================================
 =========================== short test summary info ============================
 PASSED tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]
-============================== 1 passed in 0.17s ===============================
+============================== 1 passed in 0.18s ===============================
 </pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;None&quot;, &quot;stdout&quot;: &quot;Dot example: InvalidURL raised (CORRECT)\nEvil dot: InvalidURL raised\n&quot;}
 </pre><pre></pre></details>
   <details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;Failed to parse: &#x27;.evil.com&#x27;, label empty or too long&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;stdout&quot;: &quot;Dot example: InvalidURL raised (CORRECT)\n&quot;, &quot;type&quot;: &quot;LocationParseError&quot;}
+</pre><pre></pre></details><details><summary>PASS_TO_PASS on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_requests.py&#x27;</pre><pre>ests::test_certificate_failure
+ERROR tests/test_requests.py::TestRequests::test_urlencoded_get_query_multivalued_param
+ERROR tests/test_requests.py::TestRequests::test_form_encoded_post_query_multivalued_element
+ERROR tests/test_requests.py::TestRequests::test_different_encodings_dont_break_post
+ERROR tests/test_requests.py::TestRequests::test_unicode_multipart_post[data0]
+ERROR tests/test_requests.py::TestRequests::test_unicode_multipart_post[data1]
+ERROR tests/test_requests.py::TestRequests::test_unicode_multipart_post[data2]
+ERROR tests/test_requests.py::TestRequests::test_unicode_multipart_post[data3]
+ERROR tests/test_requests.py::TestRequests::test_unicode_multipart_post_fieldnames
+ERROR tests/test_requests.py::TestRequests::test_unicode_method_name
+ERROR tests/test_requests.py::TestRequests::test_unicode_method_name_with_request_object
+ERROR tests/test_requests.py::TestRequests::test_custom_content_type
+ERROR tests/test_requests.py::TestRequests::test_hook_receives_request_arguments
+ERROR tests/test_requests.py::TestRequests::test_session_hooks_are_used_with_no_request_hooks
+ERROR tests/test_requests.py::TestRequests::test_session_hooks_are_overridden_by_request_hooks
+ERROR tests/test_requests.py::TestRequests::test_prepared_request_hook
+ERROR tests/test_requests.py::TestRequests::test_prepared_from_session
+ERROR tests/test_requests.py::TestRequests::test_request_with_bytestring_host
+ERROR tests/test_requests.py::TestRequests::test_time_elapsed_blank
+ERROR tests/test_requests.py::TestRequests::test_request_and_response_are_pickleable
+ERROR tests/test_requests.py::TestRequests::test_prepared_request_is_pickleable
+ERROR tests/test_requests.py::TestRequests::test_prepared_request_with_file_is_pickleable
+ERROR tests/test_requests.py::TestRequests::test_prepared_request_with_hook_is_pickleable
+ERROR tests/test_requests.py::TestRequests::test_cannot_send_unprepared_requests
+ERROR tests/test_requests.py::TestRequests::test_session_pickling
+ERROR tests/test_requests.py::TestRequests::test_fixes_1329
+ERROR tests/test_requests.py::TestRequests::test_uppercase_scheme_redirect
+ERROR tests/test_requests.py::TestRequests::test_header_remove_is_case_insensitive
+ERROR tests/test_requests.py::TestRequests::test_params_are_merged_case_sensitive
+ERROR tests/test_requests.py::TestRequests::test_header_keys_are_native
+ERROR tests/test_requests.py::TestRequests::test_header_validation
+ERROR tests/test_requests.py::TestRequests::test_header_value_not_str
+ERROR tests/test_requests.py::TestRequests::test_header_no_return_chars
+ERROR tests/test_requests.py::TestRequests::test_header_no_leading_space
+ERROR tests/test_requests.py::TestRequests::test_can_send_objects_with_files[foo0]
+ERROR tests/test_requests.py::TestRequests::test_can_send_objects_with_files[foo1]
+ERROR tests/test_requests.py::TestRequests::test_can_send_objects_with_files[files2]
+ERROR tests/test_requests.py::TestRequests::test_can_send_file_object_with_non_string_filename
+ERROR tests/test_requests.py::TestRequests::test_autoset_header_values_are_native
+ERROR tests/test_requests.py::TestRequests::test_auth_is_stripped_on_http_downgrade
+ERROR tests/test_requests.py::TestRequests::test_auth_is_retained_for_redirect_on_host
+ERROR tests/test_requests.py::TestRequests::test_manual_redirect_with_partial_body_read
+ERROR tests/test_requests.py::TestRequests::test_redirect_with_wrong_gzipped_header
+ERROR tests/test_requests.py::TestRequests::test_requests_history_is_saved
+ERROR tests/test_requests.py::TestRequests::test_json_param_post_content_type_works
+ERROR tests/test_requests.py::TestRequests::test_json_param_post_should_not_override_data_param
+ERROR tests/test_requests.py::TestRequests::test_response_iter_lines
+ERROR tests/test_requests.py::TestRequests::test_response_context_manager
+ERROR tests/test_requests.py::TestRequests::test_unconsumed_session_response_closes_connection
+ERROR tests/test_requests.py::TestRequests::test_session_close_proxy_clear
+ERROR tests/test_requests.py::TestRequests::test_response_json_when_content_is_None
+ERROR tests/test_requests.py::TestRequests::test_empty_stream_with_auth_does_not_set_content_length_header
+ERROR tests/test_requests.py::TestRequests::test_stream_with_auth_does_not_set_transfer_encoding_header
+ERROR tests/test_requests.py::TestRequests::test_chunked_upload_does_not_set_content_length_header
+ERROR tests/test_requests.py::TestRequests::test_custom_redirect_mixin
+ERROR tests/test_requests.py::TestTimeout::test_stream_timeout
+ERROR tests/test_requests.py::TestTimeout::test_invalid_timeout[timeout0-(connect, read)]
+ERROR tests/test_requests.py::TestTimeout::test_invalid_timeout[foo-must be an int, float or None]
+ERROR tests/test_requests.py::TestTimeout::test_none_timeout[None]
+ERROR tests/test_requests.py::TestTimeout::test_none_timeout[timeout1]
+ERROR tests/test_requests.py::TestTimeout::test_read_timeout[timeout0]
+ERROR tests/test_requests.py::TestTimeout::test_read_timeout[timeout1]
+ERROR tests/test_requests.py::TestTimeout::test_encoded_methods
+ERROR tests/test_requests.py::test_requests_are_updated_each_time
+ERROR tests/test_requests.py::test_urllib3_retries
+ERROR tests/test_requests.py::test_urllib3_pool_connection_closed
+ERROR tests/test_requests.py::TestPreparingURLs::test_redirecting_to_bad_url[http://localhost:-1-InvalidURL]
+ERROR tests/test_requests.py::TestPreparingURLs::test_post_json_nan
+ERROR tests/test_requests.py::TestPreparingURLs::test_json_decode_compatibility
+FAILED tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://*example.com]
+FAILED tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*.google.com0]
+FAILED tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*0]
+FAILED tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*.google.com1]
+FAILED tests/test_requests.py::TestPreparingURLs::test_preparing_bad_url[http://*1]
+============= 5 failed, 126 passed, 1 xfailed, 158 errors in 1.16s =============
 </pre><pre></pre></details>
 </section>
 <h2>Baseline forks</h2>
-<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.27s · 0.451 CPU-s · 0.72 s · $0.00475<br>
-patched + test: <b>PASS</b>: exit 0, 1 passed in 0.18s · 0.371 CPU-s · 0.65 s · $0.00394<br>
-patched + PASS_TO_PASS: <b>FAIL</b>: exit 1, 131 passed, 1 xfailed, 158 errors in 0.97s · 0.616 CPU-s · 1.43 s · $0.00639<br>
-canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.22s · 0.400 CPU-s · 0.64 s · $0.00424</p>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.27s · 0.450 CPU-s · 0.72 s · $0.00474<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.18s · 0.354 CPU-s · 0.62 s · $0.00377<br>
+patched + PASS_TO_PASS: <b>FAIL</b>: exit 1, 131 passed, 1 xfailed, 158 errors in 0.96s · 0.621 CPU-s · 1.42 s · $0.00644<br>
+canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.23s · 0.411 CPU-s · 0.68 s · $0.00434</p>
 <details><summary>The canary mutant</summary><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -358,90 +358,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">         return host</span><span class="line"> </span><span class="line">     def prepare_url(self, url, params):</span><span class="line del">-        &quot;&quot;&quot;Prepares the given HTTP URL.&quot;&quot;&quot;</span><span class="line del">-        #: Accept objects that have string representations.</span><span class="line del">-        #: We&#x27;re unable to blindly call unicode/str functions</span><span class="line del">-        #: as this will include the bytestring indicator (b&#x27;&#x27;)</span><span class="line del">-        #: on python 3.x.</span><span class="line del">-        #: https://github.com/psf/requests/pull/2238</span><span class="line del">-        if isinstance(url, bytes):</span><span class="line del">-            url = url.decode(&#x27;utf8&#x27;)</span><span class="line del">-        else:</span><span class="line del">-            url = unicode(url) if is_py2 else str(url)</span><span class="line del">-</span><span class="line del">-        # Remove leading whitespaces from url</span><span class="line del">-        url = url.lstrip()</span><span class="line del">-</span><span class="line del">-        # Don&#x27;t do any URL preparation for non-HTTP schemes like `mailto`,</span><span class="line del">-        # `data` etc to work around exceptions from `url_parse`, which</span><span class="line del">-        # handles RFC 3986 only.</span><span class="line del">-        if &#x27;:&#x27; in url and not url.lower().startswith(&#x27;http&#x27;):</span><span class="line del">-            self.url = url</span><span class="line del">-            return</span><span class="line del">-</span><span class="line del">-        # Support for unicode domain names and paths.</span><span class="line del">-        try:</span><span class="line del">-            scheme, auth, host, port, path, query, fragment = parse_url(url)</span><span class="line del">-        except LocationParseError as e:</span><span class="line del">-            raise InvalidURL(*e.args)</span><span class="line del">-</span><span class="line del">-        if not scheme:</span><span class="line del">-            error = (&quot;Invalid URL {0!r}: No schema supplied. Perhaps you meant http://{0}?&quot;)</span><span class="line del">-            error = error.format(to_native_string(url, &#x27;utf8&#x27;))</span><span class="line del">-</span><span class="line del">-            raise MissingSchema(error)</span><span class="line del">-</span><span class="line del">-        if not host:</span><span class="line del">-            raise InvalidURL(&quot;Invalid URL %r: No host supplied&quot; % url)</span><span class="line del">-</span><span class="line del">-        # In general, we want to try IDNA encoding the hostname if the string contains</span><span class="line del">-        # non-ASCII characters. This allows users to automatically get the correct IDNA</span><span class="line del">-        # behaviour. For strings containing only ASCII characters, we need to also verify</span><span class="line del">-        # it doesn&#x27;t start with a wildcard (*), before allowing the unencoded hostname.</span><span class="line del">-        if not unicode_is_ascii(host):</span><span class="line del">-            try:</span><span class="line del">-                host = self._get_idna_encoded_host(host)</span><span class="line del">-            except UnicodeError:</span><span class="line del">-                raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line del">-            raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-</span><span class="line del">-        # Carefully reconstruct the network location</span><span class="line del">-        netloc = auth or &#x27;&#x27;</span><span class="line del">-        if netloc:</span><span class="line del">-            netloc += &#x27;@&#x27;</span><span class="line del">-        netloc += host</span><span class="line del">-        if port:</span><span class="line del">-            netloc += &#x27;:&#x27; + str(port)</span><span class="line del">-</span><span class="line del">-        # Bare domains aren&#x27;t valid URLs.</span><span class="line del">-        if not path:</span><span class="line del">-            path = &#x27;/&#x27;</span><span class="line del">-</span><span class="line del">-        if is_py2:</span><span class="line del">-            if isinstance(scheme, str):</span><span class="line del">-                scheme = scheme.encode(&#x27;utf-8&#x27;)</span><span class="line del">-            if isinstance(netloc, str):</span><span class="line del">-                netloc = netloc.encode(&#x27;utf-8&#x27;)</span><span class="line del">-            if isinstance(path, str):</span><span class="line del">-                path = path.encode(&#x27;utf-8&#x27;)</span><span class="line del">-            if isinstance(query, str):</span><span class="line del">-                query = query.encode(&#x27;utf-8&#x27;)</span><span class="line del">-            if isinstance(fragment, str):</span><span class="line del">-                fragment = fragment.encode(&#x27;utf-8&#x27;)</span><span class="line del">-</span><span class="line del">-        if isinstance(params, (str, bytes)):</span><span class="line del">-            params = to_native_string(params)</span><span class="line del">-</span><span class="line del">-        enc_params = self._encode_params(params)</span><span class="line del">-        if enc_params:</span><span class="line del">-            if query:</span><span class="line del">-                query = &#x27;%s&amp;%s&#x27; % (query, enc_params)</span><span class="line del">-            else:</span><span class="line del">-                query = enc_params</span><span class="line del">-</span><span class="line del">-        url = requote_uri(urlunparse([scheme, netloc, path, None, query, fragment]))</span><span class="line del">-        self.url = url</span><span class="line add">+        raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line">     def prepare_headers(self, headers):</span><span class="line">         &quot;&quot;&quot;Prepares the given HTTP headers.&quot;&quot;&quot;</span></pre></details>
 <div class="pair"><div><h3>The patch</h3><pre><span class="line">diff --git a/requests/models.py b/requests/models.py</span><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -403,7 +403,7 @@ def prepare_url(self, url, params):</span><span class="line">                 host = self._get_idna_encoded_host(host)</span><span class="line">             except UnicodeError:</span><span class="line">                 raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith(u&#x27;*&#x27;):</span><span class="line add">+        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line">             raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line"> </span><span class="line">         # Carefully reconstruct the network location</span></pre></div>
 <div><h3>The test</h3><pre># -*- coding: utf-8 -*-
@@ -7992,7 +8145,7 @@ tests/test_requests.py F                                                 [100%]
 =================================== FAILURES ===================================
 ________ TestRequests.test_invalid_url[InvalidURL-http://.example.com] _________
 
-self = &lt;tests.test_requests.TestRequests object at 0x7ffff6718f10&gt;
+self = &lt;tests.test_requests.TestRequests object at 0x7ffff665b460&gt;
 exception = &lt;class &#x27;requests.exceptions.InvalidURL&#x27;&gt;
 url = &#x27;http://.example.com&#x27;
 
@@ -8142,7 +8295,7 @@ ERROR tests/test_requests.py::test_urllib3_pool_connection_closed
 ERROR tests/test_requests.py::TestPreparingURLs::test_redirecting_to_bad_url[http://localhost:-1-InvalidURL]
 ERROR tests/test_requests.py::TestPreparingURLs::test_post_json_nan
 ERROR tests/test_requests.py::TestPreparingURLs::test_json_decode_compatibility
-================== 131 passed, 1 xfailed, 158 errors in 0.97s ==================
+================== 131 passed, 1 xfailed, 158 errors in 0.96s ==================
 </pre><pre></pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
 rootdir: /testbed
@@ -8154,7 +8307,7 @@ tests/test_requests.py F                                                 [100%]
 =================================== FAILURES ===================================
 ________ TestRequests.test_invalid_url[InvalidURL-http://.example.com] _________
 
-self = &lt;tests.test_requests.TestRequests object at 0x7ffff65f39d0&gt;
+self = &lt;tests.test_requests.TestRequests object at 0x7ffff65f4a00&gt;
 exception = &lt;class &#x27;requests.exceptions.InvalidURL&#x27;&gt;
 url = &#x27;http://.example.com&#x27;
 
@@ -8196,9 +8349,9 @@ E       AssertionError: canary
 requests/models.py:361: AssertionError
 =========================== short test summary info ============================
 FAILED tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]
-============================== 1 failed in 0.22s ===============================
+============================== 1 failed in 0.23s ===============================
 </pre><pre></pre></details>
-<h2>Other mutants</h2><details><summary>m2 · equivalent, discarded: its own witness does not distinguish it (the patch returns None, prints &#x27;Dot: InvalidURL raised (CORRECT)\nDot also raises (unexpected)\nValid: no error&#x27;, the mutant returns None, prints &#x27;Dot: InvalidURL raised (CORRECT)\nDot also raises (unexpected)\nValid: no error&#x27;); discarded, never UNEARNED</summary><p>The correct patch changes the guard from `host.startswith(u&#x27;*&#x27;)` to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))`. A wrong-condition mutant might keep the tuple but use `not host.startswith(...)` or check for a different prefix like `host.startswith(u&#x27;-&#x27;)`, which would incorrectly reject valid URLs starting with a hyphen or fail to catch the intended cases. The input `http://example.com` would be incorrectly rejected if the condition checked for a hyphen.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -403,7 +403,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">                 host = self._get_idna_encoded_host(host)</span><span class="line">             except UnicodeError:</span><span class="line">                 raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line add">+        elif host.startswith((u&#x27;-&#x27;, u&#x27;.&#x27;)):</span><span class="line">             raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line"> </span><span class="line">         # Carefully reconstruct the network location</span></pre><pre>import requests
+<h2>Other mutants</h2><details><summary>m2 · equivalent, discarded: its own witness does not distinguish it (the patch returns None, prints &#x27;Dot: InvalidURL raised (CORRECT)\nDot also raises (unexpected)\nValid: no error&#x27;, the mutant returns None, prints &#x27;Dot: InvalidURL raised (CORRECT)\nDot also raises (unexpected)\nValid: no error&#x27;); discarded, never a survivor</summary><p>The correct patch changes the guard from `host.startswith(u&#x27;*&#x27;)` to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))`. A wrong-condition mutant might keep the tuple but use `not host.startswith(...)` or check for a different prefix like `host.startswith(u&#x27;-&#x27;)`, which would incorrectly reject valid URLs starting with a hyphen or fail to catch the intended cases. The input `http://example.com` would be incorrectly rejected if the condition checked for a hyphen.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -403,7 +403,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">                 host = self._get_idna_encoded_host(host)</span><span class="line">             except UnicodeError:</span><span class="line">                 raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line add">+        elif host.startswith((u&#x27;-&#x27;, u&#x27;.&#x27;)):</span><span class="line">             raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line"> </span><span class="line">         # Carefully reconstruct the network location</span></pre><pre>import requests
 # Correct patch catches * and .
 try:
     requests.get(&#x27;http://.example.com&#x27;)
@@ -8227,7 +8380,7 @@ tests/test_requests.py .                                                 [100%]
 ==================================== PASSES ====================================
 =========================== short test summary info ============================
 PASSED tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]
-============================== 1 passed in 0.18s ===============================
+============================== 1 passed in 0.17s ===============================
 </pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;None&quot;, &quot;stdout&quot;: &quot;Dot: InvalidURL raised (CORRECT)\nDot also raises (unexpected)\nValid: no error\n&quot;}
 </pre><pre></pre></details><details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /testbed &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;None&quot;, &quot;stdout&quot;: &quot;Dot: InvalidURL raised (CORRECT)\nDot also raises (unexpected)\nValid: no error\n&quot;}
 </pre><pre></pre></details></details><details><summary>m3 · killed: exit 1, 1 failed in 0.27s</summary><p>The correct patch uses `or` logic implicitly via the tuple in `startswith`. A wrong-condition mutant might use `and` instead, or check the wrong variable. For example, checking `host.endswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` would catch trailing wildcards or dots instead of leading ones. The input `http://example.*` would be incorrectly caught as invalid while `http://.example.com` would pass through.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -403,7 +403,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">                 host = self._get_idna_encoded_host(host)</span><span class="line">             except UnicodeError:</span><span class="line">                 raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line add">+        elif host.endswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line">             raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line"> </span><span class="line">         # Carefully reconstruct the network location</span></pre><pre>import requests
@@ -8250,100 +8403,6 @@ try:
     print(&#x27;Dot: no error&#x27;)
 except requests.exceptions.InvalidURL:
     print(&#x27;Dot: InvalidURL raised&#x27;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
-platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
-rootdir: /testbed
-configfile: pytest.ini
-collected 1 item
-
-tests/test_requests.py F                                                 [100%]
-
-=================================== FAILURES ===================================
-________ TestRequests.test_invalid_url[InvalidURL-http://.example.com] _________
-
-self = &lt;tests.test_requests.TestRequests object at 0x7ffff665b460&gt;
-exception = &lt;class &#x27;requests.exceptions.InvalidURL&#x27;&gt;
-url = &#x27;http://.example.com&#x27;
-
-    @pytest.mark.parametrize(
-        &#x27;exception, url&#x27;, (
-            (MissingSchema, &#x27;hiwpefhipowhefopw&#x27;),
-            (InvalidSchema, &#x27;localhost:3128&#x27;),
-            (InvalidSchema, &#x27;localhost.localdomain:3128/&#x27;),
-            (InvalidSchema, &#x27;10.122.1.1:3128/&#x27;),
-            (InvalidURL, &#x27;http://&#x27;),
-            (InvalidURL, &#x27;http://*example.com&#x27;),
-            (InvalidURL, &#x27;http://.example.com&#x27;),
-        ))
-    def test_invalid_url(self, exception, url):
-        with pytest.raises(exception):
-&gt;           requests.get(url)
-
-tests/test_requests.py:89: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-requests/api.py:75: in get
-    return request(&#x27;get&#x27;, url, params=params, **kwargs)
-requests/api.py:61: in request
-    return session.request(method=method, url=url, **kwargs)
-requests/sessions.py:529: in request
-    resp = self.send(prep, **send_kwargs)
-requests/sessions.py:645: in send
-    r = adapter.send(request, **kwargs)
-requests/adapters.py:440: in send
-    resp = conn.urlopen(
-/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/connectionpool.py:716: in urlopen
-    httplib_response = self._make_request(
-/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/connectionpool.py:416: in _make_request
-    conn.request(method, url, **httplib_request_kw)
-/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/connection.py:244: in request
-    super(HTTPConnection, self).request(method, url, body=body, headers=headers)
-/opt/miniconda3/envs/testbed/lib/python3.9/http/client.py:1285: in request
-    self._send_request(method, url, body, headers, encode_chunked)
-/opt/miniconda3/envs/testbed/lib/python3.9/http/client.py:1331: in _send_request
-    self.endheaders(body, encode_chunked=encode_chunked)
-/opt/miniconda3/envs/testbed/lib/python3.9/http/client.py:1280: in endheaders
-    self._send_output(message_body, encode_chunked=encode_chunked)
-/opt/miniconda3/envs/testbed/lib/python3.9/http/client.py:1040: in _send_output
-    self.send(msg)
-/opt/miniconda3/envs/testbed/lib/python3.9/http/client.py:980: in send
-    self.connect()
-/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/connection.py:205: in connect
-    conn = self._new_conn()
-/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/connection.py:174: in _new_conn
-    conn = connection.create_connection(
-/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/util/connection.py:68: in create_connection
-    return six.raise_from(
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-value = None, from_value = None
-
-&gt;   ???
-E   urllib3.exceptions.LocationParseError: Failed to parse: &#x27;.example.com&#x27;, label empty or too long
-
-&lt;string&gt;:3: LocationParseError
-=========================== short test summary info ============================
-FAILED tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]
-============================== 1 failed in 0.27s ===============================
-</pre><pre></pre></details></details><details><summary>m5 · killed: exit 1, 1 failed in 0.26s</summary><p>The condition `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` uses a tuple. An off-by-one mutant might change the tuple to a list with one extra or missing element, but that&#x27;s not off-by-one. Off-by-one in the context of the patch&#x27;s logic: the original code had `host.startswith(u&#x27;*&#x27;)` which is a single check. The patch changed it to a tuple. An off-by-one could be changing the condition to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)) and host != u&#x27;.&#x27;` which would miss the case where host is exactly `.` (though unlikely as a host). Or more realistically, using `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` but with a slice that is off-by-one: `host[ :len(host)-1]` etc. Let&#x27;s do a mutant that changes the startswith to check `host[1:]` as off-by-one in index, which I already did in mutant 5. Need a different off-by-one.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -403,7 +403,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">                 host = self._get_idna_encoded_host(host)</span><span class="line">             except UnicodeError:</span><span class="line">                 raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line add">+        elif host[-1:].startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line">             raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line"> </span><span class="line">         # Carefully reconstruct the network location</span></pre><pre>import requests
-# Correct patch raises InvalidURL for .example.com
-try:
-    requests.get(&#x27;http://.example.com&#x27;)
-    print(&#x27;Dot: no error (WRONG)&#x27;)
-except requests.exceptions.InvalidURL:
-    print(&#x27;Dot: InvalidURL raised (CORRECT)&#x27;)
-# Mutant checking last character instead of first
-# For http://.example.com, host=-example.com? No, host is .example.com, host[-1:] is &#x27;m&#x27;
-# startswith (*, .) is False -&gt; no error raised (MUTANT differs)
-try:
-    requests.get(&#x27;http://.example.com&#x27;)
-    print(&#x27;Dot passes mutant (MUTANT)&#x27;)
-except requests.exceptions.InvalidURL:
-    print(&#x27;Dot also raises&#x27;)
-# For http://example.com., host=example.com., host[-1:]=., startswith True -&gt; raises (same as correct)
-try:
-    requests.get(&#x27;http://example.com.&#x27;)
-    print(&#x27;Trailing dot: no error&#x27;)
-except requests.exceptions.InvalidURL:
-    print(&#x27;Trailing dot: InvalidURL raised&#x27;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
 rootdir: /testbed
 configfile: pytest.ini
@@ -8416,8 +8475,102 @@ E   urllib3.exceptions.LocationParseError: Failed to parse: &#x27;.example.com&#
 &lt;string&gt;:3: LocationParseError
 =========================== short test summary info ============================
 FAILED tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]
-============================== 1 failed in 0.26s ===============================
-</pre><pre></pre></details></details><details><summary>m6 · killed: exit 1, 1 failed in 0.26s</summary><p>The correct patch changes the guard to check for both `*` and `.` prefixes. A wrong-condition mutant might negate the condition or check a different combination. For instance, `if not host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):` would raise `InvalidURL` only when the host does NOT start with `*` or `.`, which is the opposite of the intended behavior. The input `http://example.com` would raise `InvalidURL` (incorrectly) while `http://.example.com` would pass through (no error). This is a plausible mistake a developer could make when refactoring the condition.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -403,7 +403,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">                 host = self._get_idna_encoded_host(host)</span><span class="line">             except UnicodeError:</span><span class="line">                 raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line add">+        elif not host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line">             raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line"> </span><span class="line">         # Carefully reconstruct the network location</span></pre><pre>import requests
+============================== 1 failed in 0.27s ===============================
+</pre><pre></pre></details></details><details><summary>m5 · killed: exit 1, 1 failed in 0.28s</summary><p>The condition `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` uses a tuple. An off-by-one mutant might change the tuple to a list with one extra or missing element, but that&#x27;s not off-by-one. Off-by-one in the context of the patch&#x27;s logic: the original code had `host.startswith(u&#x27;*&#x27;)` which is a single check. The patch changed it to a tuple. An off-by-one could be changing the condition to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)) and host != u&#x27;.&#x27;` which would miss the case where host is exactly `.` (though unlikely as a host). Or more realistically, using `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` but with a slice that is off-by-one: `host[ :len(host)-1]` etc. Let&#x27;s do a mutant that changes the startswith to check `host[1:]` as off-by-one in index, which I already did in mutant 5. Need a different off-by-one.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -403,7 +403,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">                 host = self._get_idna_encoded_host(host)</span><span class="line">             except UnicodeError:</span><span class="line">                 raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line add">+        elif host[-1:].startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line">             raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line"> </span><span class="line">         # Carefully reconstruct the network location</span></pre><pre>import requests
+# Correct patch raises InvalidURL for .example.com
+try:
+    requests.get(&#x27;http://.example.com&#x27;)
+    print(&#x27;Dot: no error (WRONG)&#x27;)
+except requests.exceptions.InvalidURL:
+    print(&#x27;Dot: InvalidURL raised (CORRECT)&#x27;)
+# Mutant checking last character instead of first
+# For http://.example.com, host=-example.com? No, host is .example.com, host[-1:] is &#x27;m&#x27;
+# startswith (*, .) is False -&gt; no error raised (MUTANT differs)
+try:
+    requests.get(&#x27;http://.example.com&#x27;)
+    print(&#x27;Dot passes mutant (MUTANT)&#x27;)
+except requests.exceptions.InvalidURL:
+    print(&#x27;Dot also raises&#x27;)
+# For http://example.com., host=example.com., host[-1:]=., startswith True -&gt; raises (same as correct)
+try:
+    requests.get(&#x27;http://example.com.&#x27;)
+    print(&#x27;Trailing dot: no error&#x27;)
+except requests.exceptions.InvalidURL:
+    print(&#x27;Trailing dot: InvalidURL raised&#x27;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider &#x27;&quot;&#x27;&quot;&#x27;tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]&#x27;&quot;&#x27;&quot;&#x27;&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.9.20, pytest-7.4.4, pluggy-1.0.0
+rootdir: /testbed
+configfile: pytest.ini
+collected 1 item
+
+tests/test_requests.py F                                                 [100%]
+
+=================================== FAILURES ===================================
+________ TestRequests.test_invalid_url[InvalidURL-http://.example.com] _________
+
+self = &lt;tests.test_requests.TestRequests object at 0x7ffff665b460&gt;
+exception = &lt;class &#x27;requests.exceptions.InvalidURL&#x27;&gt;
+url = &#x27;http://.example.com&#x27;
+
+    @pytest.mark.parametrize(
+        &#x27;exception, url&#x27;, (
+            (MissingSchema, &#x27;hiwpefhipowhefopw&#x27;),
+            (InvalidSchema, &#x27;localhost:3128&#x27;),
+            (InvalidSchema, &#x27;localhost.localdomain:3128/&#x27;),
+            (InvalidSchema, &#x27;10.122.1.1:3128/&#x27;),
+            (InvalidURL, &#x27;http://&#x27;),
+            (InvalidURL, &#x27;http://*example.com&#x27;),
+            (InvalidURL, &#x27;http://.example.com&#x27;),
+        ))
+    def test_invalid_url(self, exception, url):
+        with pytest.raises(exception):
+&gt;           requests.get(url)
+
+tests/test_requests.py:89: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+requests/api.py:75: in get
+    return request(&#x27;get&#x27;, url, params=params, **kwargs)
+requests/api.py:61: in request
+    return session.request(method=method, url=url, **kwargs)
+requests/sessions.py:529: in request
+    resp = self.send(prep, **send_kwargs)
+requests/sessions.py:645: in send
+    r = adapter.send(request, **kwargs)
+requests/adapters.py:440: in send
+    resp = conn.urlopen(
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/connectionpool.py:716: in urlopen
+    httplib_response = self._make_request(
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/connectionpool.py:416: in _make_request
+    conn.request(method, url, **httplib_request_kw)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/connection.py:244: in request
+    super(HTTPConnection, self).request(method, url, body=body, headers=headers)
+/opt/miniconda3/envs/testbed/lib/python3.9/http/client.py:1285: in request
+    self._send_request(method, url, body, headers, encode_chunked)
+/opt/miniconda3/envs/testbed/lib/python3.9/http/client.py:1331: in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+/opt/miniconda3/envs/testbed/lib/python3.9/http/client.py:1280: in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+/opt/miniconda3/envs/testbed/lib/python3.9/http/client.py:1040: in _send_output
+    self.send(msg)
+/opt/miniconda3/envs/testbed/lib/python3.9/http/client.py:980: in send
+    self.connect()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/connection.py:205: in connect
+    conn = self._new_conn()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/connection.py:174: in _new_conn
+    conn = connection.create_connection(
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/urllib3/util/connection.py:68: in create_connection
+    return six.raise_from(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = None, from_value = None
+
+&gt;   ???
+E   urllib3.exceptions.LocationParseError: Failed to parse: &#x27;.example.com&#x27;, label empty or too long
+
+&lt;string&gt;:3: LocationParseError
+=========================== short test summary info ============================
+FAILED tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]
+============================== 1 failed in 0.28s ===============================
+</pre><pre></pre></details></details><details><summary>m6 · killed: exit 1, 1 failed in 0.27s</summary><p>The correct patch changes the guard to check for both `*` and `.` prefixes. A wrong-condition mutant might negate the condition or check a different combination. For instance, `if not host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):` would raise `InvalidURL` only when the host does NOT start with `*` or `.`, which is the opposite of the intended behavior. The input `http://example.com` would raise `InvalidURL` (incorrectly) while `http://.example.com` would pass through (no error). This is a plausible mistake a developer could make when refactoring the condition.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -403,7 +403,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">                 host = self._get_idna_encoded_host(host)</span><span class="line">             except UnicodeError:</span><span class="line">                 raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line add">+        elif not host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line">             raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line"> </span><span class="line">         # Carefully reconstruct the network location</span></pre><pre>import requests
 # Correct patch raises InvalidURL for hosts starting with * or .
 try:
     requests.get(&#x27;http://.example.com&#x27;)
@@ -8510,7 +8663,7 @@ E   urllib3.exceptions.LocationParseError: Failed to parse: &#x27;.example.com&#
 &lt;string&gt;:3: LocationParseError
 =========================== short test summary info ============================
 FAILED tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]
-============================== 1 failed in 0.26s ===============================
+============================== 1 failed in 0.27s ===============================
 </pre><pre></pre></details></details><details><summary>m7 · killed: exit 1, 1 failed in 0.26s</summary><p>The correct patch changes the guard from `host.startswith(u&#x27;*&#x27;)` to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))`. A wrong-condition mutant might keep the tuple structure but swap the logical operator, changing the condition to `host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;))` with an `or` that actually uses `and` via misplaced negation, or simply check for the wrong combination. This specific mutant changes the condition to `host.startswith(u&#x27;*&#x27;) or host.startswith(u&#x27;.&#x27;)` which is logically equivalent to the patch for this specific case but written as separate checks; however, a true wrong-condition would be `host.startswith(u&#x27;*&#x27;) and host.startswith(u&#x27;.&#x27;)` which requires both prefixes simultaneously, an impossible condition for normal hosts. The input `http://example.com` would be incorrectly accepted (no error) while `http://.example.com` would also be accepted, but the real failure is that valid URLs with neither prefix would be rejected if the condition was inverted; actually, `and` means both must be true, so no host would ever trigger it, meaning invalid URLs like `http://.example.com` would pass through without raising `InvalidURL`. The concrete input `http://.example.com` differs: correct patch raises `InvalidURL`, this mutant does not.</p><pre><span class="line">--- a/requests/models.py</span><span class="line">+++ b/requests/models.py</span><span class="line">@@ -403,7 +403,7 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):</span><span class="line">                 host = self._get_idna_encoded_host(host)</span><span class="line">             except UnicodeError:</span><span class="line">                 raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line del">-        elif host.startswith((u&#x27;*&#x27;, u&#x27;.&#x27;)):</span><span class="line add">+        elif host.startswith(u&#x27;*&#x27;) and host.startswith(u&#x27;.&#x27;):</span><span class="line">             raise InvalidURL(&#x27;URL has an invalid label.&#x27;)</span><span class="line"> </span><span class="line">         # Carefully reconstruct the network location</span></pre><pre>import requests
 # Correct patch raises InvalidURL for .example.com
 try:
@@ -8636,7 +8789,7 @@ tests/test_requests.py F                                                 [100%]
 =================================== FAILURES ===================================
 ________ TestRequests.test_invalid_url[InvalidURL-http://.example.com] _________
 
-self = &lt;tests.test_requests.TestRequests object at 0x7ffff665b4c0&gt;
+self = &lt;tests.test_requests.TestRequests object at 0x7ffff665b460&gt;
 exception = &lt;class &#x27;requests.exceptions.InvalidURL&#x27;&gt;
 url = &#x27;http://.example.com&#x27;
 
@@ -8700,5 +8853,5 @@ E   urllib3.exceptions.LocationParseError: Failed to parse: &#x27;.example.com&#
 FAILED tests/test_requests.py::TestRequests::test_invalid_url[InvalidURL-http://.example.com]
 ============================== 1 failed in 0.26s ===============================
 </pre><pre></pre></details></details>
-<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>psf__requests-5414/original+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.27s</td><td>0.451</td><td>0.72</td><td>$0.00475</td><td>15 s</td></tr><tr><td>psf__requests-5414/patched+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td>1 passed in 0.18s</td><td>0.371</td><td>0.65</td><td>$0.00394</td><td>15 s</td></tr><tr><td>psf__requests-5414/patched+p2p<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>131 passed, 1 xfailed, 158 errors in 0.97s</td><td>0.616</td><td>1.43</td><td>$0.00639</td><td>15 s</td></tr><tr><td>psf__requests-5414/canary+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.22s</td><td>0.400</td><td>0.64</td><td>$0.00424</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m1+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td>1 passed in 0.17s</td><td>0.353</td><td>0.62</td><td>$0.00376</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-patched-m1<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.097</td><td>0.30</td><td>$0.00109</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-mutant-m1<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.104</td><td>0.32</td><td>$0.00115</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m2+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td>1 passed in 0.18s</td><td>0.368</td><td>0.64</td><td>$0.00391</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-patched-m2<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.098</td><td>0.30</td><td>$0.00110</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-mutant-m2<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.098</td><td>0.30</td><td>$0.00110</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m3+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.27s</td><td>0.449</td><td>0.72</td><td>$0.00472</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m4+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td>1 passed in 0.17s</td><td>0.358</td><td>0.63</td><td>$0.00380</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-patched-m4<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.100</td><td>0.28</td><td>$0.00112</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-mutant-m4<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.101</td><td>0.31</td><td>$0.00113</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m5+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.26s</td><td>0.434</td><td>0.70</td><td>$0.00458</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m6+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.26s</td><td>0.440</td><td>0.71</td><td>$0.00463</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m7+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.26s</td><td>0.440</td><td>0.70</td><td>$0.00463</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m8+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.26s</td><td>0.440</td><td>0.70</td><td>$0.00464</td><td>15 s</td></tr></table>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>psf__requests-5414/original+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.27s</td><td>0.450</td><td>0.72</td><td>$0.00474</td><td>15 s</td></tr><tr><td>psf__requests-5414/patched+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td>1 passed in 0.18s</td><td>0.354</td><td>0.62</td><td>$0.00377</td><td>15 s</td></tr><tr><td>psf__requests-5414/patched+p2p<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>131 passed, 1 xfailed, 158 errors in 0.96s</td><td>0.621</td><td>1.42</td><td>$0.00644</td><td>15 s</td></tr><tr><td>psf__requests-5414/canary+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.23s</td><td>0.411</td><td>0.68</td><td>$0.00434</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m1+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td>1 passed in 0.18s</td><td>0.356</td><td>0.65</td><td>$0.00379</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-patched-m1<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.101</td><td>0.32</td><td>$0.00113</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-mutant-m1<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.105</td><td>0.33</td><td>$0.00117</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m1+p2p<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>5 failed, 126 passed, 1 xfailed, 158 errors in 1.19s</td><td>0.827</td><td>1.65</td><td>$0.00851</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m2+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td>1 passed in 0.17s</td><td>0.363</td><td>0.67</td><td>$0.00385</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-patched-m2<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.103</td><td>0.35</td><td>$0.00115</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-mutant-m2<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.101</td><td>0.34</td><td>$0.00113</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m3+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.27s</td><td>0.444</td><td>0.71</td><td>$0.00468</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m4+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td>1 passed in 0.18s</td><td>0.358</td><td>0.66</td><td>$0.00380</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-patched-m4<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.100</td><td>0.32</td><td>$0.00112</td><td>15 s</td></tr><tr><td>psf__requests-5414/witness-mutant-m4<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>0</td><td></td><td>0.101</td><td>0.31</td><td>$0.00113</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m4+p2p<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>5 failed, 126 passed, 1 xfailed, 158 errors in 1.16s</td><td>0.813</td><td>1.63</td><td>$0.00837</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m5+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.28s</td><td>0.458</td><td>0.75</td><td>$0.00481</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m6+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.27s</td><td>0.462</td><td>0.78</td><td>$0.00486</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m7+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.26s</td><td>0.437</td><td>0.73</td><td>$0.00461</td><td>15 s</td></tr><tr><td>psf__requests-5414/mutant-m8+test<br><span class='muted'>@b3ebc53c-5ff0-4348-84e3-2a97dfaa2c2c</span></td><td>1</td><td>1 failed in 0.26s</td><td>0.444</td><td>0.73</td><td>$0.00467</td><td>15 s</td></tr></table>
 </main></body></html>

@@ -12,10 +12,18 @@ The three baseline forks run in parallel. BROKEN, UNFIXED and REGRESSED short-ci
 forks are spent. Mutant forks are disposable and run in parallel; idle time is free and cost is
 CPU-seconds, so parallelism costs nothing.
 
-UNEARNED is conjunctive: the test passed on a mutant AND that mutant provably differs from the
-patch on the witness its rationale names. The witness runs in a fork of the patch and a fork of
-the mutant; only a different result counts. A survivor its own witness cannot distinguish is an
-equivalent mutant: it is discarded, counted separately and never reported as UNEARNED.
+A mutant is the stand-in for a candidate patch, so it faces SWE-bench's full resolution
+criterion: FAIL_TO_PASS passing AND PASS_TO_PASS not regressing.
+
+- A mutant that passes FAIL_TO_PASS is checked with its witness, run in a fork of the patch and a
+  fork of the mutant. Only a different result makes it distinguishable. One its own witness
+  cannot distinguish is an equivalent mutant: discarded, counted separately, never a survivor.
+- Every distinguishable survivor of FAIL_TO_PASS then runs PASS_TO_PASS.
+- UNEARNED: some distinguishable mutant clears both lists.
+- UNPINNED: none clears both, but some pass FAIL_TO_PASS and are caught only by PASS_TO_PASS.
+  The designated test does not pin the bug; the suite catches the mutant incidentally.
+
+(Until 2026-10-25 PASS_TO_PASS never ran against mutants; see docs/plan_deviations.md.)
 
 Every decision here is read off exit codes and logs. No model is consulted.
 """
@@ -28,6 +36,7 @@ from collections.abc import Awaitable, Callable
 
 from falsifier.evidence import (
     BROKEN,
+    CAUGHT_BY_P2P,
     EARNED,
     EQUIVALENT,
     ERROR,
@@ -41,6 +50,7 @@ from falsifier.evidence import (
     SURVIVED,
     UNEARNED,
     UNFIXED,
+    UNPINNED,
     WITNESS_TAG,
     MutantResult,
     RunRecord,
@@ -195,9 +205,14 @@ async def verify(inst: Instance, fork: Fork) -> Verdict:
             p2p_missing=len(missing),
         )
 
-    results = await _run_mutants(inst, fork, test_cmd)
+    p2p_cmd = pytest_command(inst, inst.p2p_files)
+    results = await _run_mutants(inst, fork, test_cmd, p2p_cmd)
     survivors = [m for m in results if m.status == SURVIVED]
-    n = {s: sum(m.status == s for m in results) for s in (KILLED, SURVIVED, EQUIVALENT)}
+    caught = [m for m in results if m.status == CAUGHT_BY_P2P]
+    n = {
+        s: sum(m.status == s for m in results)
+        for s in (KILLED, SURVIVED, CAUGHT_BY_P2P, EQUIVALENT)
+    }
     n["error"] = sum(m.status == MUTANT_ERROR for m in results)
     base = (
         f"the test fails on the original ({orig_why}) and passes on the patch ({pat_why}); "
@@ -205,11 +220,25 @@ async def verify(inst: Instance, fork: Fork) -> Verdict:
     )
     if survivors:
         cites = "; ".join(_survivor_cite(m) for m in survivors)
-        return done(UNEARNED, f"{base}. Surviving mutants: {cites}", results, **n)
+        return done(
+            UNEARNED,
+            f"{base}. Mutants clearing FAIL_TO_PASS and PASS_TO_PASS: {cites}",
+            results,
+            **n,
+        )
     if n["error"]:
         return done(
             INCONCLUSIVE,
             f"{base}, but {n['error']} mutant fork(s) did not run cleanly",
+            results,
+            **n,
+        )
+    if caught:
+        cites = "; ".join(_survivor_cite(m) for m in caught)
+        return done(
+            UNPINNED,
+            f"{base}. No mutant clears both lists, but these pass FAIL_TO_PASS and are caught only "
+            f"by PASS_TO_PASS: {cites}",
             results,
             **n,
         )
@@ -245,14 +274,22 @@ def _mutant(m, status: str, **kw) -> MutantResult:
 
 def _survivor_cite(m: MutantResult) -> str:
     a, b = m.witness_results
+    p2p = (
+        f"and passes all PASS_TO_PASS (exit {m.p2p['exit_code']})"
+        if not m.p2p_missing
+        else f"but PASS_TO_PASS catches it (exit {m.p2p['exit_code']}, {len(m.p2p_missing)} not "
+        f"passed, e.g. {m.p2p_missing[0]})"
+    )
     return (
-        f"{m.id} ({m.kind}) passes the test (exit {m.test['exit_code']}) and differs on its "
-        f"witness: the patch {describe_witness(a)} (exit {m.witness_patched['exit_code']}), "
+        f"{m.id} ({m.kind}) passes FAIL_TO_PASS (exit {m.test['exit_code']}) {p2p}; it differs "
+        f"on its witness: the patch {describe_witness(a)} (exit {m.witness_patched['exit_code']}), "
         f"the mutant {describe_witness(b)} (exit {m.witness_mutant['exit_code']})"
     )
 
 
-async def _run_mutants(inst: Instance, fork: Fork, test_cmd: str) -> list[MutantResult]:
+async def _run_mutants(
+    inst: Instance, fork: Fork, test_cmd: str, p2p_cmd: str
+) -> list[MutantResult]:
     t = inst.timeouts
     runs = await asyncio.gather(
         *(
@@ -284,16 +321,45 @@ async def _run_mutants(inst: Instance, fork: Fork, test_cmd: str) -> list[Mutant
                 )
             )
     pairs = await asyncio.gather(*(asyncio.gather(a, b) for _, a, b in jobs))
+    distinguished = []
     for (res, _, _), (wp, wm) in zip(jobs, pairs, strict=True):
         res.witness_patched, res.witness_mutant = wp.to_dict(), wm.to_dict()
         a, b = res.witness_results
         if a is not None and b is not None and a != b:
-            res.status = SURVIVED
+            distinguished.append(res)
             res.note = f"witness: the patch {describe_witness(a)}, the mutant {describe_witness(b)}"
         else:
             res.status = EQUIVALENT
             res.note = (
                 f"its own witness does not distinguish it (the patch {describe_witness(a)}, "
-                f"the mutant {describe_witness(b)}); discarded, never UNEARNED"
+                f"the mutant {describe_witness(b)}); discarded, never a survivor"
             )
+    # A distinguishable survivor stands in for a candidate patch: it faces PASS_TO_PASS too.
+    overlays = {m.id: m.overlay for m in inst.mutants}
+    p2p_runs = await asyncio.gather(
+        *(
+            fork(
+                f"mutant-{res.id}+p2p",
+                {**inst.patched, **overlays[res.id], **inst.test},
+                p2p_cmd,
+                t.regression,
+            )
+            for res in distinguished
+        )
+    )
+    normalize = inst.log_parser == "parse_log_requests"
+    for res, r in zip(distinguished, p2p_runs, strict=True):
+        res.p2p = r.to_dict()
+        if r.error or r.exit_code not in (0, 1):
+            res.status = MUTANT_ERROR
+            res.note += f"; its PASS_TO_PASS run did not complete (exit {r.exit_code})"
+            continue
+        seen = passed_ids(r.stdout, normalize_options=normalize)
+        res.p2p_missing = [i for i in inst.p2p if i not in seen]
+        res.status = CAUGHT_BY_P2P if res.p2p_missing else SURVIVED
+        res.note += (
+            f"; PASS_TO_PASS catches it ({len(res.p2p_missing)} not passed)"
+            if res.p2p_missing
+            else "; it also passes every PASS_TO_PASS test"
+        )
     return results

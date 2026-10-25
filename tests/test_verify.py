@@ -264,3 +264,40 @@ def test_requests_style_path_parameters_are_normalized_like_the_dataset():
         "tests/test_utils.py::T::t[*.py]",
     }
     assert "tests/test_utils.py::T::t[/testbed/tests/test_utils.py]" in passed_ids(out)
+
+
+def test_unpinned_and_unearned_need_their_pass_to_pass_evidence():
+    forks = {
+        "original+test": _rec("o", 1, FAILED),
+        "patched+test": _rec("p"),
+        "patched+p2p": _rec("r"),
+        "canary": _canary(),
+    }
+    w_patch = _rec("wp", stdout='FALSIFIER_WITNESS {"outcome": "value", "repr": "1"}')
+    w_mut = _rec("wm", stdout='FALSIFIER_WITNESS {"outcome": "value", "repr": "2"}')
+
+    def mutant(status, p2p_missing):
+        return MutantResult(
+            "m1",
+            "k",
+            "r",
+            "w",
+            "d",
+            status,
+            test=_rec("m"),
+            witness_patched=w_patch,
+            witness_mutant=w_mut,
+            p2p=_rec("mp", 1 if p2p_missing else 0),
+            p2p_missing=p2p_missing,
+        )
+
+    Verdict("x", "UNEARNED", "r", forks, [mutant("survived", [])], "img")
+    Verdict("x", "UNPINNED", "r", forks, [mutant("caught-by-p2p", ["t::a"])], "img")
+    with pytest.raises(EvidenceError, match="contradicts"):
+        Verdict("x", "UNEARNED", "r", forks, [mutant("survived", ["t::a"])], "img")
+    with pytest.raises(EvidenceError, match="UNEARNED needs"):
+        Verdict("x", "UNEARNED", "r", forks, [mutant("caught-by-p2p", ["t::a"])], "img")
+    no_p2p = mutant("survived", [])
+    no_p2p.p2p = None
+    with pytest.raises(EvidenceError, match="PASS_TO_PASS"):
+        Verdict("x", "UNEARNED", "r", forks, [no_p2p], "img")

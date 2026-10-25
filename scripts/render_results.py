@@ -12,7 +12,14 @@ import sys
 from dataclasses import fields
 
 from falsifier.config import ROOT
-from falsifier.evidence import SURVIVED, MutantResult, Verdict, witness_result
+from falsifier.evidence import (
+    CAUGHT_BY_P2P,
+    SURVIVED,
+    MutantResult,
+    Verdict,
+    pytest_summary,
+    witness_result,
+)
 from falsifier.instance import load_swebench
 from falsifier.official import load_rows
 from falsifier.report import SCOPE, comparison, comparison_rows, write
@@ -60,35 +67,50 @@ def main() -> int:
         "",
         f"**{SCOPE}**",
         "",
-        "| Instance | Benchmark oracle | SWE-bench says | Falsifier says | Killed / distinguishable"
-        " | Equivalent discarded | Canary exit | Mutants generated |",
-        "|---|---|---|---|---|---|---|---|",
+        "| Instance | Benchmark oracle | SWE-bench says | Falsifier says | Distinguishable mutants"
+        " | Equivalent discarded | Survived FAIL_TO_PASS | **Survived both lists** | Canary exit"
+        " | Mutants generated |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for r in rows:
         gen = done[r["instance"]][2]
         L.append(
             f"| `{r['instance']}` | {r['oracle']} | {r['swebench']} | **{r['falsifier']}** | "
-            f"{r['killed']} / {r['distinguishable']} | {r['equivalent']} | {r['canary_exit']} | "
+            f"{r['distinguishable']} | {r['equivalent']} | {r['survived_f2p']} | "
+            f"**{r['survived_both']}** | {r['canary_exit']} | "
             f"{gen.get('returned', '?')} of {gen.get('asked', '?')} |"
         )
-    L += [f"| `{iid}` | not completed: {why} | | | | | | |" for iid, why in missing.items()]
+    L += [f"| `{iid}` | not completed: {why} | | | | | | | | |" for iid, why in missing.items()]
+    headline = sum(r["survived_both"] for r in rows)
+    L += [
+        "",
+        f"**Headline: {headline} mutant(s) cleared both FAIL_TO_PASS and PASS_TO_PASS** across "
+        f"{len(rows)} instance(s), i.e. SWE-bench's full resolution criterion, while provably "
+        "behaving differently from the gold patch on their own witness.",
+    ]
     L += [
         "",
         '"Benchmark oracle" means the repository\'s own FAIL_TO_PASS tests, not a reproduction of '
-        "SWE-bench's harness. Under Configuration A mutants never run against PASS_TO_PASS, so "
-        "UNEARNED means the FAIL_TO_PASS tests do not pin the behaviour, not that nothing in the "
-        "repository would. Full evidence: `reports/instances/<instance>.html` and `.json`.",
+        "SWE-bench's harness. Every distinguishable survivor of FAIL_TO_PASS is also run "
+        "against PASS_TO_PASS: UNEARNED means a mutant cleared both lists; UNPINNED means "
+        "PASS_TO_PASS caught every such mutant. Full evidence: "
+        "`reports/instances/<instance>.html` and `.json`.",
         "",
-        "## Survivors",
+        "## Survivors of FAIL_TO_PASS",
         "",
     ]
     for iid, (v, _, _) in done.items():
         for m in v.mutants:
-            if m.status != SURVIVED:
+            if m.status not in (SURVIVED, CAUGHT_BY_P2P):
                 continue
             a, b = witness_result(m.witness_patched), witness_result(m.witness_mutant)
             L += [
-                f"### `{iid}` {m.id} ({m.kind})",
+                f"### `{iid}` {m.id} ({m.kind}): "
+                + (
+                    "cleared FAIL_TO_PASS and PASS_TO_PASS"
+                    if m.status == SURVIVED
+                    else "caught by PASS_TO_PASS"
+                ),
                 "",
                 f"Rationale (the model's words): {m.rationale}",
                 "",
@@ -107,15 +129,24 @@ def main() -> int:
                 "",
                 f"- Patch (exit {m.witness_patched['exit_code']}): {describe_witness(a)}",
                 f"- Mutant (exit {m.witness_mutant['exit_code']}): {describe_witness(b)}",
+                f"- PASS_TO_PASS on the mutant (exit {m.p2p['exit_code']}, "
+                f"{pytest_summary(m.p2p['stdout'])}): "
+                + (
+                    "every PASS_TO_PASS test PASSED"
+                    if not m.p2p_missing
+                    else f"{len(m.p2p_missing)} not PASSED, e.g. {', '.join(m.p2p_missing[:3])}"
+                ),
                 "",
             ]
     (ROOT / "docs" / "results.md").write_text("\n".join(L))
     for r in rows:
         print(
-            f"{r['instance']}: oracle {r['oracle']}; SWE-bench {r['swebench']}; Falsifier "
-            f"{r['falsifier']}; killed {r['killed']} of {r['distinguishable']}; equivalent "
-            f"{r['equivalent']}; canary exit {r['canary_exit']}"
+            f"{r['instance']}: distinguishable {r['distinguishable']}; equivalent discarded "
+            f"{r['equivalent']}; survived FAIL_TO_PASS {r['survived_f2p']}; of those also "
+            f"survived PASS_TO_PASS {r['survived_both']}; verdict {r['falsifier']}; canary exit "
+            f"{r['canary_exit']}"
         )
+    print(f"headline: {headline} mutant(s) cleared both lists")
     for iid, why in missing.items():
         print(f"{iid}: not completed ({why})")
     return 0

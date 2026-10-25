@@ -487,3 +487,15 @@ def test_witness_normalization_on_the_first_live_run_forms():
     )
     plain = "from m import f\nf(1)"
     assert normalize_witness(plain) == plain
+
+
+def test_witness_shell_suffix_and_unlabelled_block():
+    from falsifier.generate import normalize_witness
+
+    piped = 'python3 -c "\nimport pytest\npytest.__version__\n" 2>&1 | head -5'
+    assert normalize_witness(piped) == "import pytest\npytest.__version__"
+    unlabelled = (
+        "### MUTANT 1\nKIND: off-by-one\nRATIONALE: r\n```diff\n--- a/x.py\n+++ b/x.py\n```\n"
+        "```python\nfrom m import f\nf(0)\n```\n"
+    )
+    assert parse_mutants(unlabelled)[0]["witness"] == "from m import f\nf(0)"

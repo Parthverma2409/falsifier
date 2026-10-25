@@ -1,0 +1,253 @@
+{
+  "asked": 10,
+  "returned": 10,
+  "usd": 0.0,
+  "calls": [
+    {
+      "purpose": "mutants[0]",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "cached": true,
+      "tokens_in": 8041,
+      "tokens_out": 3472,
+      "cost_usd": 0.0,
+      "total_usd": 0.0,
+      "cache_key": "fda429087a7341ed",
+      "at": "2026-10-25T14:29:11+00:00",
+      "generated_cost_usd": 0.00131574
+    },
+    {
+      "purpose": "mutants[1]",
+      "model": "nvidia/Nemotron-3_5-Lightning",
+      "cached": true,
+      "tokens_in": 12780,
+      "tokens_out": 675,
+      "cost_usd": 0.0,
+      "total_usd": 0.0,
+      "cache_key": "8aff0cd93fbddf1d",
+      "at": "2026-10-25T14:29:11+00:00",
+      "generated_cost_usd": 0.0009287999999999999
+    }
+  ],
+  "events": [
+    {
+      "purpose": "mutants",
+      "round": 0,
+      "asked": 10,
+      "parsed": 10,
+      "applied": 9,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 8,
+      "rejected": [
+        {
+          "mutant": 7,
+          "kind": "too-narrow",
+          "reason": "src/_pytest/logging.py does not parse after the diff: expected an indented block after 'if' statement on line 357 (logging.py, line 358)"
+        },
+        {
+          "mutant": 8,
+          "kind": "silences-symptom",
+          "reason": "git apply --check failed: error: patch failed: src/_pytest/logging.py:354\nerror: src/_pytest/logging.py: patch does not apply; re-anchoring failed: cannot re-anchor a hunk in src/_pytest/logging.py: 0 matches"
+        }
+      ]
+    },
+    {
+      "purpose": "mutants",
+      "round": 1,
+      "asked": 2,
+      "parsed": 2,
+      "applied": 2,
+      "strict_clean": 0,
+      "repaired": 0,
+      "accepted": 10,
+      "rejected": []
+    }
+  ],
+  "records": [
+    {
+      "diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -355,7 +355,8 @@ class LogCaptureFixture:\n         \"\"\"\n         # restore log levels\n         if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n+            if self._initial_handler_level > 0:\n+                self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n",
+      "rationale": "The guard `if self._initial_handler_level is not None:` is changed to `if self._initial_handler_level is not None and self._initial_handler_level > 0:`, which skips restoring when the initial level is 0 (NOTSET). The concrete input `caplog.set_level(0)` differs because the correct patch restores level 0 but this mutant leaves the handler at its current level.",
+      "kind": "off-by-one",
+      "witness": "import logging\nimport pytest\n\ndef test_initial_level_zero(caplog):\n    caplog.set_level(0)\n    # After test, correct patch restores handler to 0, this mutant leaves it unchanged\n    assert caplog.handler.level == 0",
+      "model_diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -354,7 +354,7 @@ def _finalize(self) -> None:\n         # restore log levels\n         if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n+            if self._initial_handler_level > 0:\n+                self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n",
+      "strict_clean": false,
+      "repaired": false
+    },
+    {
+      "diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -345,7 +345,6 @@ class LogCaptureFixture:\n         \"\"\"Creates a new funcarg.\"\"\"\n         self._item = item\n         # dict of log name -> log level\n-        self._initial_handler_level = None  # type: Optional[int]\n         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]\n \n     def _finalize(self) -> None:\n@@ -354,8 +353,6 @@ class LogCaptureFixture:\n         This restores the log levels changed by :meth:`set_level`.\n         \"\"\"\n         # restore log levels\n-        if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n",
+      "rationale": "The guard checks `self._initial_handler_level is not None` but the assignment `self._initial_handler_level = self.handler.level` happens after `self.handler.setLevel(level)`. The mutant moves the assignment before the setLevel, so it captures the wrong level. The concrete input `caplog.set_level(logging.CRITICAL)` differs because the correct patch saves the pre-set level, but this mutant saves the post-set level (CRITICAL) and restores it, resulting in the same value; however, with `caplog.set_level(10)` the mutant saves 30 after setting, restoring 30 instead of 10. Actually, let me reconsider. The correct patch: saves `self.handler.level` (before setLevel), then sets level. Mutant: if assignment is before setLevel, it saves the current level (say 30), then sets to 10, then restores 30 - wrong. The concrete input `caplog.set_level(10)` with initial handler level 30 differs.",
+      "kind": "wrong-condition",
+      "witness": "import logging\nimport pytest\n\ndef test_wrong_condition_order(caplog):\n    # Initially handler level is 30 (WARNING)\n    caplog.set_level(10)  # DEBUG\n    # Correct patch restores to 30, this mutant restores to 30 as well if assignment after setLevel\n    # But if moved before, it saves 30 and restores 30 - actually same\n    # Need a case where it differs\n    assert caplog.handler.level == 10  # after correct patch",
+      "model_diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -434,7 +437,7 @@ def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> Non\n         # save the original log-level to restore it during teardown\n         self._initial_logger_levels.setdefault(logger, logger_obj.level)\n         logger_obj.setLevel(level)\n+        self._initial_handler_level = self.handler.level\n         self.handler.setLevel(level)\n",
+      "strict_clean": false,
+      "repaired": false
+    },
+    {
+      "diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -345,7 +345,6 @@ class LogCaptureFixture:\n         \"\"\"Creates a new funcarg.\"\"\"\n         self._item = item\n         # dict of log name -> log level\n-        self._initial_handler_level = None  # type: Optional[int]\n         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]\n \n     def _finalize(self) -> None:\n@@ -354,8 +353,6 @@ class LogCaptureFixture:\n         This restores the log levels changed by :meth:`set_level`.\n         \"\"\"\n         # restore log levels\n-        if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n@@ -437,7 +434,8 @@ class LogCaptureFixture:\n         # save the original log-level to restore it during teardown\n         self._initial_logger_levels.setdefault(logger, logger_obj.level)\n         logger_obj.setLevel(level)\n-        self._initial_handler_level = self.handler.level\n+        if isinstance(level, int) and level > 30:\n+            self._initial_handler_level = self.handler.level\n         self.handler.setLevel(level)\n \n     @contextmanager\n",
+      "rationale": "The patch restores handler level for any level set via set_level, but this mutant only restores when the level is an integer greater than 30, missing the case when level is a string like \"DEBUG\" or a low integer like 0. The concrete input `caplog.set_level(\"DEBUG\")` differs because the correct patch handles string levels but this mutant skips restoration for string types.",
+      "kind": "too-narrow",
+      "witness": "import logging\nimport pytest\n\ndef test_string_level(caplog):\n    caplog.set_level(\"DEBUG\")\n    # Correct patch restores handler to initial level, this mutant may skip restoration\n    assert caplog.handler.level == logging.DEBUG",
+      "model_diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -437,6 +437,7 @@ def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> Non\n         # save the original log-level to restore it during teardown\n         self._initial_logger_levels.setdefault(logger, logger_obj.level)\n         logger_obj.setLevel(level)\n+        if isinstance(level, int) and level > 30:\n+            self._initial_handler_level = self.handler.level\n         self.handler.setLevel(level)\n",
+      "strict_clean": false,
+      "repaired": false
+    },
+    {
+      "diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -345,7 +345,6 @@ class LogCaptureFixture:\n         \"\"\"Creates a new funcarg.\"\"\"\n         self._item = item\n         # dict of log name -> log level\n-        self._initial_handler_level = None  # type: Optional[int]\n         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]\n \n     def _finalize(self) -> None:\n@@ -354,8 +353,6 @@ class LogCaptureFixture:\n         This restores the log levels changed by :meth:`set_level`.\n         \"\"\"\n         # restore log levels\n-        if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n@@ -437,7 +434,10 @@ class LogCaptureFixture:\n         # save the original log-level to restore it during teardown\n         self._initial_logger_levels.setdefault(logger, logger_obj.level)\n         logger_obj.setLevel(level)\n-        self._initial_handler_level = self.handler.level\n+        try:\n+            self._initial_handler_level = self.handler.level\n+        except AttributeError:\n+            pass\n         self.handler.setLevel(level)\n \n     @contextmanager\n",
+      "rationale": "The mutant catches the AttributeError when handler.level is accessed on a handler that doesn't have level attribute, and silently ignores it, making the error \"go away\" without actually restoring the level. The concrete input uses a custom handler without level attribute, but more realistically, if handler.level raises, the mutant suppresses it. The concrete input `caplog.set_level(42)` on a handler where level property is deleted differs.",
+      "kind": "silences-symptom",
+      "witness": "import logging\nimport pytest\n\ndef test_silences_symptom(caplog):\n    # Mutant catches and ignores the exception, leaving handler level unrestored\n    caplog.set_level(42)\n    # After test, handler level is not restored to initial value\n    assert caplog.handler.level != 42  # or some other difference",
+      "model_diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -437,6 +437,7 @@ def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> Non\n         # save the original log-level to restore it during teardown\n         self._initial_logger_levels.setdefault(logger, logger_obj.level)\n         logger_obj.setLevel(level)\n+        try:\n+            self._initial_handler_level = self.handler.level\n+        except AttributeError:\n+            pass\n         self.handler.setLevel(level)\n",
+      "strict_clean": false,
+      "repaired": false
+    },
+    {
+      "diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -345,7 +345,7 @@ class LogCaptureFixture:\n         \"\"\"Creates a new funcarg.\"\"\"\n         self._item = item\n         # dict of log name -> log level\n-        self._initial_handler_level = None  # type: Optional[int]\n+        self._initial_handler_level = 0  # type: Optional[int]\n         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]\n \n     def _finalize(self) -> None:\n",
+      "rationale": "The `_initial_handler_level` is initialized to `None` but the mutant changes it to `0`, which acts as a falsy value. The guard `if self._initial_handler_level is not None:` would then skip restoration when the initial level happens to be 0, but more importantly, the sentinel value 0 conflicts with a legitimate initial handler level of 0 (NOTSET). The concrete input `caplog.set_level(0)` differs because the correct patch uses `is not None` check, but this mutant's `0` value gets treated as \"not set\" and skips restoration.",
+      "kind": "off-by-one",
+      "witness": "import logging\nimport pytest\n\ndef test_sentinel_zero(caplog):\n    # Initial handler level is 0 (NOTSET)\n    caplog.set_level(0)\n    # Correct patch restores to 0, this mutant treats 0 as \"not set\" and leaves handler unchanged\n    assert caplog.handler.level == 0",
+      "model_diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -348,7 +348,7 @@ def __init__(self, item: nodes.Node) -> None:\n         \"\"\"Creates a new funcarg.\"\"\"\n         self._item = item\n         # dict of log name -> log level\n-        self._initial_handler_level = None  # type: Optional[int]\n+        self._initial_handler_level = 0  # type: Optional[int]\n         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]\n",
+      "strict_clean": false,
+      "repaired": false
+    },
+    {
+      "diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -355,7 +355,8 @@ class LogCaptureFixture:\n         \"\"\"\n         # restore log levels\n         if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n+            if self._initial_handler_level < 100:\n+                self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n",
+      "rationale": "The `_finalize` method restores handler level but the mutant changes the guard from `if self._initial_handler_level is not None:` to `if self._initial_handler_level is not None and self._initial_handler_level < 100:`, which skips restoration for high levels. The concrete input `caplog.set_level(50)` with initial level 50 differs because the condition `< 100` is true, but if initial level is 150 it would be skipped. Actually, need a case where it always differs. Let me use `caplog.set_level(50)` where initial is 30: correct restores to 30, mutant checks `50 < 100` true, restores to 30 - same. Need initial level >= 100. Use `caplog.set_level(50)` where initial handler level is 150.",
+      "kind": "wrong-condition",
+      "witness": "import logging\nimport pytest\n\ndef test_high_level(caplog):\n    # Set initial handler level to 150 (CRITICAL+)\n    caplog.handler.setLevel(150)\n    caplog.set_level(50)\n    # Correct patch restores to 150, this mutant skips because 50 < 100 is true but wait...\n    # The condition is on _initial_handler_level which is 150, and 150 < 100 is false, so skips restoration\n    assert caplog.handler.level == 150  # correct patch behavior",
+      "model_diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -354,7 +354,7 @@ def _finalize(self) -> None:\n         # restore log levels\n         if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n+            if self._initial_handler_level < 100:\n+                self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n",
+      "strict_clean": false,
+      "repaired": false
+    },
+    {
+      "diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -345,7 +345,6 @@ class LogCaptureFixture:\n         \"\"\"Creates a new funcarg.\"\"\"\n         self._item = item\n         # dict of log name -> log level\n-        self._initial_handler_level = None  # type: Optional[int]\n         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]\n \n     def _finalize(self) -> None:\n@@ -354,8 +353,6 @@ class LogCaptureFixture:\n         This restores the log levels changed by :meth:`set_level`.\n         \"\"\"\n         # restore log levels\n-        if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n@@ -436,8 +433,8 @@ class LogCaptureFixture:\n         logger_obj = logging.getLogger(logger)\n         # save the original log-level to restore it during teardown\n         self._initial_logger_levels.setdefault(logger, logger_obj.level)\n+        self._initial_logger_levels[logger] = logger_obj.level + 1  # off-by-one\n         logger_obj.setLevel(level)\n-        self._initial_handler_level = self.handler.level\n         self.handler.setLevel(level)\n \n     @contextmanager\n",
+      "rationale": "The `_initial_logger_levels.setdefault(logger, logger_obj.level)` uses `setdefault` which only sets if key is missing. The mutant changes this to `self._initial_logger_levels[logger] = logger_obj.level` which always overwrites, but combined with an off-by-one in the range or index. Actually, let me think of a true off-by-one. The patch uses `setdefault` to save initial level only once. The mutant could use `setdefault` with `logger_obj.level + 1` or `logger_obj.level - 1`. The concrete input `caplog.set_level(42)` with a logger that has level 30 differs because the mutant saves 31 instead of 30.",
+      "kind": "off-by-one",
+      "witness": "import logging\nimport pytest\n\ndef test_off_by_one_save(caplog):\n    import logging\n    logger = logging.getLogger(\"test.logger\")\n    logger.setLevel(30)\n    caplog.set_level(42)\n    # Correct patch saves initial level 30, this mutant saves 31 (off-by-one)\n    # After test, logger level restored to 31 instead of 30\n    assert logger.level == 30  # correct patch behavior",
+      "model_diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -434,6 +434,7 @@ def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> Non\n         # save the original log-level to restore it during teardown\n         self._initial_logger_levels.setdefault(logger, logger_obj.level)\n+        self._initial_logger_levels[logger] = logger_obj.level + 1  # off-by-one\n         logger_obj.setLevel(level)\n         self.handler.setLevel(level)\n",
+      "strict_clean": false,
+      "repaired": false
+    },
+    {
+      "diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -345,7 +345,6 @@ class LogCaptureFixture:\n         \"\"\"Creates a new funcarg.\"\"\"\n         self._item = item\n         # dict of log name -> log level\n-        self._initial_handler_level = None  # type: Optional[int]\n         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]\n \n     def _finalize(self) -> None:\n@@ -354,8 +353,6 @@ class LogCaptureFixture:\n         This restores the log levels changed by :meth:`set_level`.\n         \"\"\"\n         # restore log levels\n-        if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n@@ -437,7 +434,7 @@ class LogCaptureFixture:\n         # save the original log-level to restore it during teardown\n         self._initial_logger_levels.setdefault(logger, logger_obj.level)\n         logger_obj.setLevel(level)\n-        self._initial_handler_level = self.handler.level\n+        self._initial_handler_level = 0  # always save 0 instead of actual level\n         self.handler.setLevel(level)\n \n     @contextmanager\n",
+      "rationale": "The mutant changes the condition in `set_level` from saving the handler level to always saving `0`, effectively making the restoration guard `if self._initial_handler_level is not None:` always true but restoring 0 instead of the actual initial level. The concrete input `caplog.set_level(42)` on a test where initial handler level is 30 differs because the mutant restores 0 instead of 30.",
+      "kind": "wrong-condition",
+      "witness": "import logging\nimport pytest\n\ndef test_wrong_save_value(caplog):\n    # Initial handler level is 30 (WARNING)\n    caplog.set_level(42)\n    # Correct patch restores handler to 30, this mutant restores to 0\n    assert caplog.handler.level == 30  # correct patch restores initial level",
+      "model_diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -437,6 +437,7 @@ def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> Non\n         # save the original log-level to restore it during teardown\n         self._initial_logger_levels.setdefault(logger, logger_obj.level)\n         logger_obj.setLevel(level)\n+        self._initial_handler_level = 0  # always save 0 instead of actual level\n         self.handler.setLevel(level)\n",
+      "strict_clean": false,
+      "repaired": false
+    },
+    {
+      "diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -355,7 +355,8 @@ class LogCaptureFixture:\n         \"\"\"\n         # restore log levels\n         if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n+            if self._initial_handler_level == 0:\n+                self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n",
+      "rationale": "The mutant inverts the restoration guard condition from `if self._initial_handler_level is not None:` to `if self._initial_handler_level is not None and self._initial_handler_level == 0:`, which only restores the handler level when the initial level was explicitly 0 (NOTSET). For any other initial level, the handler restoration is skipped. The concrete input `caplog.set_level(20)` with initial handler level 30 differs because the correct patch restores to 30, but this mutant leaves the handler at level 20.",
+      "kind": "wrong-condition",
+      "witness": "import logging\nimport pytest\n\ndef test_inverted_guard(caplog):\n    # Initial handler level is 30 (WARNING)\n    caplog.set_level(20)\n    # Correct patch restores handler to 30, this mutant skips restoration because 30 != 0\n    assert caplog.handler.level == 30  # correct patch behavior",
+      "model_diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -354,7 +354,7 @@ def _finalize(self) -> None:\n         # restore log levels\n         if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n+            if self._initial_handler_level == 0:\n+                self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n",
+      "strict_clean": false,
+      "repaired": false
+    },
+    {
+      "diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -345,7 +345,6 @@ class LogCaptureFixture:\n         \"\"\"Creates a new funcarg.\"\"\"\n         self._item = item\n         # dict of log name -> log level\n-        self._initial_handler_level = None  # type: Optional[int]\n         self._initial_logger_levels = {}  # type: Dict[Optional[str], int]\n \n     def _finalize(self) -> None:\n@@ -354,8 +353,6 @@ class LogCaptureFixture:\n         This restores the log levels changed by :meth:`set_level`.\n         \"\"\"\n         # restore log levels\n-        if self._initial_handler_level is not None:\n-            self.handler.setLevel(self._initial_handler_level)\n         for logger_name, level in self._initial_logger_levels.items():\n             logger = logging.getLogger(logger_name)\n             logger.setLevel(level)\n@@ -437,7 +434,8 @@ class LogCaptureFixture:\n         # save the original log-level to restore it during teardown\n         self._initial_logger_levels.setdefault(logger, logger_obj.level)\n         logger_obj.setLevel(level)\n-        self._initial_handler_level = self.handler.level\n+        if logger is not None:\n+            self._initial_handler_level = self.handler.level\n         self.handler.setLevel(level)\n \n     @contextmanager\n",
+      "rationale": "The mutant only restores the handler level when a logger name is explicitly provided to `set_level`, but skips handler restoration when `logger` is `None` (affecting the root logger). The correct patch restores handler level in all cases. The concrete input `caplog.set_level(42)` without a logger argument differs because the correct patch restores the root logger's handler level, but this mutant only restores when a specific logger is named.",
+      "kind": "too-narrow",
+      "witness": "import logging\nimport pytest\n\ndef test_no_logger_argument(caplog):\n    # Set level without specifying a logger (affects root logger)\n    caplog.set_level(42)\n    # Correct patch restores handler level, this mutant skips restoration when logger is None\n    assert caplog.handler.level == 42  # correct patch restores initial level",
+      "model_diff": "--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -434,7 +434,7 @@ def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> Non\n         # save the original log-level to restore it during teardown\n         self._initial_logger_levels.setdefault(logger, logger_obj.level)\n         logger_obj.setLevel(level)\n+        if logger is not None:\n+            self._initial_handler_level = self.handler.level\n         self.handler.setLevel(level)\n",
+      "strict_clean": false,
+      "repaired": false
+    }
+  ],
+  "calibration": {
+    "checkpoint": "8b899fe6-4c0f-473b-aaac-3e80110f29cf",
+    "clean_layer": null,
+    "f2p_cpu_s": 0.258841,
+    "p2p_cpu_s": 0.399321,
+    "timeouts": {
+      "test": 15,
+      "regression": 15,
+      "witness": 15,
+      "build": 22,
+      "files": 15
+    },
+    "records": [
+      {
+        "label": "pytest-dev__pytest-7571/calibrate/gold+f2p",
+        "command": "taskset -c 0 sh -c 'export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH && cd /testbed && python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py::test_change_level_undos_handler_level'",
+        "image_in": "8b899fe6-4c0f-473b-aaac-3e80110f29cf",
+        "timeout_s": 15,
+        "disposable": true,
+        "cost_usd": 0.0027249699999999997,
+        "cost_upper_bound_usd": 0.154932,
+        "started_at": "2026-10-25T14:29:08+00:00",
+        "client_wall_s": 1.494530472000406,
+        "exit_code": 0,
+        "timed_out": false,
+        "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1\nrootdir: /testbed, configfile: pyproject.toml\ncollected 1 item\n\ntesting/logging/test_fixture.py .                                        [100%]\n\n==================================== PASSES ====================================\n____________________ test_change_level_undos_handler_level _____________________\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1\nrootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0\ncollected 3 items\n\ntest_change_level_undos_handler_level.py ...                             [100%]\n\n============================== 3 passed in 0.01s ===============================\n=========================== short test summary info ============================\nPASSED testing/logging/test_fixture.py::test_change_level_undos_handler_level\n============================== 1 passed in 0.06s ===============================\n",
+        "stderr": "",
+        "output_truncated": false,
+        "cpu_s": 0.258841,
+        "run_wall_s": 0.507373816,
+        "result_image": null,
+        "error": null,
+        "resources": {
+          "block_input": 0,
+          "block_output": 0,
+          "cost": 0.0027249699999999997,
+          "elapsed_time": 0.258841,
+          "involuntary_switches": 3,
+          "max_rss": 27312,
+          "monotonic_time": 0.507373816,
+          "page_faults": 112,
+          "page_faults_io": 6491,
+          "shared_memory": 0,
+          "signals": 0,
+          "swaps": 0,
+          "system_cpu_time": 0.042235,
+          "unshared_memory": 0,
+          "user_cpu_time": 0.216606,
+          "voluntary_switches": 2453
+        },
+        "truncate_output_at": 1048576,
+        "branch_id": "pytest-dev__pytest-7571/calibrate/gold+f2p@8b899fe6-4c0f-473b-aaac-3e80110f29cf"
+      },
+      {
+        "label": "pytest-dev__pytest-7571/calibrate/gold+p2p",
+        "command": "taskset -c 0 sh -c 'export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH && cd /testbed && python -m pytest -rA -p no:cacheprovider testing/logging/test_fixture.py'",
+        "image_in": "8b899fe6-4c0f-473b-aaac-3e80110f29cf",
+        "timeout_s": 20,
+        "disposable": true,
+        "cost_usd": 0.00414073,
+        "cost_upper_bound_usd": 0.206562,
+        "started_at": "2026-10-25T14:29:08+00:00",
+        "client_wall_s": 3.1683171410004434,
+        "exit_code": 0,
+        "timed_out": false,
+        "stdout": "============================= test session starts ==============================\nplatform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1\nrootdir: /testbed, configfile: pyproject.toml\ncollected 15 items\n\ntesting/logging/test_fixture.py ...............                          [100%]\n\n==================================== PASSES ====================================\n______________________________ test_change_level _______________________________\n------------------------------ Captured log call -------------------------------\nINFO     test_fixture:test_fixture.py:19 handler INFO level\nCRITICAL test_fixture.baz:test_fixture.py:23 logger CRITICAL level\n_____________________________ test_with_statement ______________________________\n------------------------------ Captured log call -------------------------------\nINFO     test_fixture:test_fixture.py:87 handler INFO level\nCRITICAL test_fixture.baz:test_fixture.py:91 logger CRITICAL level\n_______________________________ test_log_access ________________________________\n------------------------------ Captured log call -------------------------------\nINFO     test_fixture:test_fixture.py:101 boo arg\n________________________________ test_messages _________________________________\n------------------------------ Captured log call -------------------------------\nINFO     test_fixture:test_fixture.py:109 boo arg\nINFO     test_fixture:test_fixture.py:110 bar arg1\nbaz arg2\nERROR    test_fixture:test_fixture.py:119 oops\nTraceback (most recent call last):\n  File \"/testbed/testing/logging/test_fixture.py\", line 117, in test_messages\n    raise Exception(\"test\")\nException: test\n______________________________ test_record_tuples ______________________________\n------------------------------ Captured log call -------------------------------\nINFO     test_fixture:test_fixture.py:130 boo arg\n_________________________________ test_unicode _________________________________\n------------------------------ Captured log call -------------------------------\nINFO     test_fixture:test_fixture.py:137 b\u016b\n__________________________________ test_clear __________________________________\n------------------------------ Captured log call -------------------------------\nINFO     test_fixture:test_fixture.py:145 b\u016b\n_____________________ test_caplog_captures_for_all_stages ______________________\n------------------------------ Captured log setup ------------------------------\nINFO     test_fixture:test_fixture.py:156 a_setup_log\n------------------------------ Captured log call -------------------------------\nINFO     test_fixture:test_fixture.py:165 a_call_log\n---------------------------- Captured log teardown -----------------------------\nINFO     test_fixture:test_fixture.py:158 a_teardown_log\n______________________________ test_fixture_help _______________________________\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1\nrootdir: /tmp/pytest-of-root/pytest-0/test_fixture_help0\ncollected 0 items\ncache\n    Return a cache object that can persist state between testing sessions.\n    \n    cache.get(key, default)\n    cache.set(key, value)\n    \n    Keys must be a ``/`` separated value, where the first part is usually the\n    name of your plugin or application to avoid clashes with other cache users.\n    \n    Values can be any object handled by the json stdlib module.\n\ncapsys\n    Enable text capturing of writes to ``sys.stdout`` and ``sys.stderr``.\n    \n    The captured output is made available via ``capsys.readouterr()`` method\n    calls, which return a ``(out, err)`` namedtuple.\n    ``out`` and ``err`` will be ``text`` objects.\n\ncapsysbinary\n    Enable bytes capturing of writes to ``sys.stdout`` and ``sys.stderr``.\n    \n    The captured output is made available via ``capsysbinary.readouterr()``\n    method calls, which return a ``(out, err)`` namedtuple.\n    ``out`` and ``err`` will be ``bytes`` objects.\n\ncapfd\n    Enable text capturing of writes to file descriptors ``1`` and ``2``.\n    \n    The captured output is made available via ``capfd.readouterr()`` method\n    calls, which return a ``(out, err)`` namedtuple.\n    ``out`` and ``err`` will be ``text`` objects.\n\ncapfdbinary\n    Enable bytes capturing of writes to file descriptors ``1`` and ``2``.\n    \n    The captured output is made available via ``capfd.readouterr()`` method\n    calls, which return a ``(out, err)`` namedtuple.\n    ``out`` and ``err`` will be ``byte`` objects.\n\ndoctest_namespace [session scope]\n    Fixture that returns a :py:class:`dict` that will be injected into the namespace of doctests.\n\npytestconfig [session scope]\n    Session-scoped fixture that returns the :class:`_pytest.config.Config` object.\n    \n    Example::\n    \n        def test_foo(pytestconfig):\n            if pytestconfig.getoption(\"verbose\") > 0:\n                ...\n\nrecord_property\n    Add extra properties to the calling test.\n    \n    User properties become part of the test report and are available to the\n    configured reporters, like JUnit XML.\n    \n    The fixture is callable with ``name, value``. The value is automatically\n    XML-encoded.\n    \n    Example::\n    \n        def test_function(record_property):\n            record_property(\"example_key\", 1)\n\nrecord_xml_attribute\n    Add extra xml attributes to the tag for the calling test.\n    \n    The fixture is callable with ``name, value``. The value is\n    automatically XML-encoded.\n\nrecord_testsuite_property [session scope]\n    Records a new ``<property>`` tag as child of the root ``<testsuite>``. This is suitable to\n    writing global information regarding the entire test suite, and is compatible with ``xunit2`` JUnit family.\n    \n    This is a ``session``-scoped fixture which is called with ``(name, value)``. Example:\n    \n    .. code-block:: python\n    \n        def test_foo(record_testsuite_property):\n            record_testsuite_property(\"ARCH\", \"PPC\")\n            record_testsuite_property(\"STORAGE_TYPE\", \"CEPH\")\n    \n    ``name`` must be a string, ``value`` will be converted to a string and properly xml-escaped.\n\ncaplog\n    Access and control log capturing.\n    \n    Captured logs are available through the following properties/methods::\n    \n    * caplog.messages        -> list of format-interpolated log messages\n    * caplog.text            -> string containing formatted log output\n    * caplog.records         -> list of logging.LogRecord instances\n    * caplog.record_tuples   -> list of (logger_name, level, message) tuples\n    * caplog.clear()         -> clear captured records and formatted log output string\n\nmonkeypatch\n    The returned ``monkeypatch`` fixture provides these\n    helper methods to modify objects, dictionaries or os.environ::\n    \n        monkeypatch.setattr(obj, name, value, raising=True)\n        monkeypatch.delattr(obj, name, raising=True)\n        monkeypatch.setitem(mapping, name, value)\n        monkeypatch.delitem(obj, name, raising=True)\n        monkeypatch.setenv(name, value, prepend=False)\n        monkeypatch.delenv(name, raising=True)\n        monkeypatch.syspath_prepend(path)\n        monkeypatch.chdir(path)\n    \n    All modifications will be undone after the requesting\n    test function or fixture has finished. The ``raising``\n    parameter determines if a KeyError or AttributeError\n    will be raised if the set/deletion operation has no target.\n\nrecwarn\n    Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.\n    \n    See http://docs.python.org/library/warnings.html for information\n    on warning categories.\n\ntmpdir_factory [session scope]\n    Return a :class:`_pytest.tmpdir.TempdirFactory` instance for the test session.\n        \n\ntmp_path_factory [session scope]\n    Return a :class:`_pytest.tmpdir.TempPathFactory` instance for the test session.\n        \n\ntmpdir\n    Return a temporary directory path object\n    which is unique to each test function invocation,\n    created as a sub directory of the base temporary\n    directory.  The returned object is a `py.path.local`_\n    path object.\n    \n    .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html\n\ntmp_path\n    Return a temporary directory path object\n    which is unique to each test function invocation,\n    created as a sub directory of the base temporary\n    directory.  The returned object is a :class:`pathlib.Path`\n    object.\n    \n    .. note::\n    \n        in python < 3.6 this is a pathlib2.Path\n\n\n============================ no tests ran in 0.00s =============================\n____________________________ test_change_level_undo ____________________________\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1\nrootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undo0\ncollected 2 items\n\ntest_change_level_undo.py FF                                             [100%]\n\n=================================== FAILURES ===================================\n____________________________________ test1 _____________________________________\n\ncaplog = <_pytest.logging.LogCaptureFixture object at 0x7ffff6d56070>\n\n    def test1(caplog):\n        caplog.set_level(logging.INFO)\n        # using + operator here so fnmatch_lines doesn't match the code in the traceback\n        logging.info('log from ' + 'test1')\n>       assert 0\nE       assert 0\n\ntest_change_level_undo.py:7: AssertionError\n------------------------------ Captured log call -------------------------------\nINFO     root:test_change_level_undo.py:6 log from test1\n____________________________________ test2 _____________________________________\n\ncaplog = <_pytest.logging.LogCaptureFixture object at 0x7ffff6d4c910>\n\n    def test2(caplog):\n        # using + operator here so fnmatch_lines doesn't match the code in the traceback\n        logging.info('log from ' + 'test2')\n>       assert 0\nE       assert 0\n\ntest_change_level_undo.py:12: AssertionError\n=========================== short test summary info ============================\nFAILED test_change_level_undo.py::test1 - assert 0\nFAILED test_change_level_undo.py::test2 - assert 0\n============================== 2 failed in 0.02s ===============================\n------------------------------ Captured log call -------------------------------\nINFO     root:test_change_level_undo.py:6 log from test1\n____________________ test_change_level_undos_handler_level _____________________\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1\nrootdir: /tmp/pytest-of-root/pytest-0/test_change_level_undos_handler_level0\ncollected 3 items\n\ntest_change_level_undos_handler_level.py ...                             [100%]\n\n============================== 3 passed in 0.01s ===============================\n______________________ test_ini_controls_global_log_level ______________________\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1\nrootdir: /tmp/pytest-of-root/pytest-0/test_ini_controls_global_log_level0, configfile: tox.ini\ncollected 1 item\n\ntest_ini_controls_global_log_level.py .                                  [100%]\n\n============================== 1 passed in 0.01s ===============================\n------------------------------ Captured log call -------------------------------\nWARNING  catchlog:test_ini_controls_global_log_level.py:7 WARNING message won't be shown\nERROR    catchlog:test_ini_controls_global_log_level.py:8 ERROR message will be shown\n__________________ test_caplog_can_override_global_log_level ___________________\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1\nrootdir: /tmp/pytest-of-root/pytest-0/test_caplog_can_override_global_log_level0, configfile: tox.ini\ncollected 1 item\n\ntest_caplog_can_override_global_log_level.py .                           [100%]\n\n============================== 1 passed in 0.01s ===============================\n------------------------------ Captured log call -------------------------------\nDEBUG    catchlog:test_caplog_can_override_global_log_level.py:13 DEBUG message will be shown\nINFO     catchlog:test_caplog_can_override_global_log_level.py:21 INFO message will be shown\n____________________ test_caplog_captures_despite_exception ____________________\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1\nrootdir: /tmp/pytest-of-root/pytest-0/test_caplog_captures_despite_exception0, configfile: tox.ini\ncollected 1 item\n\ntest_caplog_captures_despite_exception.py F                              [100%]\n\n=================================== FAILURES ===================================\n___________________________ test_log_level_override ____________________________\n\nrequest = <FixtureRequest for <Function test_log_level_override>>\ncaplog = <_pytest.logging.LogCaptureFixture object at 0x7ffff69af700>\n\n    def test_log_level_override(request, caplog):\n        logger = logging.getLogger('catchlog')\n        plugin = request.config.pluginmanager.getplugin('logging-plugin')\n        assert plugin.log_level == logging.WARNING\n    \n        logger.error(\"ERROR message \" + \"will be shown\")\n    \n        with caplog.at_level(logging.DEBUG, logger.name):\n            logger.debug(\"DEBUG message \" + \"won't be shown\")\n>           raise Exception()\nE           Exception\n\ntest_caplog_captures_despite_exception.py:12: Exception\n------------------------------ Captured log call -------------------------------\nERROR    catchlog:test_caplog_captures_despite_exception.py:8 ERROR message will be shown\n=========================== short test summary info ============================\nFAILED test_caplog_captures_despite_exception.py::test_log_level_override - E...\n============================== 1 failed in 0.01s ===============================\n------------------------------ Captured log call -------------------------------\nERROR    catchlog:test_caplog_captures_despite_exception.py:8 ERROR message will be shown\nDEBUG    catchlog:test_caplog_captures_despite_exception.py:11 DEBUG message won't be shown\n_______ test_log_report_captures_according_to_config_option_upon_failure _______\n----------------------------- Captured stdout call -----------------------------\n============================= test session starts ==============================\nplatform linux -- Python 3.9.20, pytest-6.0.0rc2.dev86+gf771488d8, py-1.11.0, pluggy-0.13.1\nrootdir: /tmp/pytest-of-root/pytest-0/test_log_report_captures_according_to_config_option_upon_failure0\ncollected 1 item\n\ntest_log_report_captures_according_to_config_option_upon_failure.py F    [100%]\n\n=================================== FAILURES ===================================\n_______________________________ test_that_fails ________________________________\n\nrequest = <FixtureRequest for <Function test_that_fails>>\ncaplog = <_pytest.logging.LogCaptureFixture object at 0x7ffff696c220>\n\n    def test_that_fails(request, caplog):\n        plugin = request.config.pluginmanager.getplugin('logging-plugin')\n        assert plugin.log_level == logging.INFO\n    \n        with caplog.at_level(logging.DEBUG):\n            function_that_logs()\n    \n        if 'DEBUG log ' + 'message' not in caplog.text:\n            raise Exception('caplog failed to ' + 'capture DEBUG')\n    \n>       assert False\nE       assert False\n\ntest_log_report_captures_according_to_config_option_upon_failure.py:20: AssertionError\n----------------------------- Captured stdout call -----------------------------\nPrint message\n------------------------------ Captured log call -------------------------------\nINFO     root:test_log_report_captures_according_to_config_option_upon_failure.py:6 INFO log message\nWARNING  root:test_log_report_captures_according_to_config_option_upon_failure.py:7 WARNING log message\n=========================== short test summary info ============================\nFAILED test_log_report_captures_according_to_config_option_upon_failure.py::test_that_fails\n============================== 1 failed in 0.01s ===============================\n------------------------------ Captured log call -------------------------------\nDEBUG    root:test_log_report_captures_according_to_config_option_upon_failure.py:5 DEBUG log message\nINFO     root:test_log_report_captures_according_to_config_option_upon_failure.py:6 INFO log message\nWARNING  root:test_log_report_captures_according_to_config_option_upon_failure.py:7 WARNING log message\n=========================== short test summary info ============================\nPASSED testing/logging/test_fixture.py::test_change_level\nPASSED testing/logging/test_fixture.py::test_with_statement\nPASSED testing/logging/test_fixture.py::test_log_access\nPASSED testing/logging/test_fixture.py::test_messages\nPASSED testing/logging/test_fixture.py::test_record_tuples\nPASSED testing/logging/test_fixture.py::test_unicode\nPASSED testing/logging/test_fixture.py::test_clear\nPASSED testing/logging/test_fixture.py::test_caplog_captures_for_all_stages\nPASSED testing/logging/test_fixture.py::test_fixture_help\nPASSED testing/logging/test_fixture.py::test_change_level_undo\nPASSED testing/logging/test_fixture.py::test_change_level_undos_handler_level\nPASSED testing/logging/test_fixture.py::test_ini_controls_global_log_level\nPASSED testing/logging/test_fixture.py::test_caplog_can_override_global_log_level\nPASSED testing/logging/test_fixture.py::test_caplog_captures_despite_exception\nPASSED testing/logging/test_fixture.py::test_log_report_captures_according_to_config_option_upon_failure\n============================== 15 passed in 0.23s ==============================\n",
+        "stderr": "",
+        "output_truncated": false,
+        "cpu_s": 0.399321,
+        "run_wall_s": 0.678950673,
+        "result_image": null,
+        "error": null,
+        "resources": {
+          "block_input": 0,
+          "block_output": 0,
+          "cost": 0.00414073,
+          "elapsed_time": 0.399321,
+          "involuntary_switches": 6,
+          "max_rss": 29504,
+          "monotonic_time": 0.678950673,
+          "page_faults": 112,
+          "page_faults_io": 7219,
+          "shared_memory": 0,
+          "signals": 0,
+          "swaps": 0,
+          "system_cpu_time": 0.068231,
+          "unshared_memory": 0,
+          "user_cpu_time": 0.33109,
+          "voluntary_switches": 4523
+        },
+        "truncate_output_at": 1048576,
+        "branch_id": "pytest-dev__pytest-7571/calibrate/gold+p2p@8b899fe6-4c0f-473b-aaac-3e80110f29cf"
+      }
+    ]
+  }
+}

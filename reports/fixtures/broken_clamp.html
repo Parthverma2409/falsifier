@@ -16,6 +16,7 @@ p, li { max-width: 80ch; }
 .verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
            padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
 .EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
 .INCONCLUSIVE { color: var(--amber); }
 .reason { font-size: 1.05rem; max-width: 110ch; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
@@ -48,14 +49,14 @@ details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
 <p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 1 failed in 0.02s; the canary&#x27;s AssertionError is in the log)</b></p>
 <p class="reason">the test passed on the original code (exit 0, 1 passed in 0.01s), so it never reproduced the bug; no mutant forks were spent. Negative control: the canary failed the test (exit 1, 1 failed in 0.02s; the canary&#x27;s AssertionError is in the log)</p>
 <p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint 924f3262-d759-4983-99d5-9bb41e372e51 ·
-4 forks · 0.64 CPU-s · $0.0070 · 2026-10-25T13:40:59+00:00</p>
+4 forks · 0.66 CPU-s · $0.0072 · 2026-10-25T14:25:05+00:00</p>
 <h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status not-run">not run</span><br><span class="muted">Clamps only above hi + 1, so clamp(11, 0, 10) returns 11.</span></div></div>
 
 <h2>Baseline forks</h2>
-<p>original + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.155 CPU-s · 0.34 s · $0.00170<br>
-patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.156 CPU-s · 0.37 s · $0.00171<br>
-patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.156 CPU-s · 0.35 s · $0.00171<br>
-canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.168 CPU-s · 0.37 s · $0.00183</p>
+<p>original + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.169 CPU-s · 0.38 s · $0.00184<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.162 CPU-s · 0.38 s · $0.00177<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.163 CPU-s · 0.38 s · $0.00178<br>
+canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.169 CPU-s · 0.39 s · $0.00184</p>
 <details><summary>The canary mutant</summary><pre><span class="line">--- a/pkg/numeric.py</span><span class="line">+++ b/pkg/numeric.py</span><span class="line">@@ -1,7 +1,2 @@</span><span class="line"> def clamp(x, lo, hi):</span><span class="line del">-    &quot;&quot;&quot;Clamp x into the closed range [lo, hi].&quot;&quot;&quot;</span><span class="line del">-    if x &lt; lo:</span><span class="line del">-        return lo</span><span class="line del">-    if x &gt; hi:</span><span class="line del">-        return hi</span><span class="line del">-    return x</span><span class="line add">+    raise AssertionError(&quot;canary&quot;)</span></pre></details>
 <div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/numeric.py</span><span class="line">+++ b/pkg/numeric.py</span><span class="line">@@ -2,4 +2,6 @@ def clamp(x, lo, hi):</span><span class="line">     &quot;&quot;&quot;Clamp x into the closed range [lo, hi].&quot;&quot;&quot;</span><span class="line">     if x &lt; lo:</span><span class="line">         return lo</span><span class="line add">+    if x &gt; hi:</span><span class="line add">+        return hi</span><span class="line">     return x</span></pre></div>
 <div><h3>The test</h3><pre>from pkg.numeric import clamp
@@ -126,5 +127,5 @@ FAILED tests/test_issue.py::test_clamp_inside_range - AssertionError: canary
 ============================== 1 failed in 0.02s ===============================
 </pre><pre></pre></details>
 
-<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>broken_clamp/original+test<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.155</td><td>0.34</td><td>$0.00170</td><td>15 s</td></tr><tr><td>broken_clamp/patched+test<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.156</td><td>0.37</td><td>$0.00171</td><td>15 s</td></tr><tr><td>broken_clamp/patched+p2p<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>2 passed in 0.01s</td><td>0.156</td><td>0.35</td><td>$0.00171</td><td>45 s</td></tr><tr><td>broken_clamp/canary+test<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.168</td><td>0.37</td><td>$0.00183</td><td>15 s</td></tr></table>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>broken_clamp/original+test<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.169</td><td>0.38</td><td>$0.00184</td><td>15 s</td></tr><tr><td>broken_clamp/patched+test<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.162</td><td>0.38</td><td>$0.00177</td><td>15 s</td></tr><tr><td>broken_clamp/patched+p2p<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>2 passed in 0.01s</td><td>0.163</td><td>0.38</td><td>$0.00178</td><td>45 s</td></tr><tr><td>broken_clamp/canary+test<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.169</td><td>0.39</td><td>$0.00184</td><td>15 s</td></tr></table>
 </main></body></html>

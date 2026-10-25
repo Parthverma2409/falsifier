@@ -16,6 +16,7 @@ p, li { max-width: 80ch; }
 .verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
            padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
 .EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
 .INCONCLUSIVE { color: var(--amber); }
 .reason { font-size: 1.05rem; max-width: 110ch; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
@@ -46,16 +47,16 @@ details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
 <p>Expected <b>UNEARNED</b> · <span class="ok">agrees</span></p>
 
 <p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 1 failed in 0.02s; the canary&#x27;s AssertionError is in the log)</b></p>
-<p class="reason">the test fails on the original (exit 1, 1 failed in 0.02s) and passes on the patch (exit 0, 1 passed in 0.01s); all 3 PASS_TO_PASS tests PASSED. Surviving mutants: m2 (too-narrow) passes the test (exit 0) and differs on its witness: the patch returns [] (exit 0), the mutant returns [2, 3] (exit 0); m3 (off-by-one) passes the test (exit 0) and differs on its witness: the patch returns [3] (exit 0), the mutant returns [] (exit 0). Negative control: the canary failed the test (exit 1, 1 failed in 0.02s; the canary&#x27;s AssertionError is in the log)</p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.02s) and passes on the patch (exit 0, 1 passed in 0.01s); all 3 PASS_TO_PASS tests PASSED. Mutants clearing FAIL_TO_PASS and PASS_TO_PASS: m2 (too-narrow) passes FAIL_TO_PASS (exit 0) and passes all PASS_TO_PASS (exit 0); it differs on its witness: the patch returns [] (exit 0), the mutant returns [2, 3] (exit 0); m3 (off-by-one) passes FAIL_TO_PASS (exit 0) and passes all PASS_TO_PASS (exit 0); it differs on its witness: the patch returns [3] (exit 0), the mutant returns [] (exit 0). Negative control: the canary failed the test (exit 1, 1 failed in 0.02s; the canary&#x27;s AssertionError is in the log)</p>
 <p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint fc28719a-2861-4ffa-ac91-2150e86d7a0c ·
-11 forks · 1.27 CPU-s · $0.0140 · 2026-10-25T13:42:36+00:00</p>
-<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Uses n &lt; 0, so n = 0 slices items[-0:] and returns the whole list.</span></div><div class="card"><b>m2</b> · too-narrow<br><span class="status survived">survived</span><br><span class="muted">Only catches n == 0, so last_n([1, 2, 3], -1) returns [2, 3].</span></div><div class="card"><b>m3</b> · off-by-one<br><span class="status survived">survived</span><br><span class="muted">Treats n = 1 as empty, so last_n([1, 2, 3], 1) returns [] instead of [3].</span></div></div>
+13 forks · 1.60 CPU-s · $0.0176 · 2026-10-25T14:26:01+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Uses n &lt; 0, so n = 0 slices items[-0:] and returns the whole list.</span></div><div class="card"><b>m2</b> · too-narrow<br><span class="status survived">survived FAIL_TO_PASS and PASS_TO_PASS</span><br><span class="muted">Only catches n == 0, so last_n([1, 2, 3], -1) returns [2, 3].</span></div><div class="card"><b>m3</b> · off-by-one<br><span class="status survived">survived FAIL_TO_PASS and PASS_TO_PASS</span><br><span class="muted">Treats n = 1 as empty, so last_n([1, 2, 3], 1) returns [] instead of [3].</span></div></div>
 <h2>Survivors</h2>
 <section class="box" style="margin-top:1rem">
-  <h3>Mutant m2 survived · too-narrow</h3>
+  <h3>Mutant m2 · survived FAIL_TO_PASS and PASS_TO_PASS · too-narrow</h3>
   <div class="pair">
     <div><p><b>Rationale.</b> Only catches n == 0, so last_n([1, 2, 3], -1) returns [2, 3].</p><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,6 +1,6 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    if n &lt;= 0:</span><span class="line add">+    if n == 0:</span><span class="line">         return []</span><span class="line">     return items[-n:]</span><span class="line"> </span></pre></div>
-    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.162 CPU-s · 0.37 s · $0.00177</p><pre>from pkg.window import last_n
+    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.166 CPU-s · 0.39 s · $0.00181</p><pre>from pkg.window import last_n
 
 
 def test_last_n_zero():
@@ -72,6 +73,7 @@ last_n([1, 2, 3], -1)</pre>
     <div class="box"><b>Mutant</b>: returns [2, 3]<br>
       <span class="muted">exit 0 · unearned_last_n/witness-mutant-m2</span></div>
   </div>
+  <p style="margin-top:.8rem"><b>PASS_TO_PASS on the mutant</b>: exit 0 · 3 passed in 0.01s · every PASS_TO_PASS test PASSED: the mutant clears the full criterion</p>
   <details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_zero&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
 rootdir: /work
@@ -83,16 +85,29 @@ tests/test_issue.py .                                                    [100%]
 =========================== short test summary info ============================
 PASSED tests/test_issue.py::test_last_n_zero
 ============================== 1 passed in 0.01s ===============================
-</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[]&quot;}
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[]&quot;, &quot;stdout&quot;: &quot;&quot;}
 </pre><pre></pre></details>
-  <details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[2, 3]&quot;}
+  <details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[2, 3]&quot;, &quot;stdout&quot;: &quot;&quot;}
+</pre><pre></pre></details><details><summary>PASS_TO_PASS on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 3 items
+
+tests/test_existing.py ...                                               [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_existing.py::test_last_n_basic
+PASSED tests/test_existing.py::test_first_n_basic
+PASSED tests/test_existing.py::test_first_n_negative
+============================== 3 passed in 0.01s ===============================
 </pre><pre></pre></details>
 </section>
 <section class="box" style="margin-top:1rem">
-  <h3>Mutant m3 survived · off-by-one</h3>
+  <h3>Mutant m3 · survived FAIL_TO_PASS and PASS_TO_PASS · off-by-one</h3>
   <div class="pair">
     <div><p><b>Rationale.</b> Treats n = 1 as empty, so last_n([1, 2, 3], 1) returns [] instead of [3].</p><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,6 +1,6 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    if n &lt;= 0:</span><span class="line add">+    if n &lt;= 1:</span><span class="line">         return []</span><span class="line">     return items[-n:]</span><span class="line"> </span></pre></div>
-    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.162 CPU-s · 0.36 s · $0.00177</p><pre>from pkg.window import last_n
+    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.161 CPU-s · 0.38 s · $0.00176</p><pre>from pkg.window import last_n
 
 
 def test_last_n_zero():
@@ -109,6 +124,7 @@ last_n([1, 2, 3], 1)</pre>
     <div class="box"><b>Mutant</b>: returns []<br>
       <span class="muted">exit 0 · unearned_last_n/witness-mutant-m3</span></div>
   </div>
+  <p style="margin-top:.8rem"><b>PASS_TO_PASS on the mutant</b>: exit 0 · 3 passed in 0.01s · every PASS_TO_PASS test PASSED: the mutant clears the full criterion</p>
   <details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_zero&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
 rootdir: /work
@@ -120,16 +136,29 @@ tests/test_issue.py .                                                    [100%]
 =========================== short test summary info ============================
 PASSED tests/test_issue.py::test_last_n_zero
 ============================== 1 passed in 0.01s ===============================
-</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[3]&quot;}
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[3]&quot;, &quot;stdout&quot;: &quot;&quot;}
 </pre><pre></pre></details>
-  <details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[]&quot;}
+  <details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; export PYTHONHASHSEED=0 &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[]&quot;, &quot;stdout&quot;: &quot;&quot;}
+</pre><pre></pre></details><details><summary>PASS_TO_PASS on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 3 items
+
+tests/test_existing.py ...                                               [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_existing.py::test_last_n_basic
+PASSED tests/test_existing.py::test_first_n_basic
+PASSED tests/test_existing.py::test_first_n_negative
+============================== 3 passed in 0.01s ===============================
 </pre><pre></pre></details>
 </section>
 <h2>Baseline forks</h2>
-<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.165 CPU-s · 0.37 s · $0.00180<br>
-patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.161 CPU-s · 0.37 s · $0.00176<br>
-patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 3 passed in 0.01s · 0.165 CPU-s · 0.39 s · $0.00180<br>
-canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.165 CPU-s · 0.39 s · $0.00180</p>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.169 CPU-s · 0.39 s · $0.00184<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.163 CPU-s · 0.38 s · $0.00178<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 3 passed in 0.01s · 0.166 CPU-s · 0.38 s · $0.00181<br>
+canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.177 CPU-s · 0.39 s · $0.00192</p>
 <details><summary>The canary mutant</summary><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,8 +1,5 @@</span><span class="line"> def last_n(items, n):</span><span class="line del">-    &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    if n &lt;= 0:</span><span class="line del">-        return []</span><span class="line del">-    return items[-n:]</span><span class="line add">+    raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line"> </span><span class="line"> def first_n(items, n):</span></pre></details>
 <div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,5 +1,7 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line add">+    if n &lt;= 0:</span><span class="line add">+        return []</span><span class="line">     return items[-n:]</span><span class="line"> </span><span class="line"> </span></pre></div>
 <div><h3>The test</h3><pre>from pkg.window import last_n
@@ -233,5 +262,5 @@ tests/test_issue.py:5: AssertionError
 FAILED tests/test_issue.py::test_last_n_zero - assert [1, 2, 3] == []
 ============================== 1 failed in 0.02s ===============================
 </pre><pre></pre></details></details>
-<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>unearned_last_n/original+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.165</td><td>0.37</td><td>$0.00180</td><td>15 s</td></tr><tr><td>unearned_last_n/patched+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.161</td><td>0.37</td><td>$0.00176</td><td>15 s</td></tr><tr><td>unearned_last_n/patched+p2p<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td>3 passed in 0.01s</td><td>0.165</td><td>0.39</td><td>$0.00180</td><td>45 s</td></tr><tr><td>unearned_last_n/canary+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.165</td><td>0.39</td><td>$0.00180</td><td>15 s</td></tr><tr><td>unearned_last_n/mutant-m1+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.175</td><td>0.38</td><td>$0.00190</td><td>15 s</td></tr><tr><td>unearned_last_n/mutant-m2+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.162</td><td>0.37</td><td>$0.00177</td><td>15 s</td></tr><tr><td>unearned_last_n/witness-patched-m2<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td></td><td>0.031</td><td>0.16</td><td>$0.00037</td><td>10 s</td></tr><tr><td>unearned_last_n/witness-mutant-m2<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td></td><td>0.029</td><td>0.19</td><td>$0.00034</td><td>10 s</td></tr><tr><td>unearned_last_n/mutant-m3+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.162</td><td>0.36</td><td>$0.00177</td><td>15 s</td></tr><tr><td>unearned_last_n/witness-patched-m3<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td></td><td>0.027</td><td>0.15</td><td>$0.00032</td><td>10 s</td></tr><tr><td>unearned_last_n/witness-mutant-m3<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td></td><td>0.027</td><td>0.16</td><td>$0.00033</td><td>10 s</td></tr></table>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>unearned_last_n/original+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.169</td><td>0.39</td><td>$0.00184</td><td>15 s</td></tr><tr><td>unearned_last_n/patched+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.163</td><td>0.38</td><td>$0.00178</td><td>15 s</td></tr><tr><td>unearned_last_n/patched+p2p<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td>3 passed in 0.01s</td><td>0.166</td><td>0.38</td><td>$0.00181</td><td>45 s</td></tr><tr><td>unearned_last_n/canary+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.177</td><td>0.39</td><td>$0.00192</td><td>15 s</td></tr><tr><td>unearned_last_n/mutant-m1+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.169</td><td>0.38</td><td>$0.00184</td><td>15 s</td></tr><tr><td>unearned_last_n/mutant-m2+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.166</td><td>0.39</td><td>$0.00181</td><td>15 s</td></tr><tr><td>unearned_last_n/witness-patched-m2<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td></td><td>0.025</td><td>0.17</td><td>$0.00031</td><td>10 s</td></tr><tr><td>unearned_last_n/witness-mutant-m2<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td></td><td>0.027</td><td>0.17</td><td>$0.00032</td><td>10 s</td></tr><tr><td>unearned_last_n/mutant-m2+p2p<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td>3 passed in 0.01s</td><td>0.166</td><td>0.38</td><td>$0.00181</td><td>45 s</td></tr><tr><td>unearned_last_n/mutant-m3+test<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.161</td><td>0.38</td><td>$0.00176</td><td>15 s</td></tr><tr><td>unearned_last_n/witness-patched-m3<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td></td><td>0.026</td><td>0.17</td><td>$0.00032</td><td>10 s</td></tr><tr><td>unearned_last_n/witness-mutant-m3<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td></td><td>0.025</td><td>0.15</td><td>$0.00031</td><td>10 s</td></tr><tr><td>unearned_last_n/mutant-m3+p2p<br><span class='muted'>@fc28719a-2861-4ffa-ac91-2150e86d7a0c</span></td><td>0</td><td>3 passed in 0.01s</td><td>0.165</td><td>0.38</td><td>$0.00180</td><td>45 s</td></tr></table>
 </main></body></html>

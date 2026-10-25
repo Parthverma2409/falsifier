@@ -171,24 +171,32 @@ def witness_result(rec: RunRecord | dict | None) -> dict | None:
 # ---------------------------------------------------------------------------------------------
 # Verdicts
 
-EARNED, BROKEN, UNFIXED, REGRESSED, UNEARNED = (
+EARNED, BROKEN, UNFIXED, REGRESSED, UNEARNED, UNPINNED = (
     "EARNED",
     "BROKEN",
     "UNFIXED",
     "REGRESSED",
     "UNEARNED",
+    "UNPINNED",
 )
+"""UNEARNED: a distinguishable mutant clears SWE-bench's full resolution criterion, FAIL_TO_PASS
+and PASS_TO_PASS. UNPINNED: a distinguishable mutant passes FAIL_TO_PASS but PASS_TO_PASS catches
+it; the designated test does not pin the bug, and the suite catches the mutant incidentally."""
 INCONCLUSIVE = "INCONCLUSIVE"
 """Not a verdict: a run failed to produce the evidence a verdict needs."""
-VERDICTS = (EARNED, BROKEN, UNFIXED, REGRESSED, UNEARNED, INCONCLUSIVE)
+VERDICTS = (EARNED, BROKEN, UNFIXED, REGRESSED, UNEARNED, UNPINNED, INCONCLUSIVE)
 
-KILLED, SURVIVED, EQUIVALENT, MUTANT_ERROR, NOT_RUN = (
+KILLED, SURVIVED, CAUGHT_BY_P2P, EQUIVALENT, MUTANT_ERROR, NOT_RUN = (
     "killed",
     "survived",
+    "caught-by-p2p",
     "equivalent",
     "error",
     "not-run",
 )
+"""killed: FAIL_TO_PASS fails on the mutant. survived: distinguishable, and passes FAIL_TO_PASS
+and PASS_TO_PASS. caught-by-p2p: distinguishable, passes FAIL_TO_PASS, fails PASS_TO_PASS.
+equivalent: passes FAIL_TO_PASS but its own witness cannot tell it from the patch."""
 
 REQUIRED_FIELDS = (
     "label",
@@ -225,6 +233,9 @@ class MutantResult:
     test_why: str = ""
     witness_patched: dict | None = None
     witness_mutant: dict | None = None
+    p2p: dict | None = None
+    """PASS_TO_PASS on the mutant: run for every distinguishable survivor of FAIL_TO_PASS."""
+    p2p_missing: list[str] | None = None
     note: str = ""
 
     @property
@@ -265,7 +276,7 @@ class Verdict:
     def all_records(self) -> list[dict]:
         out = list(self.forks.values())
         for m in self.mutants:
-            out += [r for r in (m.test, m.witness_patched, m.witness_mutant) if r]
+            out += [r for r in (m.test, m.witness_patched, m.witness_mutant, m.p2p) if r]
         return out
 
     def _need(self, name: str, outcome: str | None = None) -> dict:
@@ -291,16 +302,23 @@ class Verdict:
         if self.verdict == REGRESSED:
             return
         survivors = [m for m in self.mutants if m.status == SURVIVED]
-        for m in survivors:
+        caught = [m for m in self.mutants if m.status == CAUGHT_BY_P2P]
+        for m in survivors + caught:
             if m.test is None or classify_test_run(m.test)[0] != PASS:
                 raise EvidenceError(f"survivor {m.id} has no passing test run")
             a, b = m.witness_results
             if a is None or b is None or a == b:
                 raise EvidenceError(f"survivor {m.id} is not distinguished by its witness")
+            if m.p2p is None or m.p2p.get("exit_code") not in (0, 1) or m.p2p_missing is None:
+                raise EvidenceError(f"survivor {m.id} has no completed PASS_TO_PASS run")
+            if (m.status == SURVIVED) == bool(m.p2p_missing):
+                raise EvidenceError(f"survivor {m.id}: status contradicts its PASS_TO_PASS run")
         if self.verdict == UNEARNED and not survivors:
-            raise EvidenceError("UNEARNED needs a distinguished survivor")
+            raise EvidenceError("UNEARNED needs a survivor of FAIL_TO_PASS and PASS_TO_PASS")
+        if self.verdict == UNPINNED and (survivors or not caught):
+            raise EvidenceError("UNPINNED needs a survivor caught only by PASS_TO_PASS")
         if self.verdict == EARNED:
-            if survivors:
+            if survivors or caught:
                 raise EvidenceError("EARNED with a distinguished survivor")
             if not any(m.status == KILLED for m in self.mutants):
                 raise EvidenceError("EARNED needs at least one killed mutant")

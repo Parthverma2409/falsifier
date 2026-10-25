@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 
 from falsifier.evidence import (
+    CAUGHT_BY_P2P,
     EQUIVALENT,
     KILLED,
     MUTANT_ERROR,
@@ -42,6 +43,7 @@ p, li { max-width: 80ch; }
 .verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
            padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
 .EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
 .INCONCLUSIVE { color: var(--amber); }
 .reason { font-size: 1.05rem; max-width: 110ch; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
@@ -68,7 +70,8 @@ details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
 
 STATUS_TEXT = {
     KILLED: "killed",
-    SURVIVED: "survived",
+    SURVIVED: "survived FAIL_TO_PASS and PASS_TO_PASS",
+    CAUGHT_BY_P2P: "survived FAIL_TO_PASS, caught by PASS_TO_PASS",
     EQUIVALENT: "equivalent, discarded",
     MUTANT_ERROR: "did not run cleanly",
     NOT_RUN: "not run",
@@ -132,12 +135,21 @@ def log_details(rec: dict | None, title: str) -> str:
     )
 
 
+def p2p_line(m: MutantResult) -> str:
+    if not m.p2p:
+        return "not run"
+    head = f"exit {e(m.p2p.get('exit_code'))} · {e(pytest_summary(m.p2p.get('stdout', '')) or '')}"
+    if not m.p2p_missing:
+        return head + " · every PASS_TO_PASS test PASSED: the mutant clears the full criterion"
+    return head + e(f" · {len(m.p2p_missing)} not PASSED, e.g. {', '.join(m.p2p_missing[:3])}")
+
+
 def survivor_html(m: MutantResult, test_src: str) -> str:
     a, b = m.witness_results
     wp, wm = m.witness_patched or {}, m.witness_mutant or {}
     return f"""
 <section class="box" style="margin-top:1rem">
-  <h3>Mutant {e(m.id)} survived · {e(m.kind)}</h3>
+  <h3>Mutant {e(m.id)} · {e(STATUS_TEXT[m.status])} · {e(m.kind)}</h3>
   <div class="pair">
     <div><p><b>Rationale.</b> {e(m.rationale)}</p>{diff_html(m.diff)}</div>
     <div><p><b>The test that did not catch it</b> · {run_line(m.test)}</p><pre>{e(test_src)}</pre></div>
@@ -151,8 +163,9 @@ def survivor_html(m: MutantResult, test_src: str) -> str:
     <div class="box"><b>Mutant</b>: {e(describe_witness(b))}<br>
       <span class="muted">exit {e(wm.get("exit_code"))} · {e(wm.get("label"))}</span></div>
   </div>
+  <p style="margin-top:.8rem"><b>PASS_TO_PASS on the mutant</b>: {p2p_line(m)}</p>
   {log_details(m.test, "mutant + test")}{log_details(m.witness_patched, "witness on the patch")}
-  {log_details(m.witness_mutant, "witness on the mutant")}
+  {log_details(m.witness_mutant, "witness on the mutant")}{log_details(m.p2p, "PASS_TO_PASS on the mutant")}
 </section>"""
 
 
@@ -213,14 +226,16 @@ def page(v: Verdict, inst: Instance, official: dict | None = None) -> str:
         + f'<br><span class="muted">{e(m.rationale)}</span></div>'
         for m in v.mutants
     )
-    survivors = "".join(survivor_html(m, test_src) for m in v.mutants if m.status == SURVIVED)
+    survivors = "".join(
+        survivor_html(m, test_src) for m in v.mutants if m.status in (SURVIVED, CAUGHT_BY_P2P)
+    )
     others = "".join(
         f"<details><summary>{e(m.id)} · {e(STATUS_TEXT[m.status])}: {e(m.note or m.test_why)}</summary>"
         f"<p>{e(m.rationale)}</p>{diff_html(m.diff)}<pre>{e(m.witness)}</pre>"
         f"{log_details(m.test, 'mutant + test')}{log_details(m.witness_patched, 'witness on the patch')}"
         f"{log_details(m.witness_mutant, 'witness on the mutant')}</details>"
         for m in v.mutants
-        if m.status not in (SURVIVED, NOT_RUN)
+        if m.status not in (SURVIVED, CAUGHT_BY_P2P, NOT_RUN)
     )
     records = v.all_records()
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -286,8 +301,9 @@ def index(verdicts: list[Verdict], out_dir: Path, title: str, extra: str = "") -
 
 SCOPE = (
     "Scope: five SWE-bench Verified instances across three repositories (pallets/flask, "
-    "psf/requests, pytest-dev/pytest), Configuration A: the gold patch, audited against the "
-    "benchmark's own FAIL_TO_PASS tests. No claim is made about the rest of the benchmark."
+    "psf/requests, pytest-dev/pytest). Configuration A: mutants of the gold patch, held to "
+    "SWE-bench's full resolution criterion (FAIL_TO_PASS passes and PASS_TO_PASS does not "
+    "regress). No claim is made about the rest of the benchmark."
 )
 
 
@@ -296,7 +312,8 @@ def comparison_rows(verdicts: list[Verdict], officials: dict[str, dict]) -> list
     for v in verdicts:
         o = officials[v.instance_id]
         killed = sum(m.status == KILLED for m in v.mutants)
-        survived = sum(m.status == SURVIVED for m in v.mutants)
+        both = sum(m.status == SURVIVED for m in v.mutants)
+        caught = sum(m.status == CAUGHT_BY_P2P for m in v.mutants)
         rows.append(
             {
                 "instance": v.instance_id,
@@ -304,7 +321,9 @@ def comparison_rows(verdicts: list[Verdict], officials: dict[str, dict]) -> list
                 "swebench": o["label"],
                 "falsifier": v.verdict,
                 "killed": killed,
-                "distinguishable": killed + survived,
+                "distinguishable": killed + both + caught,
+                "survived_f2p": both + caught,
+                "survived_both": both,
                 "equivalent": sum(m.status == EQUIVALENT for m in v.mutants),
                 "canary_exit": (v.forks.get("canary") or {}).get("exit_code"),
                 "cost_usd": v.cost_usd,
@@ -324,11 +343,12 @@ def comparison(
         f"<tr><td><a href='{e(r['instance'])}.html'>{e(r['instance'])}</a></td>"
         f"<td>{e(r['oracle'])}</td><td>{e(r['swebench'])}</td>"
         f"<td class='{e(r['falsifier'])}'><b>{e(r['falsifier'])}</b></td>"
-        f"<td>{r['killed']} / {r['distinguishable']}</td><td>{r['equivalent']}</td>"
+        f"<td>{r['distinguishable']}</td><td>{r['equivalent']}</td>"
+        f"<td>{r['survived_f2p']}</td><td><b>{r['survived_both']}</b></td>"
         f"<td>{e(r['canary_exit'])}</td><td>${r['cost_usd']:.4f}</td></tr>"
         for r in rows
     ) + "".join(
-        f"<tr><td>{e(iid)}</td><td colspan='7' class='muted'>not completed: {e(why)}</td></tr>"
+        f"<tr><td>{e(iid)}</td><td colspan='9' class='muted'>not completed: {e(why)}</td></tr>"
         for iid, why in (missing or {}).items()
     )
     path = out_dir / "index.html"
@@ -336,10 +356,12 @@ def comparison(
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>Falsifier results</title>
 <style>{CSS}</style></head><body><main><h1>Falsifier: benchmark oracle against execution</h1>
 <p><b>{e(SCOPE)}</b></p>
-<table><colgroup><col style="width:22%"><col style="width:17%"><col style="width:11%">
-<col style="width:13%"><col style="width:12%"><col style="width:9%"><col style="width:8%"><col style="width:8%"></colgroup>
+<table><colgroup><col style="width:18%"><col style="width:13%"><col style="width:9%">
+<col style="width:11%"><col style="width:10%"><col style="width:9%"><col style="width:9%">
+<col style="width:9%"><col style="width:6%"><col style="width:6%"></colgroup>
 <tr><th>instance</th><th>benchmark oracle</th><th>SWE-bench says</th><th>Falsifier says</th>
-<th>killed / distinguishable</th><th>equivalent discarded</th><th>canary exit</th><th>cost</th></tr>
+<th>distinguishable mutants</th><th>equivalent discarded</th><th>survived FAIL_TO_PASS</th>
+<th>survived both lists</th><th>canary exit</th><th>cost</th></tr>
 {body}</table>
 <p class="muted">"Benchmark oracle" means the repository's own FAIL_TO_PASS tests, not a reproduction
 of SWE-bench's harness. Each instance links to its full evidence: every fork's branch id, command,

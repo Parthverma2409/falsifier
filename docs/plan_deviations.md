@@ -466,3 +466,59 @@ agree, and every canary was live. Cost $0.1247, charged to the phase 3 ledger.
 - **Spend:** the second attempt cost $0.4162. The phase 3 ledger ends at $1.8989.
 
 **The escalation rule did not apply:** survivors exist.
+
+## 2026-10-25: verdict split, PASS_TO_PASS now runs against mutants
+
+**What was wrong.** Mutant forks ran FAIL_TO_PASS only. PASS_TO_PASS never ran against a mutant.
+That was Parth's instruction at the start of phase 1 ("PASS_TO_PASS never runs against a
+mutant, because a mutant is not a candidate for acceptance"), and I implemented it as stated.
+Parth has since withdrawn it, and his reason is right: **a mutant is precisely the stand-in for a
+candidate patch, so it must face the same criterion a candidate faces.** SWE-bench resolves a
+patch when FAIL_TO_PASS passes AND PASS_TO_PASS does not regress. Grading mutants on FAIL_TO_PASS
+alone measured something weaker than the benchmark's own bar. In phase 3 it showed: two of the
+three survivors broke behaviour that PASS_TO_PASS ids appear to cover.
+
+**Correction.** Every distinguishable survivor of FAIL_TO_PASS now runs PASS_TO_PASS, with the same
+command and id normalization the gold patch faces.
+- **UNEARNED:** a distinguishable mutant passes FAIL_TO_PASS AND PASS_TO_PASS. It clears
+  SWE-bench's full resolution criterion.
+- **UNPINNED (new):** a distinguishable mutant passes FAIL_TO_PASS but is caught by PASS_TO_PASS.
+  The designated test does not pin the bug; the suite catches the mutant incidentally.
+- Precedence after the baseline forks: UNEARNED, then INCONCLUSIVE for mutant forks that did not
+  complete, then UNPINNED, then EARNED.
+- **Statuses:** `survived` now means FAIL_TO_PASS and PASS_TO_PASS were both survived;
+  `caught-by-p2p` is new.
+
+**Cost.** The cost model's "PASS_TO_PASS never runs against a mutant" no longer holds. Only
+distinguishable survivors pay for a PASS_TO_PASS fork, typically $0.004-0.02 each, and killed and
+equivalent mutants still cost one targeted test.
+
+**New fixture.** `unpinned_last_n` was committed (08fb233) before any sandbox run with the split. Its m2
+passes FAIL_TO_PASS, differs on its witness, and is caught only by PASS_TO_PASS. Expected verdict UNPINNED.
+
+**The existing fixtures' expectations are unchanged.** Every fixture survivor also passes PASS_TO_PASS,
+which was checked locally and is checked again in sandboxes below.
+
+**Ceiling.** The phase 3 ceiling is raised from $2 to $5 on Parth's instruction, on the same ledger.
+
+**Witness normalization, extended** after pytest-7432's responses:
+- a `python3 -c "..."` wrapper followed by a shell suffix (`2>&1 | head -5`);
+- a ```python witness block with no `WITNESS:` label.
+
+**Results after the split (phase 3 completed, five instances, ledger $2.3533 of $5).**
+The generation responses were cached, so the mutants are the same ones as in the $2 run.
+- **pallets__flask-5014:** EARNED, 1 distinguishable mutant, killed.
+- **psf__requests-5414:** UNPINNED. 7 distinguishable, 1 equivalent. 2 survived FAIL_TO_PASS (m1, m4),
+  and both were caught by the same five wildcard PASS_TO_PASS tests. m4's rewrite also dropped the `*` branch,
+  so its catch is incidental to its too-narrow rationale.
+- **psf__requests-6028:** UNPINNED. 5 distinguishable, 5 equivalent. 1 survived FAIL_TO_PASS (m1), caught
+  by the three no-auth `prepend_scheme_if_needed` cases.
+- **pytest-dev__pytest-7432:** INCONCLUSIVE. The canary was live (exit 3). Witnesses now parse, but 12 of 13
+  diffs did not apply, and 1 changed nothing.
+- **pytest-dev__pytest-7571:** EARNED. 7 of 7 distinguishable mutants killed, 3 equivalent discarded.
+- **Headline:** 0 of 20 distinguishable mutants cleared both lists.
+
+**The pre-committed escalation was not triggered.** It was written in terms of surviving
+FAIL_TO_PASS, and 3 mutants did. Under the stricter post-split meaning (cleared both lists) the
+count is zero. Whether that zero should trigger the 10-to-30 escalation on the same five
+instances is Parth's decision. It was not run.

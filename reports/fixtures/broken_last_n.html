@@ -16,6 +16,7 @@ p, li { max-width: 80ch; }
 .verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
            padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
 .EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.UNPINNED { color: var(--amber); } .caught-by-p2p { color: var(--amber); }
 .INCONCLUSIVE { color: var(--amber); }
 .reason { font-size: 1.05rem; max-width: 110ch; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
@@ -48,14 +49,14 @@ details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
 <p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 1 failed in 0.02s; the canary&#x27;s AssertionError is in the log)</b></p>
 <p class="reason">the test passed on the original code (exit 0, 1 passed in 0.01s), so it never reproduced the bug; no mutant forks were spent. Negative control: the canary failed the test (exit 1, 1 failed in 0.02s; the canary&#x27;s AssertionError is in the log)</p>
 <p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint b2b02ac6-5bb5-44fd-90c9-1f6cf0995da2 ·
-4 forks · 0.65 CPU-s · $0.0071 · 2026-10-25T13:41:12+00:00</p>
+4 forks · 0.67 CPU-s · $0.0073 · 2026-10-25T14:25:09+00:00</p>
 <h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status not-run">not run</span><br><span class="muted">Uses n &lt; 0, so n = 0 returns the whole list.</span></div><div class="card"><b>m2</b> · too-narrow<br><span class="status not-run">not run</span><br><span class="muted">Only catches n == 0, so last_n([1, 2, 3], -1) returns [2, 3].</span></div></div>
 
 <h2>Baseline forks</h2>
 <p>original + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.163 CPU-s · 0.37 s · $0.00178<br>
-patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.154 CPU-s · 0.35 s · $0.00170<br>
-patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 3 passed in 0.01s · 0.162 CPU-s · 0.37 s · $0.00177<br>
-canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.174 CPU-s · 0.37 s · $0.00189</p>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.02s · 0.176 CPU-s · 0.41 s · $0.00191<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 3 passed in 0.02s · 0.166 CPU-s · 0.41 s · $0.00181<br>
+canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.169 CPU-s · 0.38 s · $0.00184</p>
 <details><summary>The canary mutant</summary><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,8 +1,5 @@</span><span class="line"> def last_n(items, n):</span><span class="line del">-    &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    if n &lt;= 0:</span><span class="line del">-        return []</span><span class="line del">-    return items[-n:]</span><span class="line add">+    raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line"> </span><span class="line"> def first_n(items, n):</span></pre></details>
 <div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,5 +1,7 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line add">+    if n &lt;= 0:</span><span class="line add">+        return []</span><span class="line">     return items[-n:]</span><span class="line"> </span><span class="line"> </span></pre></div>
 <div><h3>The test</h3><pre>from pkg.window import last_n
@@ -85,7 +86,7 @@ tests/test_issue.py .                                                    [100%]
 ==================================== PASSES ====================================
 =========================== short test summary info ============================
 PASSED tests/test_issue.py::test_last_n_two
-============================== 1 passed in 0.01s ===============================
+============================== 1 passed in 0.02s ===============================
 </pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
 rootdir: /work
@@ -98,7 +99,7 @@ tests/test_existing.py ...                                               [100%]
 PASSED tests/test_existing.py::test_last_n_basic
 PASSED tests/test_existing.py::test_first_n_basic
 PASSED tests/test_existing.py::test_first_n_negative
-============================== 3 passed in 0.01s ===============================
+============================== 3 passed in 0.02s ===============================
 </pre><pre></pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_two&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
 rootdir: /work
@@ -127,5 +128,5 @@ FAILED tests/test_issue.py::test_last_n_two - AssertionError: canary
 ============================== 1 failed in 0.02s ===============================
 </pre><pre></pre></details>
 
-<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>broken_last_n/original+test<br><span class='muted'>@b2b02ac6-5bb5-44fd-90c9-1f6cf0995da2</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.163</td><td>0.37</td><td>$0.00178</td><td>15 s</td></tr><tr><td>broken_last_n/patched+test<br><span class='muted'>@b2b02ac6-5bb5-44fd-90c9-1f6cf0995da2</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.154</td><td>0.35</td><td>$0.00170</td><td>15 s</td></tr><tr><td>broken_last_n/patched+p2p<br><span class='muted'>@b2b02ac6-5bb5-44fd-90c9-1f6cf0995da2</span></td><td>0</td><td>3 passed in 0.01s</td><td>0.162</td><td>0.37</td><td>$0.00177</td><td>45 s</td></tr><tr><td>broken_last_n/canary+test<br><span class='muted'>@b2b02ac6-5bb5-44fd-90c9-1f6cf0995da2</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.174</td><td>0.37</td><td>$0.00189</td><td>15 s</td></tr></table>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>broken_last_n/original+test<br><span class='muted'>@b2b02ac6-5bb5-44fd-90c9-1f6cf0995da2</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.163</td><td>0.37</td><td>$0.00178</td><td>15 s</td></tr><tr><td>broken_last_n/patched+test<br><span class='muted'>@b2b02ac6-5bb5-44fd-90c9-1f6cf0995da2</span></td><td>0</td><td>1 passed in 0.02s</td><td>0.176</td><td>0.41</td><td>$0.00191</td><td>15 s</td></tr><tr><td>broken_last_n/patched+p2p<br><span class='muted'>@b2b02ac6-5bb5-44fd-90c9-1f6cf0995da2</span></td><td>0</td><td>3 passed in 0.02s</td><td>0.166</td><td>0.41</td><td>$0.00181</td><td>45 s</td></tr><tr><td>broken_last_n/canary+test<br><span class='muted'>@b2b02ac6-5bb5-44fd-90c9-1f6cf0995da2</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.169</td><td>0.38</td><td>$0.00184</td><td>15 s</td></tr></table>
 </main></body></html>
