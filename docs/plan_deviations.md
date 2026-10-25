@@ -408,3 +408,28 @@ expression, the input the rationale names. Mutants without a well-formed witness
 and re-asked. `propose_mutant_records` returns records with the witness;
 `propose_mutants` still returns (diff, rationale). The new prompt has not been run live yet; phase 3
 is its first use.
+
+## 2026-10-25: phase 3 rules, committed BEFORE the run
+
+**Pre-committed escalation (Parth).** If zero mutants survive across all five instances
+(flask-5014, requests-5414, requests-6028, pytest-7432, pytest-7571), the response is to raise
+the mutant count from 10 to 30 **on the same five instances**: a larger sample of the same
+question. It is NOT to swap in different instances until a survivor appears. A zero across five
+instances and three repositories is a real result and is reported as one.
+
+**Negative control.** Before any mutant result is trusted, each instance runs a canary mutant
+built mechanically, with no model involved: the body of the patched function is replaced with
+`raise AssertionError("canary")`. The canary is applied through the same overlay path as real
+mutants, and the targeted test runs on it. The test MUST fail. If the canary passes or errors,
+patch application is not proven live in that environment, so every mutant result for the
+instance is void, not negative: the instance is reported as INCONCLUSIVE. Every verdict cites
+its canary's exit code. Bytecode: `PYTHONDONTWRITEBYTECODE=1` is set in every command, and
+`__pycache__` under the work tree is cleared in the checkpoint.
+
+**Timeouts.** Each instance's targeted-test timeout is 10x the targeted test's CPU time on the
+gold patch, measured, floored at 15 s. The same rule applies to the PASS_TO_PASS fork, using its
+own measured CPU time. Witness forks use the 15 s floor.
+
+**Spend.** The phase 3 ceiling is $2, held in its own ledger (`runs/spend_ledger_phase3.jsonl`)
+and counting generation as well as sandboxes. If the ceiling trips, the run stops and is reported;
+the ceiling is not raised.
