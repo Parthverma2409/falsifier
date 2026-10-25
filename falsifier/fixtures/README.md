@@ -28,3 +28,13 @@ raises, should differ between the patch and the mutant. Each mutant's `expected_
 
 The plan's four classes have two fixtures each (`earned_*`, `unearned_*`, `nonfix_*`, `broken_*`).
 `unfixed_clamp` and `regressed_last_n` are extras that exercise the other two verdicts.
+`unearned_clamp_float` covers a domain wider than the test: clamp accepts floats, the test covers
+integers only, and m4 differs from the patch only on a float. Its sibling `earned_clamp` restricts
+clamp to integers, so there the same m4 is equivalent over the whole domain.
+
+`fixture.toml` may state the code's input `domain`. Equivalence is relative to it: a mutant
+equivalent over one domain can be distinguishable over a wider one.
+
+Expectations changed after the fact, each with Parth's approval and recorded in
+`docs/plan_deviations.md`: `earned_clamp` m4, from `killed` to `equivalent` (2026-10-25; an oracle
+bug, found when the oracle contradicted the fixture).

@@ -1,0 +1,48 @@
+id = "unearned_clamp_float"
+class = "fixes the bug, test does not pin it: domain wider than test coverage"
+expected_verdict = "UNEARNED"
+issue = "clamp(x, lo, hi) ignores hi: clamp(15, 0, 10) returns 15 instead of 10."
+f2p = ["tests/test_issue.py::test_clamp_upper_bound"]
+p2p = ["tests/test_existing.py::test_clamp_below", "tests/test_existing.py::test_clamp_inside"]
+p2p_files = ["tests/test_existing.py"]
+domain = "int and float; the test covers integers only"
+
+[[mutants]]
+id = "m1"
+kind = "off-by-one"
+rationale = "Clamps only above hi + 1, so clamp(11, 0, 10) returns 11."
+witness = "from pkg.numeric import clamp\nclamp(11, 0, 10)"
+file = "pkg/numeric.py"
+old = "    if x > hi:\n"
+new = "    if x > hi + 1:\n"
+expected_status = "killed"
+
+[[mutants]]
+id = "m2"
+kind = "wrong-condition"
+rationale = "Returns lo at the upper bound, so clamp(10, 0, 10) returns 0."
+witness = "from pkg.numeric import clamp\nclamp(10, 0, 10)"
+file = "pkg/numeric.py"
+old = "    if x > hi:\n        return hi\n"
+new = "    if x >= hi:\n        return lo\n"
+expected_status = "killed"
+
+[[mutants]]
+id = "m3"
+kind = "silences-symptom"
+rationale = "Keeps the branch but returns x, so clamp(15, 0, 10) still returns 15."
+witness = "from pkg.numeric import clamp\nclamp(15, 0, 10)"
+file = "pkg/numeric.py"
+old = "        return hi\n"
+new = "        return x\n"
+expected_status = "killed"
+
+[[mutants]]
+id = "m4"
+kind = "off-by-one"
+rationale = "Clamps from hi - 1, which only differs from the patch for non-integers: clamp(9.5, 0, 10) returns 10 where the patch returns 9.5."
+witness = "from pkg.numeric import clamp\nclamp(9.5, 0, 10)"
+file = "pkg/numeric.py"
+old = "    if x > hi:\n"
+new = "    if x > hi - 1:\n"
+expected_status = "survived"

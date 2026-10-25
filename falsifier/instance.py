@@ -64,6 +64,8 @@ class Instance:
     """The original tree, for fixtures whose checkpoint is built from local files."""
     expected_verdict: str | None = None
     fixture_class: str | None = None
+    domain: str | None = None
+    """The inputs the code under audit accepts. Equivalence is only sound within it."""
 
 
 def _read_tree(root: Path) -> dict[str, str]:
@@ -107,6 +109,7 @@ def load_fixture(d: Path) -> Instance:
         original=original,
         expected_verdict=spec["expected_verdict"],
         fixture_class=spec["class"],
+        domain=spec.get("domain"),
     )
 
 

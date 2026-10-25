@@ -5,6 +5,7 @@ issue = "clamp(x, lo, hi) ignores hi: clamp(15, 0, 10) returns 15 instead of 10.
 f2p = ["tests/test_issue.py::test_clamp_upper_bound"]
 p2p = ["tests/test_existing.py::test_clamp_below", "tests/test_existing.py::test_clamp_inside"]
 p2p_files = ["tests/test_existing.py"]
+domain = "integers only: clamp validates its arguments and raises TypeError otherwise"
 
 [[mutants]]
 id = "m1"
@@ -39,9 +40,11 @@ expected_status = "killed"
 [[mutants]]
 id = "m4"
 kind = "off-by-one"
-rationale = "Clamps from hi - 1, so clamp(9, 0, 10) returns 10 instead of 9."
-witness = "from pkg.numeric import clamp\nclamp(9, 0, 10)"
+rationale = "Clamps from hi - 1. For integers, x > hi - 1 is x >= hi, and at x == hi both versions return hi; clamp accepts integers only, so this mutant is equivalent over clamp's whole domain. Its witness, clamp(9.5, 0, 10), sits just outside that domain: both versions raise TypeError."
+witness = "from pkg.numeric import clamp\nclamp(9.5, 0, 10)"
 file = "pkg/numeric.py"
 old = "    if x > hi:\n"
 new = "    if x > hi - 1:\n"
-expected_status = "killed"
+expected_status = "equivalent"
+# Corrected 2026-10-25 with Parth's approval: was "killed", an oracle bug found when the
+# oracle contradicted this fixture (docs/plan_deviations.md, phase 1).

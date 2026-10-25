@@ -194,6 +194,7 @@ def page(v: Verdict, inst: Instance) -> str:
 <title>Falsifier · {e(v.instance_id)}</title><style>{CSS}</style></head><body><main>
 <h1>{e(v.instance_id)}</h1>
 <p class="muted">{e(inst.issue)}</p>
+{f'<p class="muted">Input domain: {e(inst.domain)}</p>' if inst.domain else ""}
 <div class="verdict {e(v.verdict)}">{e(v.verdict)}</div>
 {expected}
 <p class="reason">{e(v.reason)}</p>
