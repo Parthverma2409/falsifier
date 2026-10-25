@@ -32,25 +32,119 @@ reimplement. The "SWE-bench says" column is the dataset's published label (`fals
 
 ## Results
 
-**Scope: five SWE-bench Verified instances across three repositories (pallets/flask,
-psf/requests, pytest-dev/pytest). Configuration A: mutants of the gold patch, held to SWE-bench's
-full resolution criterion (FAIL_TO_PASS passes and PASS_TO_PASS does not regress). Nothing here
-extrapolates to the rest of the benchmark.**
+> **Pre-registered (2026-10-25).** This section was written and committed *before* the
+> pre-committed escalation ran: 30 mutants per instance, on the same five instances, through the
+> same code path, with no instance substitution. It holds two drafts. After the run, the draft
+> matching the outcome is kept, its ⟨placeholders⟩ are filled with measured numbers, and the
+> other draft is deleted. Nothing else in the framing changes. The commit adding this section
+> precedes the run in git history.
 
-| Instance | SWE-bench says | Falsifier says | Distinguishable | Equivalent | Survived FAIL_TO_PASS | Survived both | Canary exit |
-|---|---|---|---|---|---|---|---|
-| `pallets__flask-5014` | RESOLVED | EARNED (on 1 mutant) | 1 | 0 | 0 | 0 | 1 |
-| `psf__requests-5414` | RESOLVED | UNPINNED | 7 | 1 | 2 | 0 | 1 |
-| `psf__requests-6028` | RESOLVED | UNPINNED | 5 | 5 | 1 | 0 | 1 |
-| `pytest-dev__pytest-7432` | RESOLVED | INCONCLUSIVE (no usable mutants) | 0 | 0 | 0 | 0 | 3 |
-| `pytest-dev__pytest-7571` | RESOLVED | EARNED | 7 | 3 | 0 | 0 | 1 |
+### Draft A: the escalation yields zero UNEARNED
 
-**Headline: 0 of 20 distinguishable mutants cleared both FAIL_TO_PASS and PASS_TO_PASS.** Three
-passed FAIL_TO_PASS and were each caught only by PASS_TO_PASS. The designated FAIL_TO_PASS tests
-did not pin those behaviours; the repositories' existing suites did.
+**Scope:** five SWE-bench Verified instances (`pallets__flask-5014`, `psf__requests-5414`,
+`psf__requests-6028`, `pytest-dev__pytest-7432`, `pytest-dev__pytest-7571`) across three
+repositories (flask, requests, pytest); ⟨N⟩ distinguishable mutants of the gold patches (20 at 10
+mutants per instance, ⟨N30⟩ at 30); Configuration A. Nothing here extrapolates to the rest of
+SWE-bench or SWT-bench.
 
-The survivors, each with its diff and rationale beside the test that missed it, the witness on both
-sides and its PASS_TO_PASS result, are in `docs/results.md`. Full evidence for every fork is in
+**Finding 1: SWE-bench's resolution criterion held.** FAIL_TO_PASS passing AND PASS_TO_PASS
+holding rejected every wrong fix we generated: 0 of ⟨N⟩ distinguishable mutants met it. The stronger
+criterion survived a larger sample: 0 of 20 at 10 mutants per instance, and 0 of ⟨N30⟩ at 30.
+
+**Finding 2: SWT-bench's criterion did not.** The fail-to-pass transition on the designated test
+alone was satisfied by wrong fixes on ⟨K⟩ of 5 instances. A test meeting that criterion can be
+satisfied by a wrong fix: one that does not fix the bug in general, or one that fixes the
+reported case while breaking behaviour outside it.
+
+Evidence: each is a mutant of the gold patch. The designated FAIL_TO_PASS test fails on the
+original code and passes on the mutant. The mutant provably behaves differently from the gold patch
+on its own witness, and the instance's negative-control canary is live.
+
+- `psf__requests-5414` m4 (too narrow). `elif host.startswith((u'*', u'.')):` became
+  `elif host == '.example.com':`. Designated test `test_invalid_url[InvalidURL-http://.example.com]`:
+  exit 1 on the original, exit 0 on the mutant. Witness `requests.get('http://.evil.com')`: the
+  gold patch raises `InvalidURL`, the mutant raises urllib3's `LocationParseError`, the original
+  bug's symptom (witness exits 0 and 0). Canary exit 1, live. It does not fix the bug in general.
+- `psf__requests-5414` m1. The same line became `elif host.startswith(u'.'):`. Designated test: exit 1
+  on the original, exit 0 on the mutant. Witness `requests.get('http://*.example.com')`: the gold
+  patch raises `InvalidURL`, the mutant proceeds to a network `ConnectionError` (exits 0 and 0).
+  Canary exit 1, live. It fixes the reported case and drops the existing `*` check.
+- `psf__requests-6028` m1. `if auth:` became `if netloc:`. Both designated tests: exit 1 on the
+  original, exit 0 on the mutant. Witness `prepend_scheme_if_needed('http://example.org/', 'https')`:
+  the gold patch returns `'http://example.org/'`, the mutant raises `TypeError` (exits 0 and 0).
+  Canary exit 1, live. It fixes the reported case and crashes on URLs without auth.
+- ⟨FAIL_TO_PASS survivors from the 30-mutant run, in the same form, or "none further"⟩
+
+PASS_TO_PASS caught every one of these, so each instance is UNPINNED, not UNEARNED. These are the
+repositories' own hand-written regression tests from the fixing pull requests, not generated ones.
+That makes the point stronger: if the maintainers' regression test for the bug does not pin it, a
+generated test need not either.
+
+⟨Per-instance table from the 30-mutant run: distinguishable, equivalents discarded, survived
+FAIL_TO_PASS, also survived PASS_TO_PASS, verdict, canary exit.⟩
+
+The 10-mutant run, for reference: flask-5014 EARNED (1 distinguishable); requests-5414 UNPINNED
+(7; 2 survived FAIL_TO_PASS; 0 both); requests-6028 UNPINNED (5; 1; 0); pytest-7432 INCONCLUSIVE
+(0); pytest-7571 EARNED (7; 0; 0).
+
+Every survivor's diff and rationale, beside the test that missed it, the witness on both sides
+and its PASS_TO_PASS result, is in `docs/results.md`. The evidence for every fork is in
+`reports/instances/`.
+
+### Draft B: the escalation yields at least one UNEARNED
+
+**Scope:** five SWE-bench Verified instances (`pallets__flask-5014`, `psf__requests-5414`,
+`psf__requests-6028`, `pytest-dev__pytest-7432`, `pytest-dev__pytest-7571`) across three
+repositories (flask, requests, pytest); ⟨N⟩ distinguishable mutants of the gold patches (20 at 10
+mutants per instance, ⟨N30⟩ at 30); Configuration A. Nothing here extrapolates to the rest of
+SWE-bench or SWT-bench.
+
+**Finding 1: SWE-bench's resolution criterion.** FAIL_TO_PASS passing AND PASS_TO_PASS holding
+rejected ⟨R⟩ of ⟨N⟩ distinguishable wrong fixes we generated. ⟨U⟩ met it: a counterexample to the
+criterion on these instances.
+
+⟨The counterexample(s): instance, mutant, diff, designated-test exit codes on the original and on
+the mutant, PASS_TO_PASS exit code and summary, witness on both sides with exit codes, canary exit
+code.⟩
+
+**Finding 2: SWT-bench's criterion did not.** The fail-to-pass transition on the designated test
+alone was satisfied by wrong fixes on ⟨K⟩ of 5 instances. A test meeting that criterion can be
+satisfied by a wrong fix: one that does not fix the bug in general, or one that fixes the
+reported case while breaking behaviour outside it.
+
+Evidence: each is a mutant of the gold patch. The designated FAIL_TO_PASS test fails on the
+original code and passes on the mutant. The mutant provably behaves differently from the gold patch
+on its own witness, and the instance's negative-control canary is live.
+
+- `psf__requests-5414` m4 (too narrow). `elif host.startswith((u'*', u'.')):` became
+  `elif host == '.example.com':`. Designated test `test_invalid_url[InvalidURL-http://.example.com]`:
+  exit 1 on the original, exit 0 on the mutant. Witness `requests.get('http://.evil.com')`: the
+  gold patch raises `InvalidURL`, the mutant raises urllib3's `LocationParseError`, the original
+  bug's symptom (witness exits 0 and 0). Canary exit 1, live. It does not fix the bug in general.
+- `psf__requests-5414` m1. The same line became `elif host.startswith(u'.'):`. Designated test: exit 1
+  on the original, exit 0 on the mutant. Witness `requests.get('http://*.example.com')`: the gold
+  patch raises `InvalidURL`, the mutant proceeds to a network `ConnectionError` (exits 0 and 0).
+  Canary exit 1, live. It fixes the reported case and drops the existing `*` check.
+- `psf__requests-6028` m1. `if auth:` became `if netloc:`. Both designated tests: exit 1 on the
+  original, exit 0 on the mutant. Witness `prepend_scheme_if_needed('http://example.org/', 'https')`:
+  the gold patch returns `'http://example.org/'`, the mutant raises `TypeError` (exits 0 and 0).
+  Canary exit 1, live. It fixes the reported case and crashes on URLs without auth.
+- ⟨FAIL_TO_PASS survivors from the 30-mutant run, in the same form, or "none further"⟩
+
+PASS_TO_PASS caught every one of these, so each instance is UNPINNED, not UNEARNED. These are the
+repositories' own hand-written regression tests from the fixing pull requests, not generated ones.
+That makes the point stronger: if the maintainers' regression test for the bug does not pin it, a
+generated test need not either.
+
+⟨Per-instance table from the 30-mutant run: distinguishable, equivalents discarded, survived
+FAIL_TO_PASS, also survived PASS_TO_PASS, verdict, canary exit.⟩
+
+The 10-mutant run, for reference: flask-5014 EARNED (1 distinguishable); requests-5414 UNPINNED
+(7; 2 survived FAIL_TO_PASS; 0 both); requests-6028 UNPINNED (5; 1; 0); pytest-7432 INCONCLUSIVE
+(0); pytest-7571 EARNED (7; 0; 0).
+
+Every survivor's diff and rationale, beside the test that missed it, the witness on both sides
+and its PASS_TO_PASS result, is in `docs/results.md`. The evidence for every fork is in
 `reports/instances/`.
 
 ## Usage
