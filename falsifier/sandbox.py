@@ -13,9 +13,13 @@ So far this holds only the guarded run that every sandbox command must go throug
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import shlex
+import tempfile
 import time
 from datetime import UTC, datetime
+from pathlib import Path
 
 from falsifier.config import USD_PER_CPU_SECOND, USD_PER_RUN, SpendLimits
 from falsifier.evidence import RunRecord
@@ -28,12 +32,23 @@ class SpendCeilingExceeded(RuntimeError):
 
 
 class SpendGuard:
-    def __init__(self, limits: SpendLimits):
+    def __init__(self, limits: SpendLimits, ledger: Path | None = None):
+        """With a ledger, spend is global: the guard starts from every cost already recorded there
+        and appends each run it settles, so the ceiling holds across processes."""
         self.limits = limits
-        self.spent_usd = 0.0
+        self.ledger = ledger
+        self.prior_usd = self._ledger_total() if ledger else 0.0
+        self.spent_usd = self.prior_usd
         self.reserved_usd = 0.0
         self.records: list[RunRecord] = []
         self._cond = asyncio.Condition()
+
+    def _ledger_total(self) -> float:
+        if not self.ledger or not self.ledger.exists():
+            return 0.0
+        return sum(
+            json.loads(ln)["charged_usd"] for ln in self.ledger.read_text().splitlines() if ln
+        )
 
     def worst_case_usd(self, timeout_s: int) -> float:
         return USD_PER_RUN + USD_PER_CPU_SECOND * timeout_s * self.limits.billable_cores
@@ -67,6 +82,20 @@ class SpendGuard:
             self.reserved_usd -= worst
             self.spent_usd += record.cost_for_accounting
             self.records.append(record)
+            if self.ledger:
+                self.ledger.parent.mkdir(parents=True, exist_ok=True)
+                with self.ledger.open("a") as f:
+                    f.write(
+                        json.dumps(
+                            {
+                                "at": record.started_at,
+                                "label": record.label,
+                                "cost_usd": record.cost_usd,
+                                "charged_usd": record.cost_for_accounting,
+                            }
+                        )
+                        + "\n"
+                    )
             self._cond.notify_all()
 
     def summary(self) -> dict:
@@ -75,6 +104,7 @@ class SpendGuard:
             "billable_cores": self.limits.billable_cores,
             "pinned_to_one_cpu": self.limits.pin_one_cpu,
             "spent_usd": self.spent_usd,
+            "spent_this_process_usd": self.spent_usd - self.prior_usd,
             "runs": len(self.records),
             "unreported_cost_runs": sum(1 for r in self.records if r.cost_usd is None),
         }
@@ -126,6 +156,7 @@ async def guarded_run(
         cost_usd=None,
         cost_upper_bound_usd=worst,
         started_at=datetime.now(UTC).isoformat(timespec="seconds"),
+        truncate_output_at=truncate_output_at,
     )
     t = time.monotonic()
     try:
@@ -146,3 +177,67 @@ async def guarded_run(
         rec.client_wall_s = time.monotonic() - t
         await guard.settle(worst, rec)
     return rec
+
+
+class Uploader:
+    """Uploads file contents once each (content-addressed), outside any guarded run and with
+    retries, so an upload stall can never consume spend budget (attempt 2, 2026-10-25)."""
+
+    def __init__(self, client, attempts: int = 3):
+        self.client, self.attempts, self.cache = client, attempts, {}
+
+    async def __call__(self, data: str | bytes):
+        raw = data.encode() if isinstance(data, str) else data
+        key = hashlib.sha256(raw).hexdigest()
+        if key in self.cache:
+            return self.cache[key]
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            f.write(raw)
+        try:
+            for attempt in range(1, self.attempts + 1):
+                try:
+                    self.cache[key] = await self.client.files.upload(f.name)
+                    break
+                except Exception:
+                    if attempt == self.attempts:
+                        raise
+                    await asyncio.sleep(2 * attempt)
+        finally:
+            Path(f.name).unlink(missing_ok=True)
+        return self.cache[key]
+
+
+class SandboxForker:
+    """Forks of one warm checkpoint: upload an overlay of files, run one command under the guard.
+    `overlay` keys are paths relative to `workdir`, or absolute paths starting with "/"."""
+
+    def __init__(
+        self,
+        checkpoint,
+        guard: SpendGuard,
+        upload: Uploader,
+        workdir: str,
+        instance_id: str,
+        concurrency: int = 50,
+    ):
+        self.checkpoint, self.guard, self.upload = checkpoint, guard, upload
+        self.workdir, self.instance_id = workdir, instance_id
+        self.sem = asyncio.Semaphore(concurrency)
+
+    async def __call__(
+        self, branch: str, overlay: dict[str, str], command: str, timeout_s: int
+    ) -> RunRecord:
+        files = {}
+        for path, content in overlay.items():
+            dest = path if path.startswith("/") else f"{self.workdir}/{path}"
+            files[dest] = await self.upload(content)
+        async with self.sem:
+            return await guarded_run(
+                self.guard,
+                self.checkpoint,
+                label=f"{self.instance_id}/{branch}",
+                shell=command,
+                timeout_s=timeout_s,
+                disposable=True,
+                files=files,
+            )

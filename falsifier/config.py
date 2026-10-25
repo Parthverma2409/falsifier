@@ -15,6 +15,29 @@ ROOT = Path(__file__).resolve().parent.parent
 USD_PER_CPU_SECOND = 0.010326
 USD_PER_RUN = 4.2e-05
 
+SPEND_CEILING_USD = 8.0
+"""Global sandbox spend ceiling for everything up to hard stop 2 (Parth, 2026-10-25). It is
+cumulative across processes: every guarded run is appended to SPEND_LEDGER, and a new guard starts
+from the ledger's total. Override with FALSIFIER_SPEND_CEILING_USD."""
+SPEND_LEDGER = ROOT / "runs" / "spend_ledger.jsonl"
+
+
+@dataclass(frozen=True)
+class Timeouts:
+    """Per-run timeouts in seconds, sized from measured cost (docs/probe_instances.md):
+    targeted tests took 0.25-0.43 CPU-s (0.5-0.75 s wall), PASS_TO_PASS 0.4-1.9 CPU-s
+    (0.8-2.8 s wall), the pytest install about 3 CPU-s. Each timeout is roughly 20x the measured
+    wall time, so a slow run still finishes and a runaway costs at most timeout * $0.0103."""
+
+    test: int = 15
+    regression: int = 45
+    witness: int = 10
+    build: int = 90
+    files: int = 20
+
+
+FIXTURE_TIMEOUTS = Timeouts()
+
 
 @dataclass(frozen=True)
 class GenerationConfig:

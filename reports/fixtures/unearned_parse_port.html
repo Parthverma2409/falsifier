@@ -1,0 +1,208 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · unearned_parse_port</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>unearned_parse_port</h1>
+<p class="muted">parse_port(&quot;[::1]:8080&quot;) raises ValueError; IPv6 addresses contain colons.</p>
+<div class="verdict UNEARNED">UNEARNED</div>
+<p>Expected <b>UNEARNED</b> · <span class="ok">agrees</span></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.02s) and passes on the patch (exit 0, 1 passed in 0.01s); all 2 PASS_TO_PASS tests PASSED. Surviving mutants: m1 (too-narrow) passes the test (exit 0) and differs on its witness: the patch returns 8080 (exit 0), the mutant raises ValueError(&quot;invalid literal for int() with base 10: &#x27;&#x27;&quot;) (exit 0)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint 8ecc063c-b438-436c-a6d7-efc9c6a37605 ·
+8 forks · 1.03 CPU-s · $0.0113 · 2026-10-25T13:11:08+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · too-narrow<br><span class="status survived">survived</span><br><span class="muted">Special-cases bracketed hosts only, so parse_port(&quot;fe80::1:8080&quot;) still raises ValueError.</span></div><div class="card"><b>m2</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Takes the host half of the split, so parse_port(&quot;[::1]:8080&quot;) raises ValueError.</span></div><div class="card"><b>m3</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">Splits at the last two colons, so parse_port(&quot;[::1]:8080&quot;) parses &quot;1]&quot; and raises.</span></div></div>
+<h2>Survivors</h2>
+<section class="box" style="margin-top:1rem">
+  <h3>Mutant m1 survived · too-narrow</h3>
+  <div class="pair">
+    <div><p><b>Rationale.</b> Special-cases bracketed hosts only, so parse_port(&quot;fe80::1:8080&quot;) still raises ValueError.</p><pre><span class="line">--- a/pkg/net.py</span><span class="line">+++ b/pkg/net.py</span><span class="line">@@ -1,3 +1,5 @@</span><span class="line"> def parse_port(address):</span><span class="line">     &quot;&quot;&quot;Return the port of a &quot;host:port&quot; address. IPv6 hosts are written in brackets.&quot;&quot;&quot;</span><span class="line del">-    return int(address.rsplit(&quot;:&quot;, 1)[1])</span><span class="line add">+    if address.startswith(&quot;[&quot;):</span><span class="line add">+        return int(address.split(&quot;]:&quot;)[1])</span><span class="line add">+    return int(address.split(&quot;:&quot;)[1])</span></pre></div>
+    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.158 CPU-s · 0.37 s · $0.00173</p><pre>from pkg.net import parse_port
+
+
+def test_parse_port_bracketed_ipv6():
+    assert parse_port(&quot;[::1]:8080&quot;) == 8080
+</pre></div>
+  </div>
+  <p style="margin-top:.8rem"><b>Witness check.</b> The mutant counts only because it provably
+  differs from the patch on its own witness:</p>
+  <pre>from pkg.net import parse_port
+parse_port(&quot;fe80::1:8080&quot;)</pre>
+  <div class="witness">
+    <div class="box"><b>Patch</b>: returns 8080<br>
+      <span class="muted">exit 0 · unearned_parse_port/witness-patched-m1</span></div>
+    <div class="box"><b>Mutant</b>: raises ValueError(&quot;invalid literal for int() with base 10: &#x27;&#x27;&quot;)<br>
+      <span class="muted">exit 0 · unearned_parse_port/witness-mutant-m1</span></div>
+  </div>
+  <details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_parse_port_bracketed_ipv6&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py .                                                    [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_issue.py::test_parse_port_bracketed_ipv6
+============================== 1 passed in 0.01s ===============================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;8080&quot;}
+</pre><pre></pre></details>
+  <details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;message&quot;: &quot;invalid literal for int() with base 10: &#x27;&#x27;&quot;, &quot;outcome&quot;: &quot;raised&quot;, &quot;type&quot;: &quot;ValueError&quot;}
+</pre><pre></pre></details>
+</section>
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.165 CPU-s · 0.38 s · $0.00180<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.163 CPU-s · 0.38 s · $0.00178<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.159 CPU-s · 0.38 s · $0.00174</p>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/net.py</span><span class="line">+++ b/pkg/net.py</span><span class="line">@@ -1,3 +1,3 @@</span><span class="line"> def parse_port(address):</span><span class="line">     &quot;&quot;&quot;Return the port of a &quot;host:port&quot; address. IPv6 hosts are written in brackets.&quot;&quot;&quot;</span><span class="line del">-    return int(address.split(&quot;:&quot;)[1])</span><span class="line add">+    return int(address.rsplit(&quot;:&quot;, 1)[1])</span></pre></div>
+<div><h3>The test</h3><pre>from pkg.net import parse_port
+
+
+def test_parse_port_bracketed_ipv6():
+    assert parse_port(&quot;[::1]:8080&quot;) == 8080
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_parse_port_bracketed_ipv6&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+________________________ test_parse_port_bracketed_ipv6 ________________________
+
+    def test_parse_port_bracketed_ipv6():
+&gt;       assert parse_port(&quot;[::1]:8080&quot;) == 8080
+
+tests/test_issue.py:5: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = &#x27;[::1]:8080&#x27;
+
+    def parse_port(address):
+        &quot;&quot;&quot;Return the port of a &quot;host:port&quot; address. IPv6 hosts are written in brackets.&quot;&quot;&quot;
+&gt;       return int(address.split(&quot;:&quot;)[1])
+E       ValueError: invalid literal for int() with base 10: &#x27;&#x27;
+
+pkg/net.py:3: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_parse_port_bracketed_ipv6 - ValueError: inva...
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_parse_port_bracketed_ipv6&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py .                                                    [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_issue.py::test_parse_port_bracketed_ipv6
+============================== 1 passed in 0.01s ===============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 2 items
+
+tests/test_existing.py ..                                                [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_existing.py::test_parse_port_hostname
+PASSED tests/test_existing.py::test_parse_port_ipv4
+============================== 2 passed in 0.01s ===============================
+</pre><pre></pre></details>
+<h2>Other mutants</h2><details><summary>m2 · killed: exit 1, 1 failed in 0.02s</summary><p>Takes the host half of the split, so parse_port(&quot;[::1]:8080&quot;) raises ValueError.</p><pre><span class="line">--- a/pkg/net.py</span><span class="line">+++ b/pkg/net.py</span><span class="line">@@ -1,3 +1,3 @@</span><span class="line"> def parse_port(address):</span><span class="line">     &quot;&quot;&quot;Return the port of a &quot;host:port&quot; address. IPv6 hosts are written in brackets.&quot;&quot;&quot;</span><span class="line del">-    return int(address.rsplit(&quot;:&quot;, 1)[1])</span><span class="line add">+    return int(address.rsplit(&quot;:&quot;, 1)[0])</span></pre><pre>from pkg.net import parse_port
+parse_port(&quot;[::1]:8080&quot;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_parse_port_bracketed_ipv6&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+________________________ test_parse_port_bracketed_ipv6 ________________________
+
+    def test_parse_port_bracketed_ipv6():
+&gt;       assert parse_port(&quot;[::1]:8080&quot;) == 8080
+
+tests/test_issue.py:5: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = &#x27;[::1]:8080&#x27;
+
+    def parse_port(address):
+        &quot;&quot;&quot;Return the port of a &quot;host:port&quot; address. IPv6 hosts are written in brackets.&quot;&quot;&quot;
+&gt;       return int(address.rsplit(&quot;:&quot;, 1)[0])
+E       ValueError: invalid literal for int() with base 10: &#x27;[::1]&#x27;
+
+pkg/net.py:3: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_parse_port_bracketed_ipv6 - ValueError: inva...
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details></details><details><summary>m3 · killed: exit 1, 1 failed in 0.02s</summary><p>Splits at the last two colons, so parse_port(&quot;[::1]:8080&quot;) parses &quot;1]&quot; and raises.</p><pre><span class="line">--- a/pkg/net.py</span><span class="line">+++ b/pkg/net.py</span><span class="line">@@ -1,3 +1,3 @@</span><span class="line"> def parse_port(address):</span><span class="line">     &quot;&quot;&quot;Return the port of a &quot;host:port&quot; address. IPv6 hosts are written in brackets.&quot;&quot;&quot;</span><span class="line del">-    return int(address.rsplit(&quot;:&quot;, 1)[1])</span><span class="line add">+    return int(address.rsplit(&quot;:&quot;, 2)[1])</span></pre><pre>from pkg.net import parse_port
+parse_port(&quot;[::1]:8080&quot;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_parse_port_bracketed_ipv6&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+________________________ test_parse_port_bracketed_ipv6 ________________________
+
+    def test_parse_port_bracketed_ipv6():
+&gt;       assert parse_port(&quot;[::1]:8080&quot;) == 8080
+
+tests/test_issue.py:5: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+address = &#x27;[::1]:8080&#x27;
+
+    def parse_port(address):
+        &quot;&quot;&quot;Return the port of a &quot;host:port&quot; address. IPv6 hosts are written in brackets.&quot;&quot;&quot;
+&gt;       return int(address.rsplit(&quot;:&quot;, 2)[1])
+E       ValueError: invalid literal for int() with base 10: &#x27;1]&#x27;
+
+pkg/net.py:3: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_parse_port_bracketed_ipv6 - ValueError: inva...
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>unearned_parse_port/original+test<br><span class='muted'>@8ecc063c-b438-436c-a6d7-efc9c6a37605</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.165</td><td>0.38</td><td>$0.00180</td><td>15 s</td></tr><tr><td>unearned_parse_port/patched+test<br><span class='muted'>@8ecc063c-b438-436c-a6d7-efc9c6a37605</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.163</td><td>0.38</td><td>$0.00178</td><td>15 s</td></tr><tr><td>unearned_parse_port/patched+p2p<br><span class='muted'>@8ecc063c-b438-436c-a6d7-efc9c6a37605</span></td><td>0</td><td>2 passed in 0.01s</td><td>0.159</td><td>0.38</td><td>$0.00174</td><td>45 s</td></tr><tr><td>unearned_parse_port/mutant-m1+test<br><span class='muted'>@8ecc063c-b438-436c-a6d7-efc9c6a37605</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.158</td><td>0.37</td><td>$0.00173</td><td>15 s</td></tr><tr><td>unearned_parse_port/witness-patched-m1<br><span class='muted'>@8ecc063c-b438-436c-a6d7-efc9c6a37605</span></td><td>0</td><td></td><td>0.031</td><td>0.18</td><td>$0.00036</td><td>10 s</td></tr><tr><td>unearned_parse_port/witness-mutant-m1<br><span class='muted'>@8ecc063c-b438-436c-a6d7-efc9c6a37605</span></td><td>0</td><td></td><td>0.028</td><td>0.15</td><td>$0.00033</td><td>10 s</td></tr><tr><td>unearned_parse_port/mutant-m2+test<br><span class='muted'>@8ecc063c-b438-436c-a6d7-efc9c6a37605</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.167</td><td>0.38</td><td>$0.00182</td><td>15 s</td></tr><tr><td>unearned_parse_port/mutant-m3+test<br><span class='muted'>@8ecc063c-b438-436c-a6d7-efc9c6a37605</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.163</td><td>0.37</td><td>$0.00178</td><td>15 s</td></tr></table>
+</main></body></html>

@@ -415,3 +415,19 @@ def test_readme_records_the_configured_endpoint_and_model():
     readme = (Path(__file__).parent.parent / "README.md").read_text()
     c = GenerationConfig()
     assert c.base_url in readme and c.model in readme
+
+
+def test_revert_with_different_formatting_is_still_a_revert(repo, tmp_path):
+    """The structural check: removing the guard but leaving a stray comment and blank line is
+    still the original code."""
+    revert = (
+        "### MUTANT 1\nKIND: silences-symptom\nRATIONALE: Drops the guard.\n```diff\n"
+        "--- a/pkg/window.py\n+++ b/pkg/window.py\n@@ -1,5 +1,5 @@\n"
+        " def last_n(items, n):\n"
+        '     """Return the last n items of a list."""\n'
+        "-    if n <= 0:\n-        return []\n+    # guard removed\n+\n"
+        "     return items[-n:]\n```\n"
+    )
+    llm = make_llm(tmp_path, [revert] * 3)
+    assert propose_mutants(GOLD, 1, repo_dir=repo, llm=llm) == []
+    assert "identical" in llm.events[0]["rejected"][0]["reason"]

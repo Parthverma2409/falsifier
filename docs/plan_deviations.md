@@ -304,3 +304,54 @@ comes from the Token Factory quickstart; model `nvidia/Nemotron-3_5-Lightning`, 
 
 **Generation spend for step 2:** $0.027 across 25 calls, including mutant runs, the bake-off and the
 patch/test smoke test. One ten-mutant run costs $0.0013–0.0031.
+
+## 2026-10-25: phase 1 (verify, evidence, report, fixture suite)
+
+The verdict pages are in `reports/fixtures/` (open `index.html`); the code is in `falsifier/verify.py`, `evidence.py`, `report.py` and `instance.py`.
+
+**How it behaves (Configuration A: mutate the gold patch, audit the benchmark's FAIL_TO_PASS tests):**
+- **Baseline forks run in parallel:** original + test, patched + test, and the single PASS_TO_PASS fork. Precedence follows BUILD_PLAN step 4: BROKEN, then UNFIXED, then REGRESSED. All three short-circuit, so no mutant forks are spent on them. The PASS_TO_PASS fork has already run in parallel by then, and it is recorded in the evidence because it was paid for.
+- **Mutant forks run the targeted test only**, are disposable, and run in parallel (cap 50).
+- **UNEARNED is conjunctive.** A surviving mutant counts only if its own witness, run in a fork of the patch and a fork of the mutant, gives a different value or exception. Otherwise it is discarded as equivalent and counted separately.
+- **INCONCLUSIVE is not one of the plan's five verdicts.** It is reported when a run that a verdict needs did not complete: platform error, pytest exit 3, 4 or 5, or no distinguishable mutant.
+- **Every verdict carries complete evidence:** branch id, command, exit code, stdout and stderr with an explicit truncate_output_at, duration, CPU-s and cost. `Verdict.__post_init__` refuses to construct one without it.
+- **No model is called** anywhere in verify.
+- **Every run is pinned to one CPU** with `taskset -c 0` and given an explicit timeout sized from `docs/probe_instances.md`:
+
+  | Run | Timeout |
+  |---|---:|
+  | Test | 15 s |
+  | P2P | 45 s |
+  | Witness | 10 s |
+  | Build | 90 s |
+
+- **The $8 ceiling is global:** `runs/spend_ledger.jsonl` persists spend across processes.
+- **Patches and mutants are uploaded as file overlays** into forks of the warm checkpoint, not applied with `git apply`.
+
+**Fixtures.** There are ten: the plan's four classes with two each, plus UNFIXED and REGRESSED. They
+were committed in `3115bc3`, before any verify code existed.
+- Their mutants are hand-written, each with a witness and an expected status, so the oracle is
+  deterministic. Nemotron mutants are not used in fixtures.
+- **Step 7 acceptance deviation (needs sign-off):** "`pytest tests/` runs Falsifier against its own
+  fixtures". `tests/test_verify.py` runs all ten through verify locally (real pytest, no sandbox,
+  free) on every `make test`. The sandbox version runs only when `FALSIFIER_SANDBOX_TESTS=1`,
+  because it spends money (about $0.10).
+
+**Disagreement (reported, not fixed):** `earned_clamp` mutant m4, `if x > hi - 1:`.
+- **Expected:** killed. **Produced:** equivalent.
+- The verdict (EARNED) agrees.
+- This is a bug in the oracle, not the code. For integers, `x > hi - 1` is `x >= hi`, and at
+  `x == hi` both versions return `hi`. So m4 is equivalent to the patch on integers, the test
+  passes it (exit 0), and its own witness `clamp(9, 0, 10)` returns 9 on both (exit 0 and exit 0).
+- The fixture's rationale ("returns 10 instead of 9") was wrong.
+- Left as is, pending Parth's decision. `tests/test_verify.py::test_fixture_verdict_locally[earned_clamp]`
+  fails until then.
+
+**Structural revert check.** Mutant de-duplication now compares Python files by `ast.dump`, not
+exact text. Over the 154 cached flask-5014 mutants (19 responses):
+- **Reverts** (structurally the original code): 2, of which the old exact-text check caught 1.
+- **Identical to the gold patch:** 0. **Duplicates within a response:** 8. **Distinct and applicable:** 134.
+- **Don't apply:** 7. **Parse errors:** 3.
+
+**Phase 1 sandbox spend:** $0.1985 across two full fixture runs. The second run re-checked the evidence
+after the P2P-recording fix.

@@ -1,8 +1,16 @@
-"""Every claim carries branch id, exit code, captured log, and what it cost."""
+"""Every claim carries branch id, exit code, captured log, and what it cost.
+
+A Verdict cannot be constructed without its evidence: __post_init__ checks that every fork it
+cites is complete (branch id, command, exit code, stdout and stderr captured with an explicit
+truncate_output_at, duration, CPU-seconds, cost) and that the forks actually support the verdict.
+"""
 
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
 
 
 @dataclass
@@ -10,9 +18,10 @@ class RunRecord:
     """One sandbox run, as executed. Built only by falsifier.sandbox.guarded_run."""
 
     label: str
+    """The branch id: `<instance>/<branch>`. With image_in it names the fork exactly."""
     command: str
     image_in: str | None
-    """Image uuid or tag the run started from (the branch it forked)."""
+    """Image uuid or tag the run started from (the checkpoint it forked)."""
     timeout_s: int
     disposable: bool
     cost_usd: float | None
@@ -34,11 +43,239 @@ class RunRecord:
     """Checkpoint uuid when disposable=False, else None."""
     error: str | None = None
     resources: dict = field(default_factory=dict)
+    truncate_output_at: int | None = None
+    """Byte limit passed explicitly to the SDK for stdout and stderr (its default is 64 KiB)."""
 
     @property
     def cost_for_accounting(self) -> float:
         """Reported cost, or the reserved worst case when no cost was reported."""
         return self.cost_usd if self.cost_usd is not None else self.cost_upper_bound_usd
 
+    @property
+    def branch_id(self) -> str:
+        return f"{self.label}@{self.image_in}"
+
     def to_dict(self) -> dict:
-        return asdict(self)
+        return asdict(self) | {"branch_id": self.branch_id}
+
+
+# ---------------------------------------------------------------------------------------------
+# Reading pytest and witness output. Classification only; no judgement about the code.
+
+PASS, FAIL, ERROR = "PASS", "FAIL", "ERROR"
+_SUMMARY = re.compile(r"^=+ (.*\bin [\d.]+s.*?) =+\s*$", re.M)
+_COUNT = re.compile(
+    r"(\d+) (passed|failed|errors?|skipped|xfailed|xpassed|deselected|warnings?|no tests ran)"
+)
+
+
+def pytest_summary(stdout: str) -> str | None:
+    found = _SUMMARY.findall(stdout or "")
+    return found[-1] if found else None
+
+
+def pytest_counts(stdout: str) -> dict[str, int]:
+    summary = pytest_summary(stdout) or ""
+    counts: dict[str, int] = {}
+    for n, kind in _COUNT.findall(summary):
+        kind = {"error": "errors", "warning": "warnings"}.get(kind, kind)
+        counts[kind] = counts.get(kind, 0) + int(n)
+    return counts
+
+
+def passed_ids(stdout: str) -> set[str]:
+    """Ids reported PASSED in a `pytest -rA` short summary, truncated at the first space as
+    SWE-bench's log parser truncates them, so they compare directly with PASS_TO_PASS."""
+    return {ln.split(" ", 2)[1] for ln in (stdout or "").splitlines() if ln.startswith("PASSED ")}
+
+
+def classify_test_run(rec: RunRecord | dict) -> tuple[str, str]:
+    """PASS, FAIL or ERROR for a run of targeted tests, with the reason.
+
+    PASS needs exit 0 and at least one passed test with none failed. Exit 1 (tests failed) and
+    exit 2 (collection error or interrupted, e.g. the test imports a name the code lacks) are
+    FAIL: the test did not pass. A timeout is FAIL. Exits 3, 4 and 5 (internal error, usage error,
+    nothing collected) and platform errors are ERROR: the run says nothing about the code."""
+    r = rec if isinstance(rec, dict) else rec.to_dict()
+    if r.get("error") or r.get("exit_code") is None:
+        return ERROR, f"no result: {r.get('error') or 'no exit code'}"
+    if r.get("timed_out"):
+        return FAIL, f"timed out after {r['timeout_s']} s"
+    code, counts = r["exit_code"], pytest_counts(r.get("stdout", ""))
+    summary = pytest_summary(r.get("stdout", "")) or "no pytest summary"
+    if code == 0:
+        if counts.get("passed", 0) >= 1 and not counts.get("failed") and not counts.get("errors"):
+            return PASS, f"exit 0, {summary}"
+        return ERROR, f"exit 0 but {summary}"
+    if code in (1, 2):
+        return FAIL, f"exit {code}, {summary}"
+    return ERROR, f"exit {code}, {summary}"
+
+
+WITNESS_TAG = "FALSIFIER_WITNESS "
+
+
+def witness_result(rec: RunRecord | dict | None) -> dict | None:
+    """The witness runner's JSON line, or None if the run produced none."""
+    if rec is None:
+        return None
+    r = rec if isinstance(rec, dict) else rec.to_dict()
+    for ln in reversed((r.get("stdout") or "").splitlines()):
+        if ln.startswith(WITNESS_TAG):
+            try:
+                return json.loads(ln[len(WITNESS_TAG) :])
+            except json.JSONDecodeError:
+                return None
+    return None
+
+
+# ---------------------------------------------------------------------------------------------
+# Verdicts
+
+EARNED, BROKEN, UNFIXED, REGRESSED, UNEARNED = (
+    "EARNED",
+    "BROKEN",
+    "UNFIXED",
+    "REGRESSED",
+    "UNEARNED",
+)
+INCONCLUSIVE = "INCONCLUSIVE"
+"""Not a verdict: a run failed to produce the evidence a verdict needs."""
+VERDICTS = (EARNED, BROKEN, UNFIXED, REGRESSED, UNEARNED, INCONCLUSIVE)
+
+KILLED, SURVIVED, EQUIVALENT, MUTANT_ERROR, NOT_RUN = (
+    "killed",
+    "survived",
+    "equivalent",
+    "error",
+    "not-run",
+)
+
+REQUIRED_FIELDS = (
+    "label",
+    "image_in",
+    "command",
+    "exit_code",
+    "stdout",
+    "stderr",
+    "truncate_output_at",
+    "run_wall_s",
+    "cpu_s",
+    "cost_usd",
+)
+
+
+class EvidenceError(ValueError):
+    """A verdict was about to be returned without the evidence that supports it."""
+
+
+def missing_evidence(rec: dict) -> list[str]:
+    return [k for k in REQUIRED_FIELDS if rec.get(k) is None]
+
+
+@dataclass
+class MutantResult:
+    id: str
+    kind: str
+    rationale: str
+    witness: str
+    diff: str
+    status: str
+    expected_status: str | None = None
+    test: dict | None = None
+    test_why: str = ""
+    witness_patched: dict | None = None
+    witness_mutant: dict | None = None
+    note: str = ""
+
+    @property
+    def witness_results(self) -> tuple[dict | None, dict | None]:
+        return witness_result(self.witness_patched), witness_result(self.witness_mutant)
+
+
+@dataclass
+class Verdict:
+    instance_id: str
+    verdict: str
+    reason: str
+    forks: dict[str, dict]
+    """Baseline forks by name: original+test, patched+test, patched+p2p."""
+    mutants: list[MutantResult]
+    checkpoint: str
+    configuration: str = "A: mutate the gold patch, audit the benchmark's FAIL_TO_PASS tests"
+    counts: dict = field(default_factory=dict)
+    expected_verdict: str | None = None
+    created: str = field(default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds"))
+
+    def __post_init__(self) -> None:
+        if self.verdict not in VERDICTS:
+            raise EvidenceError(f"unknown verdict {self.verdict!r}")
+        records = self.all_records()
+        if not records:
+            raise EvidenceError(f"{self.verdict} without a single run behind it")
+        if self.verdict == INCONCLUSIVE:
+            return
+        for rec in records:
+            if gaps := missing_evidence(rec):
+                raise EvidenceError(f"{self.verdict}: {rec.get('label')} lacks {gaps}")
+        self._check_support()
+
+    def all_records(self) -> list[dict]:
+        out = list(self.forks.values())
+        for m in self.mutants:
+            out += [r for r in (m.test, m.witness_patched, m.witness_mutant) if r]
+        return out
+
+    def _need(self, name: str, outcome: str | None = None) -> dict:
+        rec = self.forks.get(name)
+        if rec is None:
+            raise EvidenceError(f"{self.verdict} needs the {name} fork")
+        if outcome and classify_test_run(rec)[0] != outcome:
+            raise EvidenceError(f"{self.verdict} needs {name} to be {outcome}")
+        return rec
+
+    def _check_support(self) -> None:
+        if self.verdict == BROKEN:
+            self._need("original+test", PASS)
+            if any(m.test for m in self.mutants):
+                raise EvidenceError("BROKEN must not spend forks on mutants")
+            return
+        self._need("original+test", FAIL)
+        if self.verdict == UNFIXED:
+            self._need("patched+test", FAIL)
+            return
+        self._need("patched+test", PASS)
+        self._need("patched+p2p")
+        if self.verdict == REGRESSED:
+            return
+        survivors = [m for m in self.mutants if m.status == SURVIVED]
+        for m in survivors:
+            if m.test is None or classify_test_run(m.test)[0] != PASS:
+                raise EvidenceError(f"survivor {m.id} has no passing test run")
+            a, b = m.witness_results
+            if a is None or b is None or a == b:
+                raise EvidenceError(f"survivor {m.id} is not distinguished by its witness")
+        if self.verdict == UNEARNED and not survivors:
+            raise EvidenceError("UNEARNED needs a distinguished survivor")
+        if self.verdict == EARNED:
+            if survivors:
+                raise EvidenceError("EARNED with a distinguished survivor")
+            if not any(m.status == KILLED for m in self.mutants):
+                raise EvidenceError("EARNED needs at least one killed mutant")
+            if any(m.status == MUTANT_ERROR for m in self.mutants):
+                raise EvidenceError("EARNED with mutants that did not run cleanly")
+
+    @property
+    def cost_usd(self) -> float:
+        return sum(
+            r.get("cost_usd") or r.get("cost_upper_bound_usd") or 0 for r in self.all_records()
+        )
+
+    @property
+    def cpu_s(self) -> float:
+        return sum(r.get("cpu_s") or 0 for r in self.all_records())
+
+    def to_dict(self) -> dict:
+        d = asdict(self)
+        d["cost_usd"], d["cpu_s"] = self.cost_usd, self.cpu_s
+        return d

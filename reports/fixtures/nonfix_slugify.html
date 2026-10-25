@@ -1,0 +1,170 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · nonfix_slugify</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>nonfix_slugify</h1>
+<p class="muted">slugify should trim and collapse whitespace: slugify(&quot;Hello  World &quot;) should be &quot;hello-world&quot;. The patch only trims.</p>
+<div class="verdict UNEARNED">UNEARNED</div>
+<p>Expected <b>UNEARNED</b> · <span class="ok">agrees</span></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.02s) and passes on the patch (exit 0, 1 passed in 0.01s); all 2 PASS_TO_PASS tests PASSED. Surviving mutants: m1 (wrong-condition) passes the test (exit 0) and differs on its witness: the patch returns &#x27;hello--world&#x27; (exit 0), the mutant returns &#x27;hello-world&#x27; (exit 0)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint 813dc3a0-6289-4427-95f7-e7b63d8db944 ·
+7 forks · 0.86 CPU-s · $0.0095 · 2026-10-25T13:10:51+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · wrong-condition<br><span class="status survived">survived</span><br><span class="muted">Splits on any whitespace run (the full fix), so slugify(&quot;Hello  World&quot;) gives &quot;hello-world&quot; where the patch gives &quot;hello--world&quot;.</span></div><div class="card"><b>m2</b> · too-narrow<br><span class="status killed">killed</span><br><span class="muted">Strips only the left side, so slugify(&quot;Hello World &quot;) keeps a trailing hyphen.</span></div></div>
+<h2>Survivors</h2>
+<section class="box" style="margin-top:1rem">
+  <h3>Mutant m1 survived · wrong-condition</h3>
+  <div class="pair">
+    <div><p><b>Rationale.</b> Splits on any whitespace run (the full fix), so slugify(&quot;Hello  World&quot;) gives &quot;hello-world&quot; where the patch gives &quot;hello--world&quot;.</p><pre><span class="line">--- a/pkg/text.py</span><span class="line">+++ b/pkg/text.py</span><span class="line">@@ -1,3 +1,3 @@</span><span class="line"> def slugify(title):</span><span class="line">     &quot;&quot;&quot;Lower-case a title and join its words with single hyphens.&quot;&quot;&quot;</span><span class="line del">-    return title.strip().lower().replace(&quot; &quot;, &quot;-&quot;)</span><span class="line add">+    return &quot;-&quot;.join(title.lower().split())</span></pre></div>
+    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.157 CPU-s · 0.37 s · $0.00172</p><pre>from pkg.text import slugify
+
+
+def test_slugify_trailing_space():
+    assert slugify(&quot;Hello World &quot;) == &quot;hello-world&quot;
+</pre></div>
+  </div>
+  <p style="margin-top:.8rem"><b>Witness check.</b> The mutant counts only because it provably
+  differs from the patch on its own witness:</p>
+  <pre>from pkg.text import slugify
+slugify(&quot;Hello  World&quot;)</pre>
+  <div class="witness">
+    <div class="box"><b>Patch</b>: returns &#x27;hello--world&#x27;<br>
+      <span class="muted">exit 0 · nonfix_slugify/witness-patched-m1</span></div>
+    <div class="box"><b>Mutant</b>: returns &#x27;hello-world&#x27;<br>
+      <span class="muted">exit 0 · nonfix_slugify/witness-mutant-m1</span></div>
+  </div>
+  <details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_slugify_trailing_space&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py .                                                    [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_issue.py::test_slugify_trailing_space
+============================== 1 passed in 0.01s ===============================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;&#x27;hello--world&#x27;&quot;}
+</pre><pre></pre></details>
+  <details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;&#x27;hello-world&#x27;&quot;}
+</pre><pre></pre></details>
+</section>
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.164 CPU-s · 0.36 s · $0.00179<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.163 CPU-s · 0.38 s · $0.00178<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.165 CPU-s · 0.39 s · $0.00180</p>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/text.py</span><span class="line">+++ b/pkg/text.py</span><span class="line">@@ -1,3 +1,3 @@</span><span class="line"> def slugify(title):</span><span class="line">     &quot;&quot;&quot;Lower-case a title and join its words with single hyphens.&quot;&quot;&quot;</span><span class="line del">-    return title.lower().replace(&quot; &quot;, &quot;-&quot;)</span><span class="line add">+    return title.strip().lower().replace(&quot; &quot;, &quot;-&quot;)</span></pre></div>
+<div><h3>The test</h3><pre>from pkg.text import slugify
+
+
+def test_slugify_trailing_space():
+    assert slugify(&quot;Hello World &quot;) == &quot;hello-world&quot;
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_slugify_trailing_space&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+_________________________ test_slugify_trailing_space __________________________
+
+    def test_slugify_trailing_space():
+&gt;       assert slugify(&quot;Hello World &quot;) == &quot;hello-world&quot;
+E       AssertionError: assert &#x27;hello-world-&#x27; == &#x27;hello-world&#x27;
+E         
+E         - hello-world
+E         + hello-world-
+E         ?            +
+
+tests/test_issue.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_slugify_trailing_space - AssertionError: ass...
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_slugify_trailing_space&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py .                                                    [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_issue.py::test_slugify_trailing_space
+============================== 1 passed in 0.01s ===============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 2 items
+
+tests/test_existing.py ..                                                [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_existing.py::test_slugify_simple
+PASSED tests/test_existing.py::test_slugify_single_word
+============================== 2 passed in 0.01s ===============================
+</pre><pre></pre></details>
+<h2>Other mutants</h2><details><summary>m2 · killed: exit 1, 1 failed in 0.02s</summary><p>Strips only the left side, so slugify(&quot;Hello World &quot;) keeps a trailing hyphen.</p><pre><span class="line">--- a/pkg/text.py</span><span class="line">+++ b/pkg/text.py</span><span class="line">@@ -1,3 +1,3 @@</span><span class="line"> def slugify(title):</span><span class="line">     &quot;&quot;&quot;Lower-case a title and join its words with single hyphens.&quot;&quot;&quot;</span><span class="line del">-    return title.strip().lower().replace(&quot; &quot;, &quot;-&quot;)</span><span class="line add">+    return title.lstrip().lower().replace(&quot; &quot;, &quot;-&quot;)</span></pre><pre>from pkg.text import slugify
+slugify(&quot;Hello World &quot;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_slugify_trailing_space&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+_________________________ test_slugify_trailing_space __________________________
+
+    def test_slugify_trailing_space():
+&gt;       assert slugify(&quot;Hello World &quot;) == &quot;hello-world&quot;
+E       AssertionError: assert &#x27;hello-world-&#x27; == &#x27;hello-world&#x27;
+E         
+E         - hello-world
+E         + hello-world-
+E         ?            +
+
+tests/test_issue.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_slugify_trailing_space - AssertionError: ass...
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>nonfix_slugify/original+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.164</td><td>0.36</td><td>$0.00179</td><td>15 s</td></tr><tr><td>nonfix_slugify/patched+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.163</td><td>0.38</td><td>$0.00178</td><td>15 s</td></tr><tr><td>nonfix_slugify/patched+p2p<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td>2 passed in 0.01s</td><td>0.165</td><td>0.39</td><td>$0.00180</td><td>45 s</td></tr><tr><td>nonfix_slugify/mutant-m1+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.157</td><td>0.37</td><td>$0.00172</td><td>15 s</td></tr><tr><td>nonfix_slugify/witness-patched-m1<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td></td><td>0.027</td><td>0.16</td><td>$0.00032</td><td>10 s</td></tr><tr><td>nonfix_slugify/witness-mutant-m1<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td></td><td>0.026</td><td>0.15</td><td>$0.00031</td><td>10 s</td></tr><tr><td>nonfix_slugify/mutant-m2+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.162</td><td>0.36</td><td>$0.00177</td><td>15 s</td></tr></table>
+</main></body></html>

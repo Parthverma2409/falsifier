@@ -1,0 +1,195 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · earned_last_n</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>earned_last_n</h1>
+<p class="muted">last_n(items, n) returns the whole list for n &lt;= 0; it should return [].</p>
+<div class="verdict EARNED">EARNED</div>
+<p>Expected <b>EARNED</b> · <span class="ok">agrees</span></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.02s) and passes on the patch (exit 0, 1 passed in 0.01s); all 3 PASS_TO_PASS tests PASSED; the test killed 3 of 3 distinguishable mutants (1 equivalent discarded)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint 8fefe8eb-caa5-4994-8bf1-f5bc3ffcbd0f ·
+9 forks · 1.23 CPU-s · $0.0135 · 2026-10-25T13:10:35+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Uses n &lt; 0, so n = 0 slices items[-0:] and returns the whole list.</span></div><div class="card"><b>m2</b> · too-narrow<br><span class="status killed">killed</span><br><span class="muted">Only catches n == 0, so last_n([1, 2, 3], -1) returns [2, 3].</span></div><div class="card"><b>m3</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Treats n = 1 as empty, so last_n([1, 2, 3], 1) returns [] instead of [3].</span></div><div class="card"><b>m4</b> · equivalent<br><span class="status equivalent">equivalent, discarded</span><br><span class="muted">Rewrites the guard as not n &gt; 0, the same check for integers: a known equivalent mutant.</span></div></div>
+
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.170 CPU-s · 0.38 s · $0.00185<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.164 CPU-s · 0.40 s · $0.00179<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 3 passed in 0.01s · 0.159 CPU-s · 0.38 s · $0.00174</p>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,5 +1,7 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line add">+    if n &lt;= 0:</span><span class="line add">+        return []</span><span class="line">     return items[-n:]</span><span class="line"> </span><span class="line"> </span></pre></div>
+<div><h3>The test</h3><pre>from pkg.window import last_n
+
+
+def test_last_n_non_positive_and_boundary():
+    assert last_n([1, 2, 3], 0) == []
+    assert last_n([1, 2, 3], -1) == []
+    assert last_n([1, 2, 3], 1) == [3]
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_non_positive_and_boundary&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+____________________ test_last_n_non_positive_and_boundary _____________________
+
+    def test_last_n_non_positive_and_boundary():
+&gt;       assert last_n([1, 2, 3], 0) == []
+E       assert [1, 2, 3] == []
+E         
+E         Left contains 3 more items, first extra item: 1
+E         Use -v to get more diff
+
+tests/test_issue.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_last_n_non_positive_and_boundary - assert [1...
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_non_positive_and_boundary&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py .                                                    [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_issue.py::test_last_n_non_positive_and_boundary
+============================== 1 passed in 0.01s ===============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 3 items
+
+tests/test_existing.py ...                                               [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_existing.py::test_last_n_basic
+PASSED tests/test_existing.py::test_first_n_basic
+PASSED tests/test_existing.py::test_first_n_negative
+============================== 3 passed in 0.01s ===============================
+</pre><pre></pre></details>
+<h2>Other mutants</h2><details><summary>m1 · killed: exit 1, 1 failed in 0.02s</summary><p>Uses n &lt; 0, so n = 0 slices items[-0:] and returns the whole list.</p><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,6 +1,6 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    if n &lt;= 0:</span><span class="line add">+    if n &lt; 0:</span><span class="line">         return []</span><span class="line">     return items[-n:]</span><span class="line"> </span></pre><pre>from pkg.window import last_n
+last_n([1, 2, 3], 0)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_non_positive_and_boundary&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+____________________ test_last_n_non_positive_and_boundary _____________________
+
+    def test_last_n_non_positive_and_boundary():
+&gt;       assert last_n([1, 2, 3], 0) == []
+E       assert [1, 2, 3] == []
+E         
+E         Left contains 3 more items, first extra item: 1
+E         Use -v to get more diff
+
+tests/test_issue.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_last_n_non_positive_and_boundary - assert [1...
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details></details><details><summary>m2 · killed: exit 1, 1 failed in 0.02s</summary><p>Only catches n == 0, so last_n([1, 2, 3], -1) returns [2, 3].</p><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,6 +1,6 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    if n &lt;= 0:</span><span class="line add">+    if n == 0:</span><span class="line">         return []</span><span class="line">     return items[-n:]</span><span class="line"> </span></pre><pre>from pkg.window import last_n
+last_n([1, 2, 3], -1)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_non_positive_and_boundary&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+____________________ test_last_n_non_positive_and_boundary _____________________
+
+    def test_last_n_non_positive_and_boundary():
+        assert last_n([1, 2, 3], 0) == []
+&gt;       assert last_n([1, 2, 3], -1) == []
+E       assert [2, 3] == []
+E         
+E         Left contains 2 more items, first extra item: 2
+E         Use -v to get more diff
+
+tests/test_issue.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_last_n_non_positive_and_boundary - assert [2...
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details></details><details><summary>m3 · killed: exit 1, 1 failed in 0.02s</summary><p>Treats n = 1 as empty, so last_n([1, 2, 3], 1) returns [] instead of [3].</p><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,6 +1,6 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    if n &lt;= 0:</span><span class="line add">+    if n &lt;= 1:</span><span class="line">         return []</span><span class="line">     return items[-n:]</span><span class="line"> </span></pre><pre>from pkg.window import last_n
+last_n([1, 2, 3], 1)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_non_positive_and_boundary&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+____________________ test_last_n_non_positive_and_boundary _____________________
+
+    def test_last_n_non_positive_and_boundary():
+        assert last_n([1, 2, 3], 0) == []
+        assert last_n([1, 2, 3], -1) == []
+&gt;       assert last_n([1, 2, 3], 1) == [3]
+E       assert [] == [3]
+E         
+E         Right contains one more item: 3
+E         Use -v to get more diff
+
+tests/test_issue.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_last_n_non_positive_and_boundary - assert []...
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details></details><details><summary>m4 · equivalent, discarded: its own witness does not distinguish it (the patch returns [], the mutant returns []); discarded, never UNEARNED</summary><p>Rewrites the guard as not n &gt; 0, the same check for integers: a known equivalent mutant.</p><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,6 +1,6 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    if n &lt;= 0:</span><span class="line add">+    if not n &gt; 0:</span><span class="line">         return []</span><span class="line">     return items[-n:]</span><span class="line"> </span></pre><pre>from pkg.window import last_n
+last_n([1, 2, 3], 0)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_non_positive_and_boundary&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py .                                                    [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_issue.py::test_last_n_non_positive_and_boundary
+============================== 1 passed in 0.01s ===============================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[]&quot;}
+</pre><pre></pre></details><details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[]&quot;}
+</pre><pre></pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>earned_last_n/original+test<br><span class='muted'>@8fefe8eb-caa5-4994-8bf1-f5bc3ffcbd0f</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.170</td><td>0.38</td><td>$0.00185</td><td>15 s</td></tr><tr><td>earned_last_n/patched+test<br><span class='muted'>@8fefe8eb-caa5-4994-8bf1-f5bc3ffcbd0f</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.164</td><td>0.40</td><td>$0.00179</td><td>15 s</td></tr><tr><td>earned_last_n/patched+p2p<br><span class='muted'>@8fefe8eb-caa5-4994-8bf1-f5bc3ffcbd0f</span></td><td>0</td><td>3 passed in 0.01s</td><td>0.159</td><td>0.38</td><td>$0.00174</td><td>45 s</td></tr><tr><td>earned_last_n/mutant-m1+test<br><span class='muted'>@8fefe8eb-caa5-4994-8bf1-f5bc3ffcbd0f</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.162</td><td>0.39</td><td>$0.00177</td><td>15 s</td></tr><tr><td>earned_last_n/mutant-m2+test<br><span class='muted'>@8fefe8eb-caa5-4994-8bf1-f5bc3ffcbd0f</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.178</td><td>0.40</td><td>$0.00193</td><td>15 s</td></tr><tr><td>earned_last_n/mutant-m3+test<br><span class='muted'>@8fefe8eb-caa5-4994-8bf1-f5bc3ffcbd0f</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.163</td><td>0.36</td><td>$0.00178</td><td>15 s</td></tr><tr><td>earned_last_n/mutant-m4+test<br><span class='muted'>@8fefe8eb-caa5-4994-8bf1-f5bc3ffcbd0f</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.184</td><td>0.44</td><td>$0.00199</td><td>15 s</td></tr><tr><td>earned_last_n/witness-patched-m4<br><span class='muted'>@8fefe8eb-caa5-4994-8bf1-f5bc3ffcbd0f</span></td><td>0</td><td></td><td>0.026</td><td>0.15</td><td>$0.00031</td><td>10 s</td></tr><tr><td>earned_last_n/witness-mutant-m4<br><span class='muted'>@8fefe8eb-caa5-4994-8bf1-f5bc3ffcbd0f</span></td><td>0</td><td></td><td>0.026</td><td>0.15</td><td>$0.00031</td><td>10 s</td></tr></table>
+</main></body></html>

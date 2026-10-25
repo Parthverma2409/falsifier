@@ -1,0 +1,185 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · earned_clamp</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>earned_clamp</h1>
+<p class="muted">clamp(x, lo, hi) ignores hi: clamp(15, 0, 10) returns 15 instead of 10.</p>
+<div class="verdict EARNED">EARNED</div>
+<p>Expected <b>EARNED</b> · <span class="ok">agrees</span></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.02s) and passes on the patch (exit 0, 1 passed in 0.01s); all 2 PASS_TO_PASS tests PASSED; the test killed 3 of 3 distinguishable mutants (1 equivalent discarded)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint 34e5df21-34dd-43da-ba3d-9f7910aa16bd ·
+9 forks · 1.22 CPU-s · $0.0134 · 2026-10-25T13:10:28+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Clamps only above hi + 1, so clamp(11, 0, 10) returns 11.</span></div><div class="card"><b>m2</b> · wrong-condition<br><span class="status killed">killed</span><br><span class="muted">Returns lo at the upper bound, so clamp(10, 0, 10) returns 0.</span></div><div class="card"><b>m3</b> · silences-symptom<br><span class="status killed">killed</span><br><span class="muted">Keeps the branch but returns x, so clamp(15, 0, 10) still returns 15.</span></div><div class="card"><b>m4</b> · off-by-one<br><span class="status equivalent">equivalent, discarded</span> <span class="muted">(expected killed)</span><br><span class="muted">Clamps from hi - 1, so clamp(9, 0, 10) returns 10 instead of 9.</span></div></div>
+
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.173 CPU-s · 0.40 s · $0.00188<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.163 CPU-s · 0.38 s · $0.00178<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.159 CPU-s · 0.37 s · $0.00174</p>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/numeric.py</span><span class="line">+++ b/pkg/numeric.py</span><span class="line">@@ -2,4 +2,6 @@ def clamp(x, lo, hi):</span><span class="line">     &quot;&quot;&quot;Clamp x into the closed range [lo, hi].&quot;&quot;&quot;</span><span class="line">     if x &lt; lo:</span><span class="line">         return lo</span><span class="line add">+    if x &gt; hi:</span><span class="line add">+        return hi</span><span class="line">     return x</span></pre></div>
+<div><h3>The test</h3><pre>from pkg.numeric import clamp
+
+
+def test_clamp_upper_bound():
+    assert clamp(15, 0, 10) == 10
+    assert clamp(11, 0, 10) == 10
+    assert clamp(10, 0, 10) == 10
+    assert clamp(9, 0, 10) == 9
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_clamp_upper_bound&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+____________________________ test_clamp_upper_bound ____________________________
+
+    def test_clamp_upper_bound():
+&gt;       assert clamp(15, 0, 10) == 10
+E       assert 15 == 10
+E        +  where 15 = clamp(15, 0, 10)
+
+tests/test_issue.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_clamp_upper_bound - assert 15 == 10
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_clamp_upper_bound&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py .                                                    [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_issue.py::test_clamp_upper_bound
+============================== 1 passed in 0.01s ===============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 2 items
+
+tests/test_existing.py ..                                                [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_existing.py::test_clamp_below
+PASSED tests/test_existing.py::test_clamp_inside
+============================== 2 passed in 0.01s ===============================
+</pre><pre></pre></details>
+<h2>Other mutants</h2><details><summary>m1 · killed: exit 1, 1 failed in 0.02s</summary><p>Clamps only above hi + 1, so clamp(11, 0, 10) returns 11.</p><pre><span class="line">--- a/pkg/numeric.py</span><span class="line">+++ b/pkg/numeric.py</span><span class="line">@@ -2,6 +2,6 @@ def clamp(x, lo, hi):</span><span class="line">     &quot;&quot;&quot;Clamp x into the closed range [lo, hi].&quot;&quot;&quot;</span><span class="line">     if x &lt; lo:</span><span class="line">         return lo</span><span class="line del">-    if x &gt; hi:</span><span class="line add">+    if x &gt; hi + 1:</span><span class="line">         return hi</span><span class="line">     return x</span></pre><pre>from pkg.numeric import clamp
+clamp(11, 0, 10)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_clamp_upper_bound&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+____________________________ test_clamp_upper_bound ____________________________
+
+    def test_clamp_upper_bound():
+        assert clamp(15, 0, 10) == 10
+&gt;       assert clamp(11, 0, 10) == 10
+E       assert 11 == 10
+E        +  where 11 = clamp(11, 0, 10)
+
+tests/test_issue.py:6: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_clamp_upper_bound - assert 11 == 10
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details></details><details><summary>m2 · killed: exit 1, 1 failed in 0.02s</summary><p>Returns lo at the upper bound, so clamp(10, 0, 10) returns 0.</p><pre><span class="line">--- a/pkg/numeric.py</span><span class="line">+++ b/pkg/numeric.py</span><span class="line">@@ -2,6 +2,6 @@ def clamp(x, lo, hi):</span><span class="line">     &quot;&quot;&quot;Clamp x into the closed range [lo, hi].&quot;&quot;&quot;</span><span class="line">     if x &lt; lo:</span><span class="line">         return lo</span><span class="line del">-    if x &gt; hi:</span><span class="line del">-        return hi</span><span class="line add">+    if x &gt;= hi:</span><span class="line add">+        return lo</span><span class="line">     return x</span></pre><pre>from pkg.numeric import clamp
+clamp(10, 0, 10)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_clamp_upper_bound&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+____________________________ test_clamp_upper_bound ____________________________
+
+    def test_clamp_upper_bound():
+&gt;       assert clamp(15, 0, 10) == 10
+E       assert 0 == 10
+E        +  where 0 = clamp(15, 0, 10)
+
+tests/test_issue.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_clamp_upper_bound - assert 0 == 10
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details></details><details><summary>m3 · killed: exit 1, 1 failed in 0.04s</summary><p>Keeps the branch but returns x, so clamp(15, 0, 10) still returns 15.</p><pre><span class="line">--- a/pkg/numeric.py</span><span class="line">+++ b/pkg/numeric.py</span><span class="line">@@ -3,5 +3,5 @@ def clamp(x, lo, hi):</span><span class="line">     if x &lt; lo:</span><span class="line">         return lo</span><span class="line">     if x &gt; hi:</span><span class="line del">-        return hi</span><span class="line add">+        return x</span><span class="line">     return x</span></pre><pre>from pkg.numeric import clamp
+clamp(15, 0, 10)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_clamp_upper_bound&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+____________________________ test_clamp_upper_bound ____________________________
+
+    def test_clamp_upper_bound():
+&gt;       assert clamp(15, 0, 10) == 10
+E       assert 15 == 10
+E        +  where 15 = clamp(15, 0, 10)
+
+tests/test_issue.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_clamp_upper_bound - assert 15 == 10
+============================== 1 failed in 0.04s ===============================
+</pre><pre></pre></details></details><details><summary>m4 · equivalent, discarded: its own witness does not distinguish it (the patch returns 9, the mutant returns 9); discarded, never UNEARNED</summary><p>Clamps from hi - 1, so clamp(9, 0, 10) returns 10 instead of 9.</p><pre><span class="line">--- a/pkg/numeric.py</span><span class="line">+++ b/pkg/numeric.py</span><span class="line">@@ -2,6 +2,6 @@ def clamp(x, lo, hi):</span><span class="line">     &quot;&quot;&quot;Clamp x into the closed range [lo, hi].&quot;&quot;&quot;</span><span class="line">     if x &lt; lo:</span><span class="line">         return lo</span><span class="line del">-    if x &gt; hi:</span><span class="line add">+    if x &gt; hi - 1:</span><span class="line">         return hi</span><span class="line">     return x</span></pre><pre>from pkg.numeric import clamp
+clamp(9, 0, 10)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_clamp_upper_bound&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py .                                                    [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_issue.py::test_clamp_upper_bound
+============================== 1 passed in 0.01s ===============================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;9&quot;}
+</pre><pre></pre></details><details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;9&quot;}
+</pre><pre></pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>earned_clamp/original+test<br><span class='muted'>@34e5df21-34dd-43da-ba3d-9f7910aa16bd</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.173</td><td>0.40</td><td>$0.00188</td><td>15 s</td></tr><tr><td>earned_clamp/patched+test<br><span class='muted'>@34e5df21-34dd-43da-ba3d-9f7910aa16bd</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.163</td><td>0.38</td><td>$0.00178</td><td>15 s</td></tr><tr><td>earned_clamp/patched+p2p<br><span class='muted'>@34e5df21-34dd-43da-ba3d-9f7910aa16bd</span></td><td>0</td><td>2 passed in 0.01s</td><td>0.159</td><td>0.37</td><td>$0.00174</td><td>45 s</td></tr><tr><td>earned_clamp/mutant-m1+test<br><span class='muted'>@34e5df21-34dd-43da-ba3d-9f7910aa16bd</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.170</td><td>0.40</td><td>$0.00185</td><td>15 s</td></tr><tr><td>earned_clamp/mutant-m2+test<br><span class='muted'>@34e5df21-34dd-43da-ba3d-9f7910aa16bd</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.171</td><td>0.41</td><td>$0.00186</td><td>15 s</td></tr><tr><td>earned_clamp/mutant-m3+test<br><span class='muted'>@34e5df21-34dd-43da-ba3d-9f7910aa16bd</span></td><td>1</td><td>1 failed in 0.04s</td><td>0.178</td><td>0.45</td><td>$0.00193</td><td>15 s</td></tr><tr><td>earned_clamp/mutant-m4+test<br><span class='muted'>@34e5df21-34dd-43da-ba3d-9f7910aa16bd</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.158</td><td>0.37</td><td>$0.00173</td><td>15 s</td></tr><tr><td>earned_clamp/witness-patched-m4<br><span class='muted'>@34e5df21-34dd-43da-ba3d-9f7910aa16bd</span></td><td>0</td><td></td><td>0.026</td><td>0.16</td><td>$0.00031</td><td>10 s</td></tr><tr><td>earned_clamp/witness-mutant-m4<br><span class='muted'>@34e5df21-34dd-43da-ba3d-9f7910aa16bd</span></td><td>0</td><td></td><td>0.026</td><td>0.15</td><td>$0.00031</td><td>10 s</td></tr></table>
+</main></body></html>

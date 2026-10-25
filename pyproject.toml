@@ -39,3 +39,6 @@ extend-exclude = ["docs"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"falsifier/report.py" = ["E501"]  # HTML and CSS templates

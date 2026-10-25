@@ -975,8 +975,20 @@ def propose_mutants(
     return [(a["diff"], a["rationale"]) for a in accepted]
 
 
+def canonical(path: str, text: str | None) -> str | None:
+    """Python files compared by structure (ast.dump: no comments, blank lines or formatting), so a
+    mutant that reverts the patch with different whitespace is still caught. Other files by text."""
+    if text is None or not path.endswith(".py"):
+        return text
+    try:
+        return ast.dump(ast.parse(text))
+    except SyntaxError:
+        return text
+
+
 def _fingerprint(files: dict[str, str | None]) -> str:
-    return hashlib.sha256(json.dumps(sorted(files.items())).encode()).hexdigest()
+    norm = sorted((p, canonical(p, t)) for p, t in files.items())
+    return hashlib.sha256(json.dumps(norm).encode()).hexdigest()
 
 
 def _mutant_problem(v: Validated, full_state: dict, seen: set[str]) -> str | None:

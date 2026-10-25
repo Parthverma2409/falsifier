@@ -1,0 +1,169 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · nonfix_last_n</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>nonfix_last_n</h1>
+<p class="muted">last_n(items, n) returns the whole list for n &lt;= 0; it should return []. The patch handles n == 0 only.</p>
+<div class="verdict UNEARNED">UNEARNED</div>
+<p>Expected <b>UNEARNED</b> · <span class="ok">agrees</span></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.02s) and passes on the patch (exit 0, 1 passed in 0.01s); all 3 PASS_TO_PASS tests PASSED. Surviving mutants: m1 (wrong-condition) passes the test (exit 0) and differs on its witness: the patch returns [2, 3] (exit 0), the mutant returns [] (exit 0)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint d2ecc66e-22b5-4f70-8738-dec20fd16105 ·
+7 forks · 0.86 CPU-s · $0.0095 · 2026-10-25T13:10:42+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · wrong-condition<br><span class="status survived">survived</span><br><span class="muted">Guards n &lt;= 0 (the full fix), so last_n([1, 2, 3], -1) returns [] where the patch returns [2, 3].</span></div><div class="card"><b>m2</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">Guards n == 1, so last_n([1, 2, 3], 0) returns the whole list.</span></div></div>
+<h2>Survivors</h2>
+<section class="box" style="margin-top:1rem">
+  <h3>Mutant m1 survived · wrong-condition</h3>
+  <div class="pair">
+    <div><p><b>Rationale.</b> Guards n &lt;= 0 (the full fix), so last_n([1, 2, 3], -1) returns [] where the patch returns [2, 3].</p><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,6 +1,6 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    if n == 0:</span><span class="line add">+    if n &lt;= 0:</span><span class="line">         return []</span><span class="line">     return items[-n:]</span><span class="line"> </span></pre></div>
+    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.158 CPU-s · 0.37 s · $0.00173</p><pre>from pkg.window import last_n
+
+
+def test_last_n_zero():
+    assert last_n([1, 2, 3], 0) == []
+</pre></div>
+  </div>
+  <p style="margin-top:.8rem"><b>Witness check.</b> The mutant counts only because it provably
+  differs from the patch on its own witness:</p>
+  <pre>from pkg.window import last_n
+last_n([1, 2, 3], -1)</pre>
+  <div class="witness">
+    <div class="box"><b>Patch</b>: returns [2, 3]<br>
+      <span class="muted">exit 0 · nonfix_last_n/witness-patched-m1</span></div>
+    <div class="box"><b>Mutant</b>: returns []<br>
+      <span class="muted">exit 0 · nonfix_last_n/witness-mutant-m1</span></div>
+  </div>
+  <details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_zero&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py .                                                    [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_issue.py::test_last_n_zero
+============================== 1 passed in 0.01s ===============================
+</pre><pre></pre></details><details><summary>witness on the patch: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[2, 3]&quot;}
+</pre><pre></pre></details>
+  <details><summary>witness on the mutant: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python /tmp/falsifier/witness_runner.py /tmp/falsifier/witness.py&#x27;</pre><pre>FALSIFIER_WITNESS {&quot;outcome&quot;: &quot;value&quot;, &quot;repr&quot;: &quot;[]&quot;}
+</pre><pre></pre></details>
+</section>
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.171 CPU-s · 0.40 s · $0.00186<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.163 CPU-s · 0.39 s · $0.00178<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 3 passed in 0.01s · 0.159 CPU-s · 0.37 s · $0.00174</p>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,5 +1,7 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line add">+    if n == 0:</span><span class="line add">+        return []</span><span class="line">     return items[-n:]</span><span class="line"> </span><span class="line"> </span></pre></div>
+<div><h3>The test</h3><pre>from pkg.window import last_n
+
+
+def test_last_n_zero():
+    assert last_n([1, 2, 3], 0) == []
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_zero&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+_______________________________ test_last_n_zero _______________________________
+
+    def test_last_n_zero():
+&gt;       assert last_n([1, 2, 3], 0) == []
+E       assert [1, 2, 3] == []
+E         
+E         Left contains 3 more items, first extra item: 1
+E         Use -v to get more diff
+
+tests/test_issue.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_last_n_zero - assert [1, 2, 3] == []
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_zero&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py .                                                    [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_issue.py::test_last_n_zero
+============================== 1 passed in 0.01s ===============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 3 items
+
+tests/test_existing.py ...                                               [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_existing.py::test_last_n_basic
+PASSED tests/test_existing.py::test_first_n_basic
+PASSED tests/test_existing.py::test_first_n_negative
+============================== 3 passed in 0.01s ===============================
+</pre><pre></pre></details>
+<h2>Other mutants</h2><details><summary>m2 · killed: exit 1, 1 failed in 0.02s</summary><p>Guards n == 1, so last_n([1, 2, 3], 0) returns the whole list.</p><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,6 +1,6 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    if n == 0:</span><span class="line add">+    if n == 1:</span><span class="line">         return []</span><span class="line">     return items[-n:]</span><span class="line"> </span></pre><pre>from pkg.window import last_n
+last_n([1, 2, 3], 0)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_zero&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+_______________________________ test_last_n_zero _______________________________
+
+    def test_last_n_zero():
+&gt;       assert last_n([1, 2, 3], 0) == []
+E       assert [1, 2, 3] == []
+E         
+E         Left contains 3 more items, first extra item: 1
+E         Use -v to get more diff
+
+tests/test_issue.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_last_n_zero - assert [1, 2, 3] == []
+============================== 1 failed in 0.02s ===============================
+</pre><pre></pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>nonfix_last_n/original+test<br><span class='muted'>@d2ecc66e-22b5-4f70-8738-dec20fd16105</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.171</td><td>0.40</td><td>$0.00186</td><td>15 s</td></tr><tr><td>nonfix_last_n/patched+test<br><span class='muted'>@d2ecc66e-22b5-4f70-8738-dec20fd16105</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.163</td><td>0.39</td><td>$0.00178</td><td>15 s</td></tr><tr><td>nonfix_last_n/patched+p2p<br><span class='muted'>@d2ecc66e-22b5-4f70-8738-dec20fd16105</span></td><td>0</td><td>3 passed in 0.01s</td><td>0.159</td><td>0.37</td><td>$0.00174</td><td>45 s</td></tr><tr><td>nonfix_last_n/mutant-m1+test<br><span class='muted'>@d2ecc66e-22b5-4f70-8738-dec20fd16105</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.158</td><td>0.37</td><td>$0.00173</td><td>15 s</td></tr><tr><td>nonfix_last_n/witness-patched-m1<br><span class='muted'>@d2ecc66e-22b5-4f70-8738-dec20fd16105</span></td><td>0</td><td></td><td>0.027</td><td>0.15</td><td>$0.00033</td><td>10 s</td></tr><tr><td>nonfix_last_n/witness-mutant-m1<br><span class='muted'>@d2ecc66e-22b5-4f70-8738-dec20fd16105</span></td><td>0</td><td></td><td>0.027</td><td>0.16</td><td>$0.00033</td><td>10 s</td></tr><tr><td>nonfix_last_n/mutant-m2+test<br><span class='muted'>@d2ecc66e-22b5-4f70-8738-dec20fd16105</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.158</td><td>0.37</td><td>$0.00173</td><td>15 s</td></tr></table>
+</main></body></html>
