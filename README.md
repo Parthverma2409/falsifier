@@ -10,6 +10,10 @@ _TODO: describe the problem Falsifier addresses._
 
 _TODO: describe the red, patch, green loop and how evidence is collected._
 
+**"Benchmark oracle" means the repository's own FAIL_TO_PASS tests**, as listed in SWE-bench
+Verified. It does not mean a reproduction of SWE-bench's harness, which Falsifier does not
+reimplement. The "SWE-bench says" column is the dataset's published label (`falsifier/official.py`).
+
 ## Verdicts
 
 _TODO: list the possible verdicts and what each one means._
@@ -35,7 +39,18 @@ Settings live in `falsifier/config.py`; this list mirrors it.
 
 ## Limitations
 
-_TODO: known limitations._
+This section names real holes, as they are found. The full list is written after the run.
+
+- **Equivalence is relative to the input domain, not absolute.** Falsifier discards a surviving
+  mutant as equivalent when its own witness cannot tell it apart from the patch. That discard is
+  sound only within the domain the witness explores. A mutant equivalent over one domain can be
+  distinguishable over a wider one. `clamp` with `x > hi - 1` is the same as the patch for
+  integers and different for `clamp(9.5, 0, 10)`. If the code accepts more than its witness
+  tries, a discarded mutant may be a real survivor, and EARNED may be too generous.
+  The fixtures `earned_clamp` (integers only, enforced) and `unearned_clamp_float` (floats
+  accepted, integer-only test) pin both sides. We found this when our own oracle contradicted
+  our own fixture: the fixture said `killed`, the oracle said `equivalent`, and the oracle was
+  right.
 
 ## Prior art
 

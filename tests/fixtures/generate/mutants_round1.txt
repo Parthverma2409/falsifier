@@ -1,6 +1,11 @@
 ### MUTANT 9
 KIND: too-narrow
 RATIONALE: Only handles n == 0, so a negative n such as -2 still slices from the front.
+WITNESS:
+```python
+from pkg.window import last_n
+last_n([1, 2, 3], -2)
+```
 ```diff
 --- a/pkg/window.py
 +++ b/pkg/window.py
@@ -16,6 +21,11 @@ RATIONALE: Only handles n == 0, so a negative n such as -2 still slices from the
 ### MUTANT 10
 KIND: off-by-one
 RATIONALE: Treats n=1 as empty, so last_n([1, 2], 1) returns [] instead of [2].
+WITNESS:
+```python
+from pkg.window import last_n
+last_n([1, 2], 1)
+```
 ```diff
 --- a/pkg/window.py
 +++ b/pkg/window.py

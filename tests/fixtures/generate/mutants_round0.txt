@@ -1,6 +1,11 @@
 ### MUTANT 1
 KIND: off-by-one
 RATIONALE: Uses n < 0, so n=0 still slices items[-0:] and returns the whole list.
+WITNESS:
+```python
+from pkg.window import last_n
+last_n([1, 2, 3], 0)
+```
 ```diff
 --- a/pkg/window.py
 +++ b/pkg/window.py
@@ -16,6 +21,11 @@ RATIONALE: Uses n < 0, so n=0 still slices items[-0:] and returns the whole list
 ### MUTANT 2
 KIND: wrong-condition
 RATIONALE: Guards on an empty list instead of a non-positive n, so last_n([1, 2], 0) still returns everything.
+WITNESS:
+```python
+from pkg.window import last_n
+last_n([1, 2], 0)
+```
 ```diff
 --- a/pkg/window.py
 +++ b/pkg/window.py
@@ -31,6 +41,11 @@ RATIONALE: Guards on an empty list instead of a non-positive n, so last_n([1, 2]
 ### MUTANT 3
 KIND: too-narrow
 RATIONALE: Context does not match the source, so this cannot apply.
+WITNESS:
+```python
+from pkg.window import last_n
+last_n([1, 2, 3], 0)
+```
 ```diff
 --- a/pkg/window.py
 +++ b/pkg/window.py
@@ -46,6 +61,11 @@ RATIONALE: Context does not match the source, so this cannot apply.
 ### MUTANT 4
 KIND: wrong-condition
 RATIONALE: Drops the colon, which does not parse.
+WITNESS:
+```python
+from pkg.window import last_n
+last_n([1, 2, 3], 0)
+```
 ```diff
 --- a/pkg/window.py
 +++ b/pkg/window.py
@@ -61,6 +81,11 @@ RATIONALE: Drops the colon, which does not parse.
 ### MUTANT 5
 KIND: silences-symptom
 RATIONALE: Reads the queue without popping, so the loop never ends.
+WITNESS:
+```python
+from pkg.window import drain
+drain([1, 2])
+```
 ```diff
 --- a/pkg/window.py
 +++ b/pkg/window.py
@@ -77,6 +102,11 @@ RATIONALE: Reads the queue without popping, so the loop never ends.
 ### MUTANT 6
 KIND: silences-symptom
 RATIONALE: Removes the guard entirely, which is just the original code.
+WITNESS:
+```python
+from pkg.window import last_n
+last_n([1, 2, 3], 0)
+```
 ```diff
 --- a/pkg/window.py
 +++ b/pkg/window.py
@@ -91,6 +121,11 @@ RATIONALE: Removes the guard entirely, which is just the original code.
 ### MUTANT 7
 KIND: wrong-condition
 RATIONALE: Loops forever on a constant condition.
+WITNESS:
+```python
+from pkg.window import drain
+drain([1, 2])
+```
 ```diff
 --- a/pkg/window.py
 +++ b/pkg/window.py

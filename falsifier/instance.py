@@ -177,3 +177,92 @@ async def build_fixture(client, guard: SpendGuard, upload: Uploader, base, inst:
         inst.timeouts.files,
         files=files,
     )
+
+
+# ---------------------------------------------------------------------------------------------
+# SWE-bench Verified instances (official harness images)
+
+SWEBENCH_WORKDIR = "/testbed"
+SWEBENCH_ENV = "export HOME=/root PATH=/opt/miniconda3/envs/testbed/bin:$PATH"
+"""Sandboxes have no $HOME (git config --global fails without it), and putting the conda env on
+PATH replaces `conda activate`, which cost 0.18 CPU-s per fork (docs/probe_instances.md)."""
+SWEBENCH_TIMEOUTS = Timeouts(test=30, regression=60, witness=15, build=120, files=20)
+"""Measured on these images (docs/probe_instances.md): targeted test 0.5-0.75 s wall, PASS_TO_PASS
+0.8-2.8 s, build 1.3-3.8 s. Generous multiples, because pytester-based tests vary more."""
+REPOS = ROOT / ".cache" / "repos"
+
+
+def install_steps(eval_script: str) -> list[str]:
+    """The harness's install lines: after the second `conda activate testbed`, up to the first
+    `git checkout` or `git apply`."""
+    lines = eval_script.splitlines()
+    acts = [i for i, ln in enumerate(lines) if ln.strip() == "conda activate testbed"]
+    out = []
+    for ln in lines[acts[1] + 1 :]:
+        if ln.startswith(("git checkout", "git apply")):
+            break
+        if ln.strip():
+            out.append(ln.strip())
+    return out
+
+
+def checkout(repo: str, commit: str, dest: Path) -> Path:
+    """A local copy of the repository at `commit`, read to turn patches into exact overlays.
+    Its files are read, never executed."""
+    import subprocess
+
+    if not (dest / ".git").exists():
+        dest.mkdir(parents=True, exist_ok=True)
+        git = ["git", "-C", str(dest)]
+        subprocess.run([*git, "init", "-q"], check=True)
+        subprocess.run(
+            [*git, "remote", "add", "origin", f"https://github.com/{repo}.git"], check=True
+        )
+        subprocess.run([*git, "fetch", "-q", "--depth", "1", "origin", commit], check=True)
+        subprocess.run([*git, "checkout", "-q", "FETCH_HEAD"], check=True)
+    head = subprocess.run(
+        ["git", "-C", str(dest), "rev-parse", "HEAD"], capture_output=True, text=True, check=True
+    ).stdout.strip()
+    if head != commit:
+        raise RuntimeError(f"{dest} is at {head}, expected {commit}")
+    return dest
+
+
+def load_swebench(row: dict) -> Instance:
+    from falsifier.generate import tree_reader, validate_diff
+    from falsifier.official import official
+
+    o = official(row)
+    repo_dir = checkout(row["repo"], row["base_commit"], REPOS / row["instance_id"])
+    read = tree_reader(repo_dir)
+    gold, test = validate_diff(row["patch"], read), validate_diff(row["test_patch"], read)
+    return Instance(
+        id=row["instance_id"],
+        workdir=SWEBENCH_WORKDIR,
+        env=SWEBENCH_ENV,
+        issue=row["problem_statement"],
+        f2p=o.fail_to_pass,
+        p2p=o.pass_to_pass,
+        p2p_files=test.paths,
+        patched={p: t for p, t in gold.after.items() if t is not None},
+        test={p: t for p, t in test.after.items() if t is not None},
+        gold_diff=gold.diff,
+        test_diff=test.diff,
+        mutants=[],
+        timeouts=SWEBENCH_TIMEOUTS,
+        expected_verdict=None,
+    )
+
+
+async def build_swebench(client, guard: SpendGuard, inst: Instance, row: dict):
+    """Warm checkpoint: the official image after the harness's install step."""
+    base = await client.images.oci(row["image"])
+    install = " && ".join(install_steps(row["eval_script"]))
+    shell = (
+        f"{inst.env} && cd {inst.workdir} && git config --global --add safe.directory "
+        f"{inst.workdir} && {install}"
+    )
+    key = f"swebench:{inst.id}:" + _digest(row["image"], shell)
+    return await _checkpoint(
+        client, guard, key, f"{inst.id}/build", base, shell, inst.timeouts.build
+    )

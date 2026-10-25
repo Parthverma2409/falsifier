@@ -41,18 +41,19 @@ details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
 </style></head><body><main>
 <h1>nonfix_slugify</h1>
 <p class="muted">slugify should trim and collapse whitespace: slugify(&quot;Hello  World &quot;) should be &quot;hello-world&quot;. The patch only trims.</p>
+
 <div class="verdict UNEARNED">UNEARNED</div>
 <p>Expected <b>UNEARNED</b> · <span class="ok">agrees</span></p>
 <p class="reason">the test fails on the original (exit 1, 1 failed in 0.02s) and passes on the patch (exit 0, 1 passed in 0.01s); all 2 PASS_TO_PASS tests PASSED. Surviving mutants: m1 (wrong-condition) passes the test (exit 0) and differs on its witness: the patch returns &#x27;hello--world&#x27; (exit 0), the mutant returns &#x27;hello-world&#x27; (exit 0)</p>
 <p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint 813dc3a0-6289-4427-95f7-e7b63d8db944 ·
-7 forks · 0.86 CPU-s · $0.0095 · 2026-10-25T13:10:51+00:00</p>
+7 forks · 0.86 CPU-s · $0.0095 · 2026-10-25T13:24:18+00:00</p>
 <h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · wrong-condition<br><span class="status survived">survived</span><br><span class="muted">Splits on any whitespace run (the full fix), so slugify(&quot;Hello  World&quot;) gives &quot;hello-world&quot; where the patch gives &quot;hello--world&quot;.</span></div><div class="card"><b>m2</b> · too-narrow<br><span class="status killed">killed</span><br><span class="muted">Strips only the left side, so slugify(&quot;Hello World &quot;) keeps a trailing hyphen.</span></div></div>
 <h2>Survivors</h2>
 <section class="box" style="margin-top:1rem">
   <h3>Mutant m1 survived · wrong-condition</h3>
   <div class="pair">
     <div><p><b>Rationale.</b> Splits on any whitespace run (the full fix), so slugify(&quot;Hello  World&quot;) gives &quot;hello-world&quot; where the patch gives &quot;hello--world&quot;.</p><pre><span class="line">--- a/pkg/text.py</span><span class="line">+++ b/pkg/text.py</span><span class="line">@@ -1,3 +1,3 @@</span><span class="line"> def slugify(title):</span><span class="line">     &quot;&quot;&quot;Lower-case a title and join its words with single hyphens.&quot;&quot;&quot;</span><span class="line del">-    return title.strip().lower().replace(&quot; &quot;, &quot;-&quot;)</span><span class="line add">+    return &quot;-&quot;.join(title.lower().split())</span></pre></div>
-    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.157 CPU-s · 0.37 s · $0.00172</p><pre>from pkg.text import slugify
+    <div><p><b>The test that did not catch it</b> · <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.155 CPU-s · 0.36 s · $0.00170</p><pre>from pkg.text import slugify
 
 
 def test_slugify_trailing_space():
@@ -86,9 +87,9 @@ PASSED tests/test_issue.py::test_slugify_trailing_space
 </pre><pre></pre></details>
 </section>
 <h2>Baseline forks</h2>
-<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.164 CPU-s · 0.36 s · $0.00179<br>
-patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.163 CPU-s · 0.38 s · $0.00178<br>
-patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.165 CPU-s · 0.39 s · $0.00180</p>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.162 CPU-s · 0.38 s · $0.00177<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.162 CPU-s · 0.38 s · $0.00177<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.158 CPU-s · 0.35 s · $0.00173</p>
 <div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/text.py</span><span class="line">+++ b/pkg/text.py</span><span class="line">@@ -1,3 +1,3 @@</span><span class="line"> def slugify(title):</span><span class="line">     &quot;&quot;&quot;Lower-case a title and join its words with single hyphens.&quot;&quot;&quot;</span><span class="line del">-    return title.lower().replace(&quot; &quot;, &quot;-&quot;)</span><span class="line add">+    return title.strip().lower().replace(&quot; &quot;, &quot;-&quot;)</span></pre></div>
 <div><h3>The test</h3><pre>from pkg.text import slugify
 
@@ -166,5 +167,5 @@ tests/test_issue.py:5: AssertionError
 FAILED tests/test_issue.py::test_slugify_trailing_space - AssertionError: ass...
 ============================== 1 failed in 0.02s ===============================
 </pre><pre></pre></details></details>
-<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>nonfix_slugify/original+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.164</td><td>0.36</td><td>$0.00179</td><td>15 s</td></tr><tr><td>nonfix_slugify/patched+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.163</td><td>0.38</td><td>$0.00178</td><td>15 s</td></tr><tr><td>nonfix_slugify/patched+p2p<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td>2 passed in 0.01s</td><td>0.165</td><td>0.39</td><td>$0.00180</td><td>45 s</td></tr><tr><td>nonfix_slugify/mutant-m1+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.157</td><td>0.37</td><td>$0.00172</td><td>15 s</td></tr><tr><td>nonfix_slugify/witness-patched-m1<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td></td><td>0.027</td><td>0.16</td><td>$0.00032</td><td>10 s</td></tr><tr><td>nonfix_slugify/witness-mutant-m1<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td></td><td>0.026</td><td>0.15</td><td>$0.00031</td><td>10 s</td></tr><tr><td>nonfix_slugify/mutant-m2+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.162</td><td>0.36</td><td>$0.00177</td><td>15 s</td></tr></table>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>nonfix_slugify/original+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.162</td><td>0.38</td><td>$0.00177</td><td>15 s</td></tr><tr><td>nonfix_slugify/patched+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.162</td><td>0.38</td><td>$0.00177</td><td>15 s</td></tr><tr><td>nonfix_slugify/patched+p2p<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td>2 passed in 0.01s</td><td>0.158</td><td>0.35</td><td>$0.00173</td><td>45 s</td></tr><tr><td>nonfix_slugify/mutant-m1+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.155</td><td>0.36</td><td>$0.00170</td><td>15 s</td></tr><tr><td>nonfix_slugify/witness-patched-m1<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td></td><td>0.027</td><td>0.17</td><td>$0.00033</td><td>10 s</td></tr><tr><td>nonfix_slugify/witness-mutant-m1<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>0</td><td></td><td>0.026</td><td>0.15</td><td>$0.00031</td><td>10 s</td></tr><tr><td>nonfix_slugify/mutant-m2+test<br><span class='muted'>@813dc3a0-6289-4427-95f7-e7b63d8db944</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.171</td><td>0.39</td><td>$0.00186</td><td>15 s</td></tr></table>
 </main></body></html>

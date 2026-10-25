@@ -41,17 +41,18 @@ details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
 </style></head><body><main>
 <h1>broken_clamp</h1>
 <p class="muted">clamp(x, lo, hi) ignores hi: clamp(15, 0, 10) returns 15 instead of 10.</p>
+
 <div class="verdict BROKEN">BROKEN</div>
 <p>Expected <b>BROKEN</b> · <span class="ok">agrees</span></p>
 <p class="reason">the test passed on the original code (exit 0, 1 passed in 0.01s), so it never reproduced the bug; no mutant forks were spent</p>
 <p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint 924f3262-d759-4983-99d5-9bb41e372e51 ·
-3 forks · 0.49 CPU-s · $0.0054 · 2026-10-25T13:10:16+00:00</p>
+3 forks · 0.49 CPU-s · $0.0054 · 2026-10-25T13:23:39+00:00</p>
 <h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status not-run">not run</span><br><span class="muted">Clamps only above hi + 1, so clamp(11, 0, 10) returns 11.</span></div></div>
 
 <h2>Baseline forks</h2>
-<p>original + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.163 CPU-s · 0.37 s · $0.00178<br>
-patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.164 CPU-s · 0.37 s · $0.00179<br>
-patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.164 CPU-s · 0.38 s · $0.00179</p>
+<p>original + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.162 CPU-s · 0.38 s · $0.00177<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.167 CPU-s · 0.42 s · $0.00182<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.165 CPU-s · 0.40 s · $0.00180</p>
 <div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/numeric.py</span><span class="line">+++ b/pkg/numeric.py</span><span class="line">@@ -2,4 +2,6 @@ def clamp(x, lo, hi):</span><span class="line">     &quot;&quot;&quot;Clamp x into the closed range [lo, hi].&quot;&quot;&quot;</span><span class="line">     if x &lt; lo:</span><span class="line">         return lo</span><span class="line add">+    if x &gt; hi:</span><span class="line add">+        return hi</span><span class="line">     return x</span></pre></div>
 <div><h3>The test</h3><pre>from pkg.numeric import clamp
 
@@ -95,5 +96,5 @@ PASSED tests/test_existing.py::test_clamp_inside
 ============================== 2 passed in 0.01s ===============================
 </pre><pre></pre></details>
 
-<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>broken_clamp/original+test<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.163</td><td>0.37</td><td>$0.00178</td><td>15 s</td></tr><tr><td>broken_clamp/patched+test<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.164</td><td>0.37</td><td>$0.00179</td><td>15 s</td></tr><tr><td>broken_clamp/patched+p2p<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>2 passed in 0.01s</td><td>0.164</td><td>0.38</td><td>$0.00179</td><td>45 s</td></tr></table>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>broken_clamp/original+test<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.162</td><td>0.38</td><td>$0.00177</td><td>15 s</td></tr><tr><td>broken_clamp/patched+test<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.167</td><td>0.42</td><td>$0.00182</td><td>15 s</td></tr><tr><td>broken_clamp/patched+p2p<br><span class='muted'>@924f3262-d759-4983-99d5-9bb41e372e51</span></td><td>0</td><td>2 passed in 0.01s</td><td>0.165</td><td>0.40</td><td>$0.00180</td><td>45 s</td></tr></table>
 </main></body></html>

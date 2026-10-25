@@ -294,6 +294,11 @@ MUTANT_VS_ORIGINAL = '''\
 ### MUTANT 1
 KIND: off-by-one
 RATIONALE: Guards n < 0 instead of n <= 0, so n=0 still returns the whole list.
+WITNESS:
+```python
+from pkg.window import last_n
+last_n([1, 2, 3], 0)
+```
 ```diff
 --- a/pkg/window.py
 +++ b/pkg/window.py
@@ -421,7 +426,8 @@ def test_revert_with_different_formatting_is_still_a_revert(repo, tmp_path):
     """The structural check: removing the guard but leaving a stray comment and blank line is
     still the original code."""
     revert = (
-        "### MUTANT 1\nKIND: silences-symptom\nRATIONALE: Drops the guard.\n```diff\n"
+        "### MUTANT 1\nKIND: silences-symptom\nRATIONALE: Drops the guard.\n"
+        "WITNESS:\n```python\nfrom pkg.window import last_n\nlast_n([1], 0)\n```\n```diff\n"
         "--- a/pkg/window.py\n+++ b/pkg/window.py\n@@ -1,5 +1,5 @@\n"
         " def last_n(items, n):\n"
         '     """Return the last n items of a list."""\n'
@@ -431,3 +437,31 @@ def test_revert_with_different_formatting_is_still_a_revert(repo, tmp_path):
     llm = make_llm(tmp_path, [revert] * 3)
     assert propose_mutants(GOLD, 1, repo_dir=repo, llm=llm) == []
     assert "identical" in llm.events[0]["rejected"][0]["reason"]
+
+
+def test_witness_is_required_and_must_end_in_an_expression():
+    def block(witness):
+        return (
+            "### MUTANT 1\nKIND: off-by-one\nRATIONALE: r\n"
+            + (f"WITNESS:\n```python\n{witness}\n```\n" if witness is not None else "")
+            + "```diff\n--- a/x.py\n+++ b/x.py\n```\n"
+        )
+
+    assert parse_mutants(block("from m import f\nf(0)"))[0].get("parse_error") is None
+    assert parse_mutants(block("from m import f\nf(0)"))[0]["witness"] == "from m import f\nf(0)"
+    assert "no WITNESS" in parse_mutants(block(None))[0]["parse_error"]
+    assert "end with one expression" in parse_mutants(block("x = 1"))[0]["parse_error"]
+    assert "does not parse" in parse_mutants(block("f(("))[0]["parse_error"]
+
+
+def test_records_carry_the_witness(repo, tmp_path):
+    from falsifier.generate import propose_mutant_records
+
+    answers = [(FIXTURES / f"mutants_round{i}.txt").read_text() for i in (0, 1)]
+    recs = propose_mutant_records(GOLD, 4, repo_dir=repo, llm=make_llm(tmp_path, answers))
+    assert [r["witness"].splitlines()[-1] for r in recs] == [
+        "last_n([1, 2, 3], 0)",
+        "last_n([1, 2], 0)",
+        "last_n([1, 2, 3], -2)",
+        "last_n([1, 2], 1)",
+    ]

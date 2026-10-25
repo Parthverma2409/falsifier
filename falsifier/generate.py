@@ -668,6 +668,12 @@ Format each mutant exactly like this:
 KIND: <off-by-one | wrong-condition | too-narrow | silences-symptom>
 RATIONALE: <one sentence: what this gets wrong, and the concrete input on which it differs
 from the correct patch>
+WITNESS:
+```python
+<Python run from the repository root: import what it needs, then end with ONE expression
+evaluating the input the rationale names. Its value, or the exception it raises, must differ
+between the correct patch and this mutant. No network, files, randomness, time or printing.>
+```
 ```diff
 --- a/<path>
 +++ b/<path>
@@ -696,7 +702,8 @@ MUTANT_REASK = """\
 
 Write {k} new mutants in the same format, numbered from {start}. They must differ from every
 accepted mutant (accepted kinds and rationales: {accepted_list}). Write them against the original
-source, copy context lines exactly, and keep every loop terminating."""
+source, copy context lines exactly, give each a WITNESS that ends in one expression, and keep
+every loop terminating."""
 
 FIX_REASK = """\
 That answer was rejected: {error}
@@ -814,37 +821,64 @@ def _label(block: str, name: str) -> str | None:
     return m.group(1).strip() if m else None
 
 
+_WITNESS = re.compile(r"WITNESS[\s*_]*:[\s*_]*\n*```python[^\n]*\n(.*?)```", re.S | re.I)
+
+
+def witness_problem(src: str) -> str | None:
+    """A witness must parse and end in an expression: verify evaluates that expression on the
+    patch and on the mutant and compares the value or exception."""
+    try:
+        tree = ast.parse(src)
+    except SyntaxError as exc:
+        return f"WITNESS does not parse: {exc}"
+    if not tree.body or not isinstance(tree.body[-1], ast.Expr):
+        return "WITNESS must end with one expression"
+    return None
+
+
 def parse_mutants(text: str) -> list[dict]:
-    """Split a mutant answer into {kind, rationale, diff} blocks; malformed blocks keep a
+    """Split a mutant answer into {kind, rationale, witness, diff} blocks; malformed blocks keep a
     `parse_error` so they are reported as rejections rather than silently lost."""
     starts = [m.start() for m in _MUTANT_HEAD.finditer(text)]
     out = []
     for i, s in enumerate(starts):
         block = text[s : starts[i + 1] if i + 1 < len(starts) else len(text)]
         kind, why = _label(block, "KIND"), _label(block, "RATIONALE")
+        w = _WITNESS.search(block)
+        witness = w.group(1).strip("\n") if w else None
         diff = extract_block(block, "diff")
-        m = {"kind": kind, "rationale": why, "diff": diff}
+        m = {"kind": kind, "rationale": why, "witness": witness, "diff": diff}
         if not why:
             m["parse_error"] = "no RATIONALE line"
+        elif witness is None:
+            m["parse_error"] = "no WITNESS ```python block"
+        elif problem := witness_problem(witness):
+            m["parse_error"] = problem
         elif diff is None:
             m["parse_error"] = "no ```diff block"
         out.append(m)
     return out
 
 
-def propose_mutants(
+def propose_mutants(patch: str, n: int, **kwargs) -> list[tuple[str, str]]:
+    """(diff, rationale) pairs. propose_mutant_records gives full records, with witnesses."""
+    return [(r["diff"], r["rationale"]) for r in propose_mutant_records(patch, n, **kwargs)]
+
+
+def propose_mutant_records(
     patch: str,
     n: int,
     *,
     repo_dir: Path,
     issue_text: str = "",
     llm: LLM | None = None,
-) -> list[tuple[str, str]]:
-    """Up to n plausible wrong fixes of `patch`, as (unified diff against the patched tree,
-    one-sentence rationale). Every diff applies cleanly to the patched tree, touches only files
-    the patch touches, leaves them parseable, differs from both the patch and the original, and
-    keeps a reachable exit in any loop it touches. Whether a mutant is actually wrong is not
-    decided here.
+) -> list[dict]:
+    """Up to n plausible wrong fixes of `patch`, as records with the unified diff against the
+    patched tree, a one-sentence rationale, the kind, and a WITNESS: Python ending in one
+    expression on which the mutant should differ from the patch. Every diff applies cleanly to
+    the patched tree, touches only files the patch touches, leaves them parseable, differs from
+    both the patch and the original, and keeps a reachable exit in any loop it touches. Whether
+    a mutant is actually wrong is not decided here.
 
     The model writes each mutant as an alternative fix against the original source (it does so
     even when asked otherwise; first live run, 2026-10-25). Its diff is validated against the
@@ -972,7 +1006,8 @@ def propose_mutants(
         ]
     if len(accepted) < n:
         log.warning("mutants: %d of %d after %d re-ask rounds", len(accepted), n, MAX_REASK_ROUNDS)
-    return [(a["diff"], a["rationale"]) for a in accepted]
+    keep = ("diff", "rationale", "kind", "witness", "model_diff", "strict_clean", "repaired")
+    return [{k: a.get(k) for k in keep} for a in accepted]
 
 
 def canonical(path: str, text: str | None) -> str | None:

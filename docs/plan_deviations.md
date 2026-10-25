@@ -355,3 +355,56 @@ exact text. Over the 154 cached flask-5014 mutants (19 responses):
 
 **Phase 1 sandbox spend:** $0.1985 across two full fixture runs. The second run re-checked the evidence
 after the P2P-recording fix.
+
+## 2026-10-25: after hard stop 1 (Parth's decisions)
+
+**`earned_clamp` m4 corrected to `equivalent`**, with Parth's agreement on the analysis. The fixture
+now makes its domain explicit: `clamp` is annotated `int` and raises `TypeError` for anything else, so
+the equivalence holds over the whole domain by construction instead of implicitly. m4's witness is
+now `clamp(9.5, 0, 10)`, just outside that domain, and both versions raise `TypeError`.
+
+**New fixture `unearned_clamp_float`**, the domain-wider-than-coverage case. clamp accepts floats, the
+test covers integers only, and m4 (`x > hi - 1`) has witness `clamp(9.5, 0, 10)`: the patch returns 9.5 and the
+mutant returns 10. Expected verdict UNEARNED, with m4 `survived`.
+
+**Limitation: equivalence is relative to the input domain, not absolute.** A mutant equivalent over
+one domain can be distinguishable over a wider one, so the equivalence discard is sound only
+within the domain its witness explores. **How we found it:** our own oracle contradicted our own
+fixture. The fixture expected m4 `killed`, verify reported `equivalent` with both witness runs
+returning 9 (exit 0, exit 0), and the fixture was wrong. The limitation is also in the README.
+
+**Configuration B, later.** Gate the PASS_TO_PASS fork behind the original-code fork instead of
+launching them in parallel, so a BROKEN verdict does not pay for the regression suite.
+Configuration A keeps them in parallel: BROKEN should be impossible there, because FAIL_TO_PASS fails on
+the original by construction.
+
+## 2026-10-25: phase 2 (official.py, five instances built and checked)
+
+**`official.py` is thin.** It returns the dataset's published label for the gold patch, RESOLVED by
+construction, plus the FAIL_TO_PASS and PASS_TO_PASS lists. It runs nothing and reproduces none of the
+harness's logic. The README says "benchmark oracle" means the repository's own FAIL_TO_PASS tests.
+
+**Instances.** Five, from the three lightest repos measured; no django, sympy, astropy or matplotlib:
+- `pallets__flask-5014`
+- `psf__requests-5414`
+- `psf__requests-6028`
+- `pytest-dev__pytest-7432`
+- `pytest-dev__pytest-7571`
+
+All have FAIL_TO_PASS ids without spaces, so they can be run directly. Each is built from the
+official harness image by running the harness's own install step once (`disposable=False`).
+
+**Overlays.** Patches become exact file overlays by applying them to a local checkout at the base
+commit (`.cache/repos`, gitignored; the files are read, never executed).
+
+**Environment check (all five pass).** FAIL_TO_PASS fails on the original and passes with the gold
+patch, in forks of the warm checkpoint. None came back BROKEN.
+
+**requests installs non-editable (`pip install .`).** Its tests still import `/testbed/requests` from
+source: the gold-patched fork passes without a reinstall.
+
+**`generate.py` now asks for a WITNESS with every mutant.** It must be a Python block ending in one
+expression, the input the rationale names. Mutants without a well-formed witness are rejected
+and re-asked. `propose_mutant_records` returns records with the witness;
+`propose_mutants` still returns (diff, rationale). The new prompt has not been run live yet; phase 3
+is its first use.
