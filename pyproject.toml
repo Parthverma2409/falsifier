@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "falsifier"
+version = "0.0.1"
+description = "Evidence-gated verification of model-proposed patches in Nebius Sandboxes."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Parth Verma" }]
+# contree-sdk supports <3.15; dev docs target 3.10-3.13. This project is tested on 3.12.
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "openai==3.37.0",
+    "contree-sdk==0.3.6",
+    "python-dotenv==1.2.4",
+    "rich==15.0.0",
+    "jinja2==3.1.6",
+    "datasets==5.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "ruff==0.17.2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
