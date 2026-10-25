@@ -824,15 +824,37 @@ def _label(block: str, name: str) -> str | None:
 _WITNESS = re.compile(r"WITNESS[\s*_]*:[\s*_]*\n*```python[^\n]*\n(.*?)```", re.S | re.I)
 
 
+_PY_C = re.compile(r"^\s*python3?\s+-c\s+([\"'])(.*)\1\s*$", re.S)
+
+
+def normalize_witness(src: str) -> str:
+    """Deterministic clean-up of the two off-contract forms the model wrote on its first live run
+    (phase 3, 2026-10-25): a shell wrapper `python3 -c "..."` (flask, requests-5414) and a doctest
+    transcript with `>>>` prompts and claimed outputs (requests-6028). The claimed outputs are
+    dropped: they are the model's assertions, and only execution counts."""
+    src = src.strip("\n")
+    if m := _PY_C.match(src):
+        src = m.group(2).replace('\\"', '"') if m.group(1) == '"' else m.group(2)
+    lines = src.splitlines()
+    if any(ln.lstrip().startswith(">>>") for ln in lines):
+        code = []
+        for ln in lines:
+            s = ln.lstrip()
+            if s.startswith(">>>") or s.startswith("..."):
+                code.append(s[4:] if s[3:4] == " " else s[3:])
+        src = "\n".join(code)
+    return src.strip("\n")
+
+
 def witness_problem(src: str) -> str | None:
-    """A witness must parse and end in an expression: verify evaluates that expression on the
-    patch and on the mutant and compares the value or exception."""
+    """A witness must parse. verify runs it on the patch and on the mutant and compares its final
+    expression's value or exception and everything it prints."""
     try:
         tree = ast.parse(src)
     except SyntaxError as exc:
         return f"WITNESS does not parse: {exc}"
-    if not tree.body or not isinstance(tree.body[-1], ast.Expr):
-        return "WITNESS must end with one expression"
+    if not tree.body:
+        return "WITNESS is empty"
     return None
 
 
@@ -845,7 +867,7 @@ def parse_mutants(text: str) -> list[dict]:
         block = text[s : starts[i + 1] if i + 1 < len(starts) else len(text)]
         kind, why = _label(block, "KIND"), _label(block, "RATIONALE")
         w = _WITNESS.search(block)
-        witness = w.group(1).strip("\n") if w else None
+        witness = normalize_witness(w.group(1)) if w else None
         diff = extract_block(block, "diff")
         m = {"kind": kind, "rationale": why, "witness": witness, "diff": diff}
         if not why:

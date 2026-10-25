@@ -8,6 +8,7 @@ into a fork of the warm checkpoint, so no fork has to run `git apply`.
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import tomllib
@@ -15,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from falsifier.config import FIXTURE_TIMEOUTS, ROOT, Timeouts
-from falsifier.generate import make_diff
+from falsifier.generate import changed_new_lines, make_diff
 from falsifier.sandbox import SpendGuard, Uploader, guarded_run
 
 FIXTURES_DIR = ROOT / "falsifier" / "fixtures"
@@ -27,7 +28,7 @@ FIXTURE_SETUP = (
     "pip install --no-cache-dir --quiet --disable-pip-version-check pytest==8.3.5"
     " && python -m pytest --version"
 )
-FIXTURE_ENV = "export HOME=/root"
+FIXTURE_ENV = "export HOME=/root PYTHONDONTWRITEBYTECODE=1"
 FIXTURE_WORKDIR = "/work"
 
 
@@ -66,6 +67,54 @@ class Instance:
     fixture_class: str | None = None
     domain: str | None = None
     """The inputs the code under audit accepts. Equivalence is only sound within it."""
+    canary: Mutant | None = None
+    """Negative control: the patched function's body replaced with raise AssertionError."""
+    log_parser: str | None = None
+    """SWE-bench's log parser for the repo; decides how PASS_TO_PASS ids are normalized."""
+
+
+CANARY_LINE = 'raise AssertionError("canary")'
+
+
+def make_canary(before: dict[str, str | None], after: dict[str, str]) -> Mutant | None:
+    """Built mechanically, no model: in the first patched Python file, the innermost function
+    containing a line the patch changed gets its whole body replaced with
+    `raise AssertionError("canary")`. Any test that exercises the patch must then fail; if it does
+    not, overlays are not reaching the code under test."""
+    for path in sorted(after):
+        if not path.endswith(".py"):
+            continue
+        text = after[path]
+        changed = changed_new_lines(before.get(path) or "", text)
+        funcs = [
+            n
+            for n in ast.walk(ast.parse(text))
+            if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and n.body[0].lineno > n.lineno  # skip one-line defs
+            and changed & set(range(n.lineno, n.end_lineno + 1))
+        ]
+        if not funcs:
+            continue
+        fn = min(funcs, key=lambda n: n.end_lineno - n.lineno)
+        lines = text.splitlines(keepends=True)
+        start = fn.body[0].lineno - 1
+        if fn.body[0].lineno == fn.body[0].end_lineno and not lines[start].strip():
+            continue
+        indent = " " * fn.body[0].col_offset
+        new = "".join([*lines[:start], f"{indent}{CANARY_LINE}\n", *lines[fn.end_lineno :]])
+        ast.parse(new)
+        return Mutant(
+            id="canary",
+            kind="canary",
+            rationale=(
+                f"Negative control: the body of {fn.name}() in {path}, which the patch changes, "
+                f"replaced with {CANARY_LINE}. The targeted test must fail on it."
+            ),
+            witness="",
+            overlay={path: new},
+            diff=make_diff({path: text}, {path: new}),
+        )
+    return None
 
 
 def _read_tree(root: Path) -> dict[str, str]:
@@ -110,6 +159,7 @@ def load_fixture(d: Path) -> Instance:
         expected_verdict=spec["expected_verdict"],
         fixture_class=spec["class"],
         domain=spec.get("domain"),
+        canary=make_canary({p: original.get(p) for p in patched}, patched),
     )
 
 
@@ -183,12 +233,16 @@ async def build_fixture(client, guard: SpendGuard, upload: Uploader, base, inst:
 # SWE-bench Verified instances (official harness images)
 
 SWEBENCH_WORKDIR = "/testbed"
-SWEBENCH_ENV = "export HOME=/root PATH=/opt/miniconda3/envs/testbed/bin:$PATH"
+SWEBENCH_ENV = (
+    "export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH"
+)
 """Sandboxes have no $HOME (git config --global fails without it), and putting the conda env on
 PATH replaces `conda activate`, which cost 0.18 CPU-s per fork (docs/probe_instances.md)."""
-SWEBENCH_TIMEOUTS = Timeouts(test=30, regression=60, witness=15, build=120, files=20)
-"""Measured on these images (docs/probe_instances.md): targeted test 0.5-0.75 s wall, PASS_TO_PASS
-0.8-2.8 s, build 1.3-3.8 s. Generous multiples, because pytester-based tests vary more."""
+SWEBENCH_TIMEOUTS = Timeouts(test=15, regression=20, witness=15, build=22, files=15)
+"""Measured on these images (docs/probe_instances.md, phase 2): targeted test 0.5-0.75 s wall,
+PASS_TO_PASS 0.8-2.8 s, build at most 2.19 CPU-s (so 22 s, 10x). These are the starting
+values: the largest measured targeted test (0.43 CPU-s) and PASS_TO_PASS (1.88 CPU-s) at 10x,
+floored at 15 s. Phase 3 then sets test and regression per instance from its own calibration."""
 REPOS = ROOT / ".cache" / "repos"
 
 
@@ -236,6 +290,7 @@ def load_swebench(row: dict) -> Instance:
     repo_dir = checkout(row["repo"], row["base_commit"], REPOS / row["instance_id"])
     read = tree_reader(repo_dir)
     gold, test = validate_diff(row["patch"], read), validate_diff(row["test_patch"], read)
+    patched = {p: t for p, t in gold.after.items() if t is not None}
     return Instance(
         id=row["instance_id"],
         workdir=SWEBENCH_WORKDIR,
@@ -244,13 +299,15 @@ def load_swebench(row: dict) -> Instance:
         f2p=o.fail_to_pass,
         p2p=o.pass_to_pass,
         p2p_files=test.paths,
-        patched={p: t for p, t in gold.after.items() if t is not None},
+        patched=patched,
         test={p: t for p, t in test.after.items() if t is not None},
         gold_diff=gold.diff,
         test_diff=test.diff,
         mutants=[],
         timeouts=SWEBENCH_TIMEOUTS,
         expected_verdict=None,
+        canary=make_canary(gold.before, patched),
+        log_parser=row.get("log_parser"),
     )
 
 
@@ -262,7 +319,24 @@ async def build_swebench(client, guard: SpendGuard, inst: Instance, row: dict):
         f"{inst.env} && cd {inst.workdir} && git config --global --add safe.directory "
         f"{inst.workdir} && {install}"
     )
-    key = f"swebench:{inst.id}:" + _digest(row["image"], shell)
+    # Keyed on the image and the install step only, so a change to the env prefix cannot
+    # force a rebuild (phase 3 first run: adding PYTHONDONTWRITEBYTECODE rebuilt everything).
+    key = f"swebench:{inst.id}:" + _digest(row["image"], install)
     return await _checkpoint(
         client, guard, key, f"{inst.id}/build", base, shell, inst.timeouts.build
+    )
+
+
+PYCACHE_CLEAN = "find {workdir} -name __pycache__ -type d -prune -exec rm -rf {{}} +"
+
+
+async def clean_checkpoint(client, guard: SpendGuard, inst: Instance, warm):
+    """A layer on the warm checkpoint with every __pycache__ under the work tree removed, so no
+    stale bytecode can shadow an overlaid source file (with PYTHONDONTWRITEBYTECODE=1 none is
+    written afterwards)."""
+    shell = f"{inst.env} && {PYCACHE_CLEAN.format(workdir=inst.workdir)}"
+    shell += f' && test -z "$(find {inst.workdir} -name __pycache__ -type d)"'
+    key = f"clean:{inst.id}:" + _digest(str(warm.uuid), shell)
+    return await _checkpoint(
+        client, guard, key, f"{inst.id}/clean-pycache", warm, shell, inst.timeouts.files
     )

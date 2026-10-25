@@ -98,6 +98,31 @@ class SpendGuard:
                     )
             self._cond.notify_all()
 
+    def require_room(self, label: str, usd: float) -> None:
+        """Raise before spending `usd` outside a sandbox run (model calls) if it cannot fit."""
+        if self.spent_usd + self.reserved_usd + usd > self.limits.ceiling_usd:
+            raise self._no_room(label, usd)
+
+    async def charge(self, label: str, usd: float) -> None:
+        """Record spend made outside a sandbox run (model calls) against the same ceiling."""
+        async with self._cond:
+            self.spent_usd += usd
+            if self.ledger:
+                self.ledger.parent.mkdir(parents=True, exist_ok=True)
+                with self.ledger.open("a") as f:
+                    f.write(
+                        json.dumps(
+                            {
+                                "at": datetime.now(UTC).isoformat(timespec="seconds"),
+                                "label": label,
+                                "cost_usd": usd,
+                                "charged_usd": usd,
+                            }
+                        )
+                        + "\n"
+                    )
+            self._cond.notify_all()
+
     def summary(self) -> dict:
         return {
             "ceiling_usd": self.limits.ceiling_usd,

@@ -450,8 +450,9 @@ def test_witness_is_required_and_must_end_in_an_expression():
     assert parse_mutants(block("from m import f\nf(0)"))[0].get("parse_error") is None
     assert parse_mutants(block("from m import f\nf(0)"))[0]["witness"] == "from m import f\nf(0)"
     assert "no WITNESS" in parse_mutants(block(None))[0]["parse_error"]
-    assert "end with one expression" in parse_mutants(block("x = 1"))[0]["parse_error"]
+    assert parse_mutants(block("print(f(0))"))[0].get("parse_error") is None  # stdout counts
     assert "does not parse" in parse_mutants(block("f(("))[0]["parse_error"]
+    assert "empty" in parse_mutants(block(""))[0]["parse_error"]
 
 
 def test_records_carry_the_witness(repo, tmp_path):
@@ -465,3 +466,24 @@ def test_records_carry_the_witness(repo, tmp_path):
         "last_n([1, 2, 3], -2)",
         "last_n([1, 2], 1)",
     ]
+
+
+def test_witness_normalization_on_the_first_live_run_forms():
+    """The two off-contract forms Lightning wrote in phase 3: a shell wrapper and a doctest."""
+    from falsifier.generate import normalize_witness
+
+    shell = "python3 -c \"\nfrom flask import Blueprint\nprint('x')\nBlueprint(' ', 't')\n\""
+    assert (
+        normalize_witness(shell) == "from flask import Blueprint\nprint('x')\nBlueprint(' ', 't')"
+    )
+    doctest = (
+        ">>> from requests.utils import prepend_scheme_if_needed\n"
+        ">>> prepend_scheme_if_needed('http://example.org/', 'https')\n"
+        "'https://example.org/'"
+    )
+    assert normalize_witness(doctest) == (
+        "from requests.utils import prepend_scheme_if_needed\n"
+        "prepend_scheme_if_needed('http://example.org/', 'https')"
+    )
+    plain = "from m import f\nf(1)"
+    assert normalize_witness(plain) == plain

@@ -44,15 +44,19 @@ details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
 
 <div class="verdict REGRESSED">REGRESSED</div>
 <p>Expected <b>REGRESSED</b> · <span class="ok">agrees</span></p>
-<p class="reason">1 of 3 PASS_TO_PASS tests not PASSED on the patch (exit 1, 1 failed, 2 passed in 0.02s): tests/test_existing.py::test_last_n_basic</p>
+
+<p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 1 failed in 0.02s; the canary&#x27;s AssertionError is in the log)</b></p>
+<p class="reason">1 of 3 PASS_TO_PASS tests not PASSED on the patch (exit 1, 1 failed, 2 passed in 0.02s): tests/test_existing.py::test_last_n_basic. Negative control: the canary failed the test (exit 1, 1 failed in 0.02s; the canary&#x27;s AssertionError is in the log)</p>
 <p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint c80290c9-f288-4854-8cce-75f72fd00a4f ·
-3 forks · 0.51 CPU-s · $0.0055 · 2026-10-25T13:24:21+00:00</p>
+4 forks · 0.67 CPU-s · $0.0073 · 2026-10-25T13:42:19+00:00</p>
 <h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status not-run">not run</span><br><span class="muted">Uses n &lt; 0, so n = 0 returns the whole list.</span></div></div>
 
 <h2>Baseline forks</h2>
-<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.170 CPU-s · 0.39 s · $0.00185<br>
-patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.165 CPU-s · 0.38 s · $0.00180<br>
-patched + PASS_TO_PASS: <b>FAIL</b>: exit 1, 1 failed, 2 passed in 0.02s · 0.173 CPU-s · 0.40 s · $0.00188</p>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.171 CPU-s · 0.38 s · $0.00186<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.01s · 0.161 CPU-s · 0.37 s · $0.00176<br>
+patched + PASS_TO_PASS: <b>FAIL</b>: exit 1, 1 failed, 2 passed in 0.02s · 0.172 CPU-s · 0.39 s · $0.00187<br>
+canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.170 CPU-s · 0.37 s · $0.00185</p>
+<details><summary>The canary mutant</summary><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,8 +1,5 @@</span><span class="line"> def last_n(items, n):</span><span class="line del">-    &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    if n &lt;= 0:</span><span class="line del">-        return []</span><span class="line del">-    return list(reversed(items[-n:]))</span><span class="line add">+    raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line"> </span><span class="line"> def first_n(items, n):</span></pre></details>
 <div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/window.py</span><span class="line">+++ b/pkg/window.py</span><span class="line">@@ -1,6 +1,8 @@</span><span class="line"> def last_n(items, n):</span><span class="line">     &quot;&quot;&quot;Return the last n items of a list. A non-positive n returns an empty list.&quot;&quot;&quot;</span><span class="line del">-    return items[-n:]</span><span class="line add">+    if n &lt;= 0:</span><span class="line add">+        return []</span><span class="line add">+    return list(reversed(items[-n:]))</span><span class="line"> </span><span class="line"> </span><span class="line"> def first_n(items, n):</span></pre></div>
 <div><h3>The test</h3><pre>from pkg.window import last_n
 
@@ -60,7 +64,7 @@ patched + PASS_TO_PASS: <b>FAIL</b>: exit 1, 1 failed, 2 passed in 0.02s · 0.17
 def test_last_n_zero():
     assert last_n([1, 2, 3], 0) == []
 </pre></div></div>
-<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_zero&#x27;</pre><pre>============================= test session starts ==============================
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_zero&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
 rootdir: /work
 collected 1 item
@@ -81,7 +85,7 @@ tests/test_issue.py:5: AssertionError
 =========================== short test summary info ============================
 FAILED tests/test_issue.py::test_last_n_zero - assert [1, 2, 3] == []
 ============================== 1 failed in 0.02s ===============================
-</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_zero&#x27;</pre><pre>============================= test session starts ==============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_zero&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
 rootdir: /work
 collected 1 item
@@ -92,7 +96,7 @@ tests/test_issue.py .                                                    [100%]
 =========================== short test summary info ============================
 PASSED tests/test_issue.py::test_last_n_zero
 ============================== 1 passed in 0.01s ===============================
-</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
 rootdir: /work
 collected 3 items
@@ -116,7 +120,33 @@ PASSED tests/test_existing.py::test_first_n_basic
 PASSED tests/test_existing.py::test_first_n_negative
 FAILED tests/test_existing.py::test_last_n_basic - assert [3, 2] == [2, 3]
 ========================= 1 failed, 2 passed in 0.02s ==========================
+</pre><pre></pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_last_n_zero&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+_______________________________ test_last_n_zero _______________________________
+
+    def test_last_n_zero():
+&gt;       assert last_n([1, 2, 3], 0) == []
+
+tests/test_issue.py:5: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+items = [1, 2, 3], n = 0
+
+    def last_n(items, n):
+&gt;       raise AssertionError(&quot;canary&quot;)
+E       AssertionError: canary
+
+pkg/window.py:2: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_last_n_zero - AssertionError: canary
+============================== 1 failed in 0.02s ===============================
 </pre><pre></pre></details>
 
-<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>regressed_last_n/original+test<br><span class='muted'>@c80290c9-f288-4854-8cce-75f72fd00a4f</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.170</td><td>0.39</td><td>$0.00185</td><td>15 s</td></tr><tr><td>regressed_last_n/patched+test<br><span class='muted'>@c80290c9-f288-4854-8cce-75f72fd00a4f</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.165</td><td>0.38</td><td>$0.00180</td><td>15 s</td></tr><tr><td>regressed_last_n/patched+p2p<br><span class='muted'>@c80290c9-f288-4854-8cce-75f72fd00a4f</span></td><td>1</td><td>1 failed, 2 passed in 0.02s</td><td>0.173</td><td>0.40</td><td>$0.00188</td><td>45 s</td></tr></table>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>regressed_last_n/original+test<br><span class='muted'>@c80290c9-f288-4854-8cce-75f72fd00a4f</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.171</td><td>0.38</td><td>$0.00186</td><td>15 s</td></tr><tr><td>regressed_last_n/patched+test<br><span class='muted'>@c80290c9-f288-4854-8cce-75f72fd00a4f</span></td><td>0</td><td>1 passed in 0.01s</td><td>0.161</td><td>0.37</td><td>$0.00176</td><td>15 s</td></tr><tr><td>regressed_last_n/patched+p2p<br><span class='muted'>@c80290c9-f288-4854-8cce-75f72fd00a4f</span></td><td>1</td><td>1 failed, 2 passed in 0.02s</td><td>0.172</td><td>0.39</td><td>$0.00187</td><td>45 s</td></tr><tr><td>regressed_last_n/canary+test<br><span class='muted'>@c80290c9-f288-4854-8cce-75f72fd00a4f</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.170</td><td>0.37</td><td>$0.00185</td><td>15 s</td></tr></table>
 </main></body></html>

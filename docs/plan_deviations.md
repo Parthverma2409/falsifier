@@ -433,3 +433,36 @@ own measured CPU time. Witness forks use the 15 s floor.
 **Spend.** The phase 3 ceiling is $2, held in its own ledger (`runs/spend_ledger_phase3.jsonl`)
 and counting generation as well as sandboxes. If the ceiling trips, the run stops and is reported;
 the ceiling is not raised.
+
+## 2026-10-25: phase 3 run log
+
+**Before the run:** the eleven fixtures were re-run through the new canary path in sandboxes. All
+agree, and every canary was live. Cost $0.1247, charged to the phase 3 ledger.
+
+**First attempt, which crashed:**
+- **Zero mutants accepted** on the three instances it reached. The WITNESS contract was too strict
+  for what the model writes: shell wrappers and doctest transcripts.
+- **REGRESSED on the `psf__requests-6028` gold patch.** This was a grading bug: path-parameter ids
+  are normalized in the dataset and were not normalized by us.
+- **Every warm checkpoint was rebuilt.** The build key included the env prefix, which had just
+  gained `PYTHONDONTWRITEBYTECODE`.
+- **The run crashed on the pytest-7432 rebuild.** It hit an API read timeout, and the guard charged
+  that build its 120 s worst case, $1.24.
+
+**Fixes, all in code, with no expectation changed:**
+- witness normalization, with printed output compared and `PYTHONHASHSEED=0`;
+- dataset-style id normalization for requests;
+- build keys on the image and install step only (existing builds reused);
+- build and calibration timeouts sized from measurement (build 22 s, test 15 s, P2P 20 s);
+- per-instance errors recorded instead of crashing the run.
+
+**Second attempt:**
+- **pallets__flask-5014:** EARNED, but on 1 mutant.
+- **psf__requests-5414:** UNEARNED, 2 survivors.
+- **psf__requests-6028:** UNEARNED, 1 survivor and 5 equivalents.
+- **pytest-dev__pytest-7432:** INCONCLUSIVE. The canary was live, but there were no usable mutants.
+- **The $2 ceiling then tripped** during pytest-dev__pytest-7571's mutant forks. Per the rule, the run
+  stopped and the ceiling was not raised.
+- **Spend:** the second attempt cost $0.4162. The phase 3 ledger ends at $1.8989.
+
+**The escalation rule did not apply:** survivors exist.

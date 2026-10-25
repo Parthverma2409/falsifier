@@ -19,7 +19,9 @@ SPEND_CEILING_USD = 8.0
 """Global sandbox spend ceiling for everything up to hard stop 2 (Parth, 2026-10-25). It is
 cumulative across processes: every guarded run is appended to SPEND_LEDGER, and a new guard starts
 from the ledger's total. Override with FALSIFIER_SPEND_CEILING_USD."""
-SPEND_LEDGER = ROOT / "runs" / "spend_ledger.jsonl"
+_ledger = Path(os.environ.get("FALSIFIER_SPEND_LEDGER", ROOT / "runs" / "spend_ledger.jsonl"))
+SPEND_LEDGER = _ledger if _ledger.is_absolute() else ROOT / _ledger
+"""Override with FALSIFIER_SPEND_LEDGER: phase 3 has its own $2 ledger (docs/plan_deviations.md)."""
 
 
 @dataclass(frozen=True)

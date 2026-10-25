@@ -19,6 +19,7 @@ from falsifier.evidence import (
     SURVIVED,
     MutantResult,
     Verdict,
+    canary_live,
     classify_test_run,
     pytest_summary,
 )
@@ -155,7 +156,40 @@ def survivor_html(m: MutantResult, test_src: str) -> str:
 </section>"""
 
 
-def page(v: Verdict, inst: Instance) -> str:
+def issue_html(issue: str, limit: int = 200) -> str:
+    """The first 200 characters only, so the verdict stays above the fold at 1080p."""
+    flat = " ".join(issue.split())
+    if len(flat) <= limit:
+        return f'<p class="muted">{e(flat)}</p>'
+    return (
+        f'<p class="muted">{e(flat[:limit].rsplit(" ", 1)[0])} …</p>'
+        f"<details><summary>Full issue</summary><pre>{e(issue)}</pre></details>"
+    )
+
+
+def canary_line(v: Verdict) -> str:
+    rec = v.forks.get("canary")
+    live, why = canary_live(rec)
+    mark = (
+        '<span class="ok">live</span>'
+        if live
+        else '<span class="bad">NOT LIVE: mutant results void</span>'
+    )
+    exit_code = rec.get("exit_code") if rec else "n/a"
+    return f"Negative control (canary): exit {e(exit_code)} · {mark} · {e(why)}"
+
+
+def official_line(official: dict | None) -> str:
+    if not official:
+        return ""
+    n = len(official["fail_to_pass"])
+    return (
+        f"<p>SWE-bench says <b>{e(official['label'])}</b> · benchmark oracle: the repository's "
+        f"own FAIL_TO_PASS tests ({n})</p>"
+    )
+
+
+def page(v: Verdict, inst: Instance, official: dict | None = None) -> str:
     test_src = "\n".join(inst.test.values())
     expected = (
         f"<p>Expected <b>{e(v.expected_verdict)}</b> · "
@@ -193,10 +227,12 @@ def page(v: Verdict, inst: Instance) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Falsifier · {e(v.instance_id)}</title><style>{CSS}</style></head><body><main>
 <h1>{e(v.instance_id)}</h1>
-<p class="muted">{e(inst.issue)}</p>
+{issue_html(inst.issue)}
 {f'<p class="muted">Input domain: {e(inst.domain)}</p>' if inst.domain else ""}
 <div class="verdict {e(v.verdict)}">{e(v.verdict)}</div>
 {expected}
+{official_line(official)}
+<p><b>{canary_line(v)}</b></p>
 <p class="reason">{e(v.reason)}</p>
 <p class="muted">Configuration {e(v.configuration)} · checkpoint {e(v.checkpoint)} ·
 {len(records)} forks · {v.cpu_s:.2f} CPU-s · ${v.cost_usd:.4f} · {e(v.created)}</p>
@@ -205,7 +241,9 @@ def page(v: Verdict, inst: Instance) -> str:
 <h2>Baseline forks</h2>
 <p>original + test: {run_line(v.forks.get("original+test"))}<br>
 patched + test: {run_line(v.forks.get("patched+test"))}<br>
-patched + PASS_TO_PASS: {run_line(v.forks.get("patched+p2p")) if v.forks.get("patched+p2p") else '<span class="muted">not run</span>'}</p>
+patched + PASS_TO_PASS: {run_line(v.forks.get("patched+p2p")) if v.forks.get("patched+p2p") else '<span class="muted">not run</span>'}<br>
+canary + test: {run_line(v.forks.get("canary"))}</p>
+{("<details><summary>The canary mutant</summary>" + diff_html(inst.canary.diff) + "</details>") if inst.canary else ""}
 <div class="pair"><div><h3>The patch</h3>{diff_html(inst.gold_diff)}</div>
 <div><h3>The test</h3><pre>{e(test_src)}</pre></div></div>
 {"".join(log_details(r, k) for k, r in v.forks.items())}
@@ -214,11 +252,14 @@ patched + PASS_TO_PASS: {run_line(v.forks.get("patched+p2p")) if v.forks.get("pa
 </main></body></html>"""
 
 
-def write(v: Verdict, inst: Instance, out_dir: Path) -> tuple[Path, Path]:
+def write(
+    v: Verdict, inst: Instance, out_dir: Path, official: dict | None = None
+) -> tuple[Path, Path]:
     out_dir.mkdir(parents=True, exist_ok=True)
     j, h = out_dir / f"{v.instance_id}.json", out_dir / f"{v.instance_id}.html"
-    j.write_text(json.dumps(v.to_dict(), indent=2, default=str) + "\n")
-    h.write_text(page(v, inst))
+    data = v.to_dict() | ({"official": official} if official else {})
+    j.write_text(json.dumps(data, indent=2, default=str) + "\n")
+    h.write_text(page(v, inst, official))
     return j, h
 
 
@@ -240,4 +281,67 @@ def index(verdicts: list[Verdict], out_dir: Path, title: str, extra: str = "") -
 <tr><th>instance</th><th>expected</th><th>verdict</th><th></th><th>forks</th><th>CPU-s</th><th>cost</th></tr>
 {rows}</table><p class="muted">Total ${total:.4f} across {len(verdicts)} instances.</p>
 </main></body></html>""")
+    return path
+
+
+SCOPE = (
+    "Scope: five SWE-bench Verified instances across three repositories (pallets/flask, "
+    "psf/requests, pytest-dev/pytest), Configuration A: the gold patch, audited against the "
+    "benchmark's own FAIL_TO_PASS tests. No claim is made about the rest of the benchmark."
+)
+
+
+def comparison_rows(verdicts: list[Verdict], officials: dict[str, dict]) -> list[dict]:
+    rows = []
+    for v in verdicts:
+        o = officials[v.instance_id]
+        killed = sum(m.status == KILLED for m in v.mutants)
+        survived = sum(m.status == SURVIVED for m in v.mutants)
+        rows.append(
+            {
+                "instance": v.instance_id,
+                "oracle": f"FAIL_TO_PASS, {len(o['fail_to_pass'])} test(s)",
+                "swebench": o["label"],
+                "falsifier": v.verdict,
+                "killed": killed,
+                "distinguishable": killed + survived,
+                "equivalent": sum(m.status == EQUIVALENT for m in v.mutants),
+                "canary_exit": (v.forks.get("canary") or {}).get("exit_code"),
+                "cost_usd": v.cost_usd,
+            }
+        )
+    return rows
+
+
+def comparison(
+    verdicts: list[Verdict],
+    officials: dict[str, dict],
+    out_dir: Path,
+    missing: dict[str, str] | None = None,
+) -> Path:
+    rows = comparison_rows(verdicts, officials)
+    body = "".join(
+        f"<tr><td><a href='{e(r['instance'])}.html'>{e(r['instance'])}</a></td>"
+        f"<td>{e(r['oracle'])}</td><td>{e(r['swebench'])}</td>"
+        f"<td class='{e(r['falsifier'])}'><b>{e(r['falsifier'])}</b></td>"
+        f"<td>{r['killed']} / {r['distinguishable']}</td><td>{r['equivalent']}</td>"
+        f"<td>{e(r['canary_exit'])}</td><td>${r['cost_usd']:.4f}</td></tr>"
+        for r in rows
+    ) + "".join(
+        f"<tr><td>{e(iid)}</td><td colspan='7' class='muted'>not completed: {e(why)}</td></tr>"
+        for iid, why in (missing or {}).items()
+    )
+    path = out_dir / "index.html"
+    path.write_text(f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Falsifier results</title>
+<style>{CSS}</style></head><body><main><h1>Falsifier: benchmark oracle against execution</h1>
+<p><b>{e(SCOPE)}</b></p>
+<table><colgroup><col style="width:22%"><col style="width:17%"><col style="width:11%">
+<col style="width:13%"><col style="width:12%"><col style="width:9%"><col style="width:8%"><col style="width:8%"></colgroup>
+<tr><th>instance</th><th>benchmark oracle</th><th>SWE-bench says</th><th>Falsifier says</th>
+<th>killed / distinguishable</th><th>equivalent discarded</th><th>canary exit</th><th>cost</th></tr>
+{body}</table>
+<p class="muted">"Benchmark oracle" means the repository's own FAIL_TO_PASS tests, not a reproduction
+of SWE-bench's harness. Each instance links to its full evidence: every fork's branch id, command,
+exit code, captured output, CPU-seconds and cost.</p></main></body></html>""")
     return path

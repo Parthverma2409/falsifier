@@ -44,15 +44,19 @@ details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
 
 <div class="verdict UNFIXED">UNFIXED</div>
 <p>Expected <b>UNFIXED</b> · <span class="ok">agrees</span></p>
-<p class="reason">the test fails on the patch (exit 1, 1 failed in 0.02s); on the original: exit 1, 1 failed in 0.02s</p>
+
+<p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 1 failed in 0.02s; the canary&#x27;s AssertionError is in the log)</b></p>
+<p class="reason">the test fails on the patch (exit 1, 1 failed in 0.02s); on the original: exit 1, 1 failed in 0.02s. Negative control: the canary failed the test (exit 1, 1 failed in 0.02s; the canary&#x27;s AssertionError is in the log)</p>
 <p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint 540454bb-6dd5-4244-9b65-b6e2e2ed72a9 ·
-3 forks · 0.50 CPU-s · $0.0054 · 2026-10-25T13:24:47+00:00</p>
+4 forks · 0.67 CPU-s · $0.0073 · 2026-10-25T13:42:48+00:00</p>
 <h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status not-run">not run</span><br><span class="muted">Clamps only above hi + 1.</span></div></div>
 
 <h2>Baseline forks</h2>
-<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.162 CPU-s · 0.35 s · $0.00177<br>
-patched + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.169 CPU-s · 0.38 s · $0.00184<br>
-patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.164 CPU-s · 0.38 s · $0.00179</p>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.169 CPU-s · 0.38 s · $0.00184<br>
+patched + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.168 CPU-s · 0.38 s · $0.00183<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.165 CPU-s · 0.38 s · $0.00180<br>
+canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.02s · 0.168 CPU-s · 0.39 s · $0.00183</p>
+<details><summary>The canary mutant</summary><pre><span class="line">--- a/pkg/numeric.py</span><span class="line">+++ b/pkg/numeric.py</span><span class="line">@@ -1,7 +1,2 @@</span><span class="line"> def clamp(x, lo, hi):</span><span class="line del">-    &quot;&quot;&quot;Clamp x into the closed range [lo, hi].&quot;&quot;&quot;</span><span class="line del">-    if x &lt; lo:</span><span class="line del">-        return lo</span><span class="line del">-    if x &gt; hi:</span><span class="line del">-        return lo</span><span class="line del">-    return x</span><span class="line add">+    raise AssertionError(&quot;canary&quot;)</span></pre></details>
 <div class="pair"><div><h3>The patch</h3><pre><span class="line">--- a/pkg/numeric.py</span><span class="line">+++ b/pkg/numeric.py</span><span class="line">@@ -2,4 +2,6 @@ def clamp(x, lo, hi):</span><span class="line">     &quot;&quot;&quot;Clamp x into the closed range [lo, hi].&quot;&quot;&quot;</span><span class="line">     if x &lt; lo:</span><span class="line">         return lo</span><span class="line add">+    if x &gt; hi:</span><span class="line add">+        return lo</span><span class="line">     return x</span></pre></div>
 <div><h3>The test</h3><pre>from pkg.numeric import clamp
 
@@ -60,7 +64,7 @@ patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 2 passed in 0.01s · 0.164 CPU-s ·
 def test_clamp_upper_bound():
     assert clamp(15, 0, 10) == 10
 </pre></div></div>
-<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_clamp_upper_bound&#x27;</pre><pre>============================= test session starts ==============================
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_clamp_upper_bound&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
 rootdir: /work
 collected 1 item
@@ -79,7 +83,7 @@ tests/test_issue.py:5: AssertionError
 =========================== short test summary info ============================
 FAILED tests/test_issue.py::test_clamp_upper_bound - assert 15 == 10
 ============================== 1 failed in 0.02s ===============================
-</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_clamp_upper_bound&#x27;</pre><pre>============================= test session starts ==============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_clamp_upper_bound&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
 rootdir: /work
 collected 1 item
@@ -98,7 +102,7 @@ tests/test_issue.py:5: AssertionError
 =========================== short test summary info ============================
 FAILED tests/test_issue.py::test_clamp_upper_bound - assert 0 == 10
 ============================== 1 failed in 0.02s ===============================
-</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_existing.py&#x27;</pre><pre>============================= test session starts ==============================
 platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
 rootdir: /work
 collected 2 items
@@ -110,7 +114,33 @@ tests/test_existing.py ..                                                [100%]
 PASSED tests/test_existing.py::test_clamp_below
 PASSED tests/test_existing.py::test_clamp_inside
 ============================== 2 passed in 0.01s ===============================
+</pre><pre></pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 &amp;&amp; cd /work &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_issue.py::test_clamp_upper_bound&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-8.3.5, pluggy-1.7.0
+rootdir: /work
+collected 1 item
+
+tests/test_issue.py F                                                    [100%]
+
+=================================== FAILURES ===================================
+____________________________ test_clamp_upper_bound ____________________________
+
+    def test_clamp_upper_bound():
+&gt;       assert clamp(15, 0, 10) == 10
+
+tests/test_issue.py:5: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+x = 15, lo = 0, hi = 10
+
+    def clamp(x, lo, hi):
+&gt;       raise AssertionError(&quot;canary&quot;)
+E       AssertionError: canary
+
+pkg/numeric.py:2: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_issue.py::test_clamp_upper_bound - AssertionError: canary
+============================== 1 failed in 0.02s ===============================
 </pre><pre></pre></details>
 
-<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>unfixed_clamp/original+test<br><span class='muted'>@540454bb-6dd5-4244-9b65-b6e2e2ed72a9</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.162</td><td>0.35</td><td>$0.00177</td><td>15 s</td></tr><tr><td>unfixed_clamp/patched+test<br><span class='muted'>@540454bb-6dd5-4244-9b65-b6e2e2ed72a9</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.169</td><td>0.38</td><td>$0.00184</td><td>15 s</td></tr><tr><td>unfixed_clamp/patched+p2p<br><span class='muted'>@540454bb-6dd5-4244-9b65-b6e2e2ed72a9</span></td><td>0</td><td>2 passed in 0.01s</td><td>0.164</td><td>0.38</td><td>$0.00179</td><td>45 s</td></tr></table>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>unfixed_clamp/original+test<br><span class='muted'>@540454bb-6dd5-4244-9b65-b6e2e2ed72a9</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.169</td><td>0.38</td><td>$0.00184</td><td>15 s</td></tr><tr><td>unfixed_clamp/patched+test<br><span class='muted'>@540454bb-6dd5-4244-9b65-b6e2e2ed72a9</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.168</td><td>0.38</td><td>$0.00183</td><td>15 s</td></tr><tr><td>unfixed_clamp/patched+p2p<br><span class='muted'>@540454bb-6dd5-4244-9b65-b6e2e2ed72a9</span></td><td>0</td><td>2 passed in 0.01s</td><td>0.165</td><td>0.38</td><td>$0.00180</td><td>45 s</td></tr><tr><td>unfixed_clamp/canary+test<br><span class='muted'>@540454bb-6dd5-4244-9b65-b6e2e2ed72a9</span></td><td>1</td><td>1 failed in 0.02s</td><td>0.168</td><td>0.39</td><td>$0.00183</td><td>15 s</td></tr></table>
 </main></body></html>

@@ -144,20 +144,29 @@ def _rec(label, exit_code=0, stdout="==== 1 passed in 0.01s ====", **kw):
 FAILED = "==== 1 failed in 0.01s ===="
 
 
+def _canary():
+    return _rec("c", 1, "E   AssertionError: canary\n" + FAILED)
+
+
 def test_verdict_refuses_missing_evidence():
-    forks = {"original+test": _rec("o", 1, FAILED), "patched+test": _rec("p", cost_usd=None)}
+    forks = {
+        "original+test": _rec("o", 1, FAILED),
+        "patched+test": _rec("p", cost_usd=None),
+        "canary": _canary(),
+    }
     with pytest.raises(EvidenceError, match="lacks"):
         Verdict("x", "UNFIXED", "r", forks, [], "img")
 
 
 def test_verdict_refuses_unsupported_claims():
-    broken = {"original+test": _rec("o", 1, FAILED)}
+    broken = {"original+test": _rec("o", 1, FAILED), "canary": _canary()}
     with pytest.raises(EvidenceError):
         Verdict("x", BROKEN, "r", broken, [], "img")
     forks = {
         "original+test": _rec("o", 1, FAILED),
         "patched+test": _rec("p"),
         "patched+p2p": _rec("r"),
+        "canary": _canary(),
     }
     lone = MutantResult("m1", "k", "r", "w", "d", "survived", test=_rec("m"))
     with pytest.raises(EvidenceError, match="not distinguished"):
@@ -205,4 +214,53 @@ def test_fixtures_in_sandboxes():
 def test_every_paid_fork_is_in_the_evidence(tmp_path):
     verdict, fork = run_local(FIXTURES["broken_clamp"], tmp_path)
     assert verdict.verdict == BROKEN
-    assert sorted(verdict.forks) == sorted(fork.calls)
+    assert sorted(r["label"].split("/", 1)[1] for r in verdict.forks.values()) == sorted(fork.calls)
+
+
+def test_verdict_needs_a_live_negative_control():
+    forks = {"original+test": _rec("o", 0), "canary": _rec("c", 0)}  # canary PASSED
+    with pytest.raises(EvidenceError, match="negative control"):
+        Verdict("x", BROKEN, "r", forks, [], "img")
+
+
+class DropCanaryForker(LocalForker):
+    """Simulates a mispathed patch: the canary's overlay never reaches the code under test."""
+
+    async def __call__(self, branch, overlay, command, timeout_s):
+        if branch == "canary+test":
+            overlay = {p: t for p, t in overlay.items() if p not in self.inst.canary.overlay}
+            overlay.update(self.inst.patched)
+        return await super().__call__(branch, overlay, command, timeout_s)
+
+
+@pytest.mark.parametrize("fixture_id", ["unearned_parse_port", "earned_last_n"])
+def test_dead_overlays_void_the_instance(fixture_id, tmp_path):
+    """If the canary passes, every mutant result would be void: no verdict, no mutant forks."""
+    inst = FIXTURES[fixture_id]
+    (tmp_path / "_original").mkdir()
+    for path, text in inst.original.items():
+        dest = tmp_path / "_original" / path
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(text)
+    fork = DropCanaryForker(inst, tmp_path)
+    verdict = asyncio.run(verify(inst, fork))
+    assert verdict.verdict == INCONCLUSIVE and "negative control" in verdict.reason
+    assert not any(c.startswith("mutant-") for c in fork.calls)
+    assert verdict.counts["canary_exit"] == 0
+
+
+def test_every_fixture_has_a_canary():
+    assert all(f.canary is not None for f in FIXTURES.values())
+
+
+def test_requests_style_path_parameters_are_normalized_like_the_dataset():
+    out = (
+        "PASSED tests/test_utils.py::T::t[/testbed/tests/test_utils.py]\n"
+        "PASSED tests/test_utils.py::T::t[//double]\nPASSED tests/test_utils.py::T::t[*.py]\n"
+    )
+    assert passed_ids(out, normalize_options=True) == {
+        "tests/test_utils.py::T::t[/test_utils.py]",
+        "tests/test_utils.py::T::t[//double]",
+        "tests/test_utils.py::T::t[*.py]",
+    }
+    assert "tests/test_utils.py::T::t[/testbed/tests/test_utils.py]" in passed_ids(out)

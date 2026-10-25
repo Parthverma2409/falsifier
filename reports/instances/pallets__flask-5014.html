@@ -1,0 +1,1303 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falsifier · pallets__flask-5014</title><style>
+:root { --ink:#111; --muted:#444; --line:#c9c9c9; --bg:#fff; --soft:#f3f3f1;
+        --red:#a3141b; --green:#0b6b2f; --amber:#7a4b00; }
+* { box-sizing: border-box; }
+html { font-size: 22px; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+       font: 1rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; overflow-x: hidden; }
+main { max-width: 1840px; margin: 0 auto; padding: 1.4rem 2rem 3rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .3rem; }
+h2 { font-size: 1.4rem; margin: 2rem 0 .6rem; border-bottom: 2px solid var(--line); }
+h3 { font-size: 1.15rem; margin: 1rem 0 .4rem; }
+p, li { max-width: 80ch; }
+.muted { color: var(--muted); }
+.verdict { display: inline-block; font-size: 2.6rem; font-weight: 800; letter-spacing: .02em;
+           padding: .15rem .9rem; border: 4px solid currentColor; border-radius: .4rem; margin: .4rem 0; }
+.EARNED { color: var(--green); } .UNEARNED, .BROKEN, .UNFIXED, .REGRESSED { color: var(--red); }
+.INCONCLUSIVE { color: var(--amber); }
+.reason { font-size: 1.05rem; max-width: 110ch; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; margin: 0;
+      font: .8rem/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      background: var(--soft); border: 1px solid var(--line); border-radius: .3rem; padding: .6rem .7rem; }
+.line { display: block; } .add { background: #d9f2df; } .del { background: #f8dcdc; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .7rem; }
+.card { border: 2px solid var(--line); border-radius: .4rem; padding: .6rem .8rem; min-width: 0; }
+.card b { font-size: 1.05rem; }
+.status { font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.killed { color: var(--green); } .survived { color: var(--red); } .equivalent, .not-run { color: var(--muted); }
+.error { color: var(--amber); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; }
+.box { border: 2px solid var(--line); border-radius: .4rem; padding: .7rem .9rem; min-width: 0; }
+.witness { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .8rem; margin-top: .6rem; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: .85rem; }
+td, th { border-bottom: 1px solid var(--line); padding: .3rem .4rem; text-align: left;
+         vertical-align: top; overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+details { margin: .4rem 0; } summary { cursor: pointer; color: var(--muted); }
+.ok { color: var(--green); font-weight: 700; } .bad { color: var(--red); font-weight: 700; }
+@media (max-width: 1100px) { .pair, .witness { grid-template-columns: minmax(0, 1fr); } }
+</style></head><body><main>
+<h1>pallets__flask-5014</h1>
+<p class="muted">Require a non-empty name for Blueprints Things do not work correctly if a Blueprint is given an empty name (e.g. #4944). It would be helpful if a `ValueError` was raised when trying to do that.</p>
+
+<div class="verdict EARNED">EARNED</div>
+
+<p>SWE-bench says <b>RESOLVED</b> · benchmark oracle: the repository's own FAIL_TO_PASS tests (1)</p>
+<p><b>Negative control (canary): exit 1 · <span class="ok">live</span> · the canary failed the test (exit 1, 1 failed in 0.08s; the canary&#x27;s AssertionError is in the log)</b></p>
+<p class="reason">the test fails on the original (exit 1, 1 failed in 0.08s) and passes on the patch (exit 0, 1 passed in 0.06s); all 59 PASS_TO_PASS tests PASSED; the test killed 1 of 1 distinguishable mutants (0 equivalent discarded). Negative control: the canary failed the test (exit 1, 1 failed in 0.08s; the canary&#x27;s AssertionError is in the log)</p>
+<p class="muted">Configuration A: mutate the gold patch, audit the benchmark&#x27;s FAIL_TO_PASS tests · checkpoint e4489d32-4203-45fe-b3d1-c4be5ad55543 ·
+5 forks · 1.58 CPU-s · $0.0169 · 2026-10-25T13:54:35+00:00</p>
+<h2>Mutant grid</h2><div class="grid"><div class="card"><b>m1</b> · off-by-one<br><span class="status killed">killed</span><br><span class="muted">The guard `if not name:` treats a name of just whitespace as valid, but the correct patch rejects any falsy name; a name of `&quot; &quot;` passes the off-by-one check but fails the correct patch. The concrete input is `name=&quot; &quot;`.</span></div></div>
+
+<h2>Baseline forks</h2>
+<p>original + test: <b>FAIL</b>: exit 1, 1 failed in 0.08s · 0.297 CPU-s · 0.62 s · $0.00319<br>
+patched + test: <b>PASS</b>: exit 0, 1 passed in 0.06s · 0.287 CPU-s · 0.59 s · $0.00308<br>
+patched + PASS_TO_PASS: <b>PASS</b>: exit 0, 60 passed in 0.23s · 0.415 CPU-s · 0.79 s · $0.00437<br>
+canary + test: <b>FAIL</b>: exit 1, 1 failed in 0.08s · 0.293 CPU-s · 0.59 s · $0.00315</p>
+<details><summary>The canary mutant</summary><pre><span class="line">--- a/src/flask/blueprints.py</span><span class="line">+++ b/src/flask/blueprints.py</span><span class="line">@@ -182,31 +182,7 @@ class Blueprint(Scaffold):</span><span class="line">         root_path: t.Optional[str] = None,</span><span class="line">         cli_group: t.Optional[str] = _sentinel,  # type: ignore</span><span class="line">     ):</span><span class="line del">-        super().__init__(</span><span class="line del">-            import_name=import_name,</span><span class="line del">-            static_folder=static_folder,</span><span class="line del">-            static_url_path=static_url_path,</span><span class="line del">-            template_folder=template_folder,</span><span class="line del">-            root_path=root_path,</span><span class="line del">-        )</span><span class="line del">-</span><span class="line del">-        if not name:</span><span class="line del">-            raise ValueError(&quot;&#x27;name&#x27; may not be empty.&quot;)</span><span class="line del">-</span><span class="line del">-        if &quot;.&quot; in name:</span><span class="line del">-            raise ValueError(&quot;&#x27;name&#x27; may not contain a dot &#x27;.&#x27; character.&quot;)</span><span class="line del">-</span><span class="line del">-        self.name = name</span><span class="line del">-        self.url_prefix = url_prefix</span><span class="line del">-        self.subdomain = subdomain</span><span class="line del">-        self.deferred_functions: t.List[DeferredSetupFunction] = []</span><span class="line del">-</span><span class="line del">-        if url_defaults is None:</span><span class="line del">-            url_defaults = {}</span><span class="line del">-</span><span class="line del">-        self.url_values_defaults = url_defaults</span><span class="line del">-        self.cli_group = cli_group</span><span class="line del">-        self._blueprints: t.List[t.Tuple[&quot;Blueprint&quot;, dict]] = []</span><span class="line add">+        raise AssertionError(&quot;canary&quot;)</span><span class="line"> </span><span class="line">     def _check_setup_finished(self, f_name: str) -&gt; None:</span><span class="line">         if self._got_registered_once:</span></pre></details>
+<div class="pair"><div><h3>The patch</h3><pre><span class="line">diff --git a/src/flask/blueprints.py b/src/flask/blueprints.py</span><span class="line">--- a/src/flask/blueprints.py</span><span class="line">+++ b/src/flask/blueprints.py</span><span class="line">@@ -190,6 +190,9 @@ def __init__(</span><span class="line">             root_path=root_path,</span><span class="line">         )</span><span class="line"> </span><span class="line add">+        if not name:</span><span class="line add">+            raise ValueError(&quot;&#x27;name&#x27; may not be empty.&quot;)</span><span class="line add">+</span><span class="line">         if &quot;.&quot; in name:</span><span class="line">             raise ValueError(&quot;&#x27;name&#x27; may not contain a dot &#x27;.&#x27; character.&quot;)</span><span class="line"> </span></pre></div>
+<div><h3>The test</h3><pre>import pytest
+from jinja2 import TemplateNotFound
+from werkzeug.http import parse_cache_control_header
+
+import flask
+
+
+def test_blueprint_specific_error_handling(app, client):
+    frontend = flask.Blueprint(&quot;frontend&quot;, __name__)
+    backend = flask.Blueprint(&quot;backend&quot;, __name__)
+    sideend = flask.Blueprint(&quot;sideend&quot;, __name__)
+
+    @frontend.errorhandler(403)
+    def frontend_forbidden(e):
+        return &quot;frontend says no&quot;, 403
+
+    @frontend.route(&quot;/frontend-no&quot;)
+    def frontend_no():
+        flask.abort(403)
+
+    @backend.errorhandler(403)
+    def backend_forbidden(e):
+        return &quot;backend says no&quot;, 403
+
+    @backend.route(&quot;/backend-no&quot;)
+    def backend_no():
+        flask.abort(403)
+
+    @sideend.route(&quot;/what-is-a-sideend&quot;)
+    def sideend_no():
+        flask.abort(403)
+
+    app.register_blueprint(frontend)
+    app.register_blueprint(backend)
+    app.register_blueprint(sideend)
+
+    @app.errorhandler(403)
+    def app_forbidden(e):
+        return &quot;application itself says no&quot;, 403
+
+    assert client.get(&quot;/frontend-no&quot;).data == b&quot;frontend says no&quot;
+    assert client.get(&quot;/backend-no&quot;).data == b&quot;backend says no&quot;
+    assert client.get(&quot;/what-is-a-sideend&quot;).data == b&quot;application itself says no&quot;
+
+
+def test_blueprint_specific_user_error_handling(app, client):
+    class MyDecoratorException(Exception):
+        pass
+
+    class MyFunctionException(Exception):
+        pass
+
+    blue = flask.Blueprint(&quot;blue&quot;, __name__)
+
+    @blue.errorhandler(MyDecoratorException)
+    def my_decorator_exception_handler(e):
+        assert isinstance(e, MyDecoratorException)
+        return &quot;boom&quot;
+
+    def my_function_exception_handler(e):
+        assert isinstance(e, MyFunctionException)
+        return &quot;bam&quot;
+
+    blue.register_error_handler(MyFunctionException, my_function_exception_handler)
+
+    @blue.route(&quot;/decorator&quot;)
+    def blue_deco_test():
+        raise MyDecoratorException()
+
+    @blue.route(&quot;/function&quot;)
+    def blue_func_test():
+        raise MyFunctionException()
+
+    app.register_blueprint(blue)
+
+    assert client.get(&quot;/decorator&quot;).data == b&quot;boom&quot;
+    assert client.get(&quot;/function&quot;).data == b&quot;bam&quot;
+
+
+def test_blueprint_app_error_handling(app, client):
+    errors = flask.Blueprint(&quot;errors&quot;, __name__)
+
+    @errors.app_errorhandler(403)
+    def forbidden_handler(e):
+        return &quot;you shall not pass&quot;, 403
+
+    @app.route(&quot;/forbidden&quot;)
+    def app_forbidden():
+        flask.abort(403)
+
+    forbidden_bp = flask.Blueprint(&quot;forbidden_bp&quot;, __name__)
+
+    @forbidden_bp.route(&quot;/nope&quot;)
+    def bp_forbidden():
+        flask.abort(403)
+
+    app.register_blueprint(errors)
+    app.register_blueprint(forbidden_bp)
+
+    assert client.get(&quot;/forbidden&quot;).data == b&quot;you shall not pass&quot;
+    assert client.get(&quot;/nope&quot;).data == b&quot;you shall not pass&quot;
+
+
+@pytest.mark.parametrize(
+    (&quot;prefix&quot;, &quot;rule&quot;, &quot;url&quot;),
+    (
+        (&quot;&quot;, &quot;/&quot;, &quot;/&quot;),
+        (&quot;/&quot;, &quot;&quot;, &quot;/&quot;),
+        (&quot;/&quot;, &quot;/&quot;, &quot;/&quot;),
+        (&quot;/foo&quot;, &quot;&quot;, &quot;/foo&quot;),
+        (&quot;/foo/&quot;, &quot;&quot;, &quot;/foo/&quot;),
+        (&quot;&quot;, &quot;/bar&quot;, &quot;/bar&quot;),
+        (&quot;/foo/&quot;, &quot;/bar&quot;, &quot;/foo/bar&quot;),
+        (&quot;/foo/&quot;, &quot;bar&quot;, &quot;/foo/bar&quot;),
+        (&quot;/foo&quot;, &quot;/bar&quot;, &quot;/foo/bar&quot;),
+        (&quot;/foo/&quot;, &quot;//bar&quot;, &quot;/foo/bar&quot;),
+        (&quot;/foo//&quot;, &quot;/bar&quot;, &quot;/foo/bar&quot;),
+    ),
+)
+def test_blueprint_prefix_slash(app, client, prefix, rule, url):
+    bp = flask.Blueprint(&quot;test&quot;, __name__, url_prefix=prefix)
+
+    @bp.route(rule)
+    def index():
+        return &quot;&quot;, 204
+
+    app.register_blueprint(bp)
+    assert client.get(url).status_code == 204
+
+
+def test_blueprint_url_defaults(app, client):
+    bp = flask.Blueprint(&quot;test&quot;, __name__)
+
+    @bp.route(&quot;/foo&quot;, defaults={&quot;baz&quot;: 42})
+    def foo(bar, baz):
+        return f&quot;{bar}/{baz:d}&quot;
+
+    @bp.route(&quot;/bar&quot;)
+    def bar(bar):
+        return str(bar)
+
+    app.register_blueprint(bp, url_prefix=&quot;/1&quot;, url_defaults={&quot;bar&quot;: 23})
+    app.register_blueprint(bp, name=&quot;test2&quot;, url_prefix=&quot;/2&quot;, url_defaults={&quot;bar&quot;: 19})
+
+    assert client.get(&quot;/1/foo&quot;).data == b&quot;23/42&quot;
+    assert client.get(&quot;/2/foo&quot;).data == b&quot;19/42&quot;
+    assert client.get(&quot;/1/bar&quot;).data == b&quot;23&quot;
+    assert client.get(&quot;/2/bar&quot;).data == b&quot;19&quot;
+
+
+def test_blueprint_url_processors(app, client):
+    bp = flask.Blueprint(&quot;frontend&quot;, __name__, url_prefix=&quot;/&lt;lang_code&gt;&quot;)
+
+    @bp.url_defaults
+    def add_language_code(endpoint, values):
+        values.setdefault(&quot;lang_code&quot;, flask.g.lang_code)
+
+    @bp.url_value_preprocessor
+    def pull_lang_code(endpoint, values):
+        flask.g.lang_code = values.pop(&quot;lang_code&quot;)
+
+    @bp.route(&quot;/&quot;)
+    def index():
+        return flask.url_for(&quot;.about&quot;)
+
+    @bp.route(&quot;/about&quot;)
+    def about():
+        return flask.url_for(&quot;.index&quot;)
+
+    app.register_blueprint(bp)
+
+    assert client.get(&quot;/de/&quot;).data == b&quot;/de/about&quot;
+    assert client.get(&quot;/de/about&quot;).data == b&quot;/de/&quot;
+
+
+def test_templates_and_static(test_apps):
+    from blueprintapp import app
+
+    client = app.test_client()
+
+    rv = client.get(&quot;/&quot;)
+    assert rv.data == b&quot;Hello from the Frontend&quot;
+    rv = client.get(&quot;/admin/&quot;)
+    assert rv.data == b&quot;Hello from the Admin&quot;
+    rv = client.get(&quot;/admin/index2&quot;)
+    assert rv.data == b&quot;Hello from the Admin&quot;
+    rv = client.get(&quot;/admin/static/test.txt&quot;)
+    assert rv.data.strip() == b&quot;Admin File&quot;
+    rv.close()
+    rv = client.get(&quot;/admin/static/css/test.css&quot;)
+    assert rv.data.strip() == b&quot;/* nested file */&quot;
+    rv.close()
+
+    # try/finally, in case other tests use this app for Blueprint tests.
+    max_age_default = app.config[&quot;SEND_FILE_MAX_AGE_DEFAULT&quot;]
+    try:
+        expected_max_age = 3600
+        if app.config[&quot;SEND_FILE_MAX_AGE_DEFAULT&quot;] == expected_max_age:
+            expected_max_age = 7200
+        app.config[&quot;SEND_FILE_MAX_AGE_DEFAULT&quot;] = expected_max_age
+        rv = client.get(&quot;/admin/static/css/test.css&quot;)
+        cc = parse_cache_control_header(rv.headers[&quot;Cache-Control&quot;])
+        assert cc.max_age == expected_max_age
+        rv.close()
+    finally:
+        app.config[&quot;SEND_FILE_MAX_AGE_DEFAULT&quot;] = max_age_default
+
+    with app.test_request_context():
+        assert (
+            flask.url_for(&quot;admin.static&quot;, filename=&quot;test.txt&quot;)
+            == &quot;/admin/static/test.txt&quot;
+        )
+
+    with app.test_request_context():
+        with pytest.raises(TemplateNotFound) as e:
+            flask.render_template(&quot;missing.html&quot;)
+        assert e.value.name == &quot;missing.html&quot;
+
+    with flask.Flask(__name__).test_request_context():
+        assert flask.render_template(&quot;nested/nested.txt&quot;) == &quot;I&#x27;m nested&quot;
+
+
+def test_default_static_max_age(app):
+    class MyBlueprint(flask.Blueprint):
+        def get_send_file_max_age(self, filename):
+            return 100
+
+    blueprint = MyBlueprint(&quot;blueprint&quot;, __name__, static_folder=&quot;static&quot;)
+    app.register_blueprint(blueprint)
+
+    # try/finally, in case other tests use this app for Blueprint tests.
+    max_age_default = app.config[&quot;SEND_FILE_MAX_AGE_DEFAULT&quot;]
+    try:
+        with app.test_request_context():
+            unexpected_max_age = 3600
+            if app.config[&quot;SEND_FILE_MAX_AGE_DEFAULT&quot;] == unexpected_max_age:
+                unexpected_max_age = 7200
+            app.config[&quot;SEND_FILE_MAX_AGE_DEFAULT&quot;] = unexpected_max_age
+            rv = blueprint.send_static_file(&quot;index.html&quot;)
+            cc = parse_cache_control_header(rv.headers[&quot;Cache-Control&quot;])
+            assert cc.max_age == 100
+            rv.close()
+    finally:
+        app.config[&quot;SEND_FILE_MAX_AGE_DEFAULT&quot;] = max_age_default
+
+
+def test_templates_list(test_apps):
+    from blueprintapp import app
+
+    templates = sorted(app.jinja_env.list_templates())
+    assert templates == [&quot;admin/index.html&quot;, &quot;frontend/index.html&quot;]
+
+
+def test_dotted_name_not_allowed(app, client):
+    with pytest.raises(ValueError):
+        flask.Blueprint(&quot;app.ui&quot;, __name__)
+
+
+def test_empty_name_not_allowed(app, client):
+    with pytest.raises(ValueError):
+        flask.Blueprint(&quot;&quot;, __name__)
+
+
+def test_dotted_names_from_app(app, client):
+    test = flask.Blueprint(&quot;test&quot;, __name__)
+
+    @app.route(&quot;/&quot;)
+    def app_index():
+        return flask.url_for(&quot;test.index&quot;)
+
+    @test.route(&quot;/test/&quot;)
+    def index():
+        return flask.url_for(&quot;app_index&quot;)
+
+    app.register_blueprint(test)
+
+    rv = client.get(&quot;/&quot;)
+    assert rv.data == b&quot;/test/&quot;
+
+
+def test_empty_url_defaults(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.route(&quot;/&quot;, defaults={&quot;page&quot;: 1})
+    @bp.route(&quot;/page/&lt;int:page&gt;&quot;)
+    def something(page):
+        return str(page)
+
+    app.register_blueprint(bp)
+
+    assert client.get(&quot;/&quot;).data == b&quot;1&quot;
+    assert client.get(&quot;/page/2&quot;).data == b&quot;2&quot;
+
+
+def test_route_decorator_custom_endpoint(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.route(&quot;/foo&quot;)
+    def foo():
+        return flask.request.endpoint
+
+    @bp.route(&quot;/bar&quot;, endpoint=&quot;bar&quot;)
+    def foo_bar():
+        return flask.request.endpoint
+
+    @bp.route(&quot;/bar/123&quot;, endpoint=&quot;123&quot;)
+    def foo_bar_foo():
+        return flask.request.endpoint
+
+    @bp.route(&quot;/bar/foo&quot;)
+    def bar_foo():
+        return flask.request.endpoint
+
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+
+    @app.route(&quot;/&quot;)
+    def index():
+        return flask.request.endpoint
+
+    assert client.get(&quot;/&quot;).data == b&quot;index&quot;
+    assert client.get(&quot;/py/foo&quot;).data == b&quot;bp.foo&quot;
+    assert client.get(&quot;/py/bar&quot;).data == b&quot;bp.bar&quot;
+    assert client.get(&quot;/py/bar/123&quot;).data == b&quot;bp.123&quot;
+    assert client.get(&quot;/py/bar/foo&quot;).data == b&quot;bp.bar_foo&quot;
+
+
+def test_route_decorator_custom_endpoint_with_dots(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    with pytest.raises(ValueError):
+        bp.route(&quot;/&quot;, endpoint=&quot;a.b&quot;)(lambda: &quot;&quot;)
+
+    with pytest.raises(ValueError):
+        bp.add_url_rule(&quot;/&quot;, endpoint=&quot;a.b&quot;)
+
+    def view():
+        return &quot;&quot;
+
+    view.__name__ = &quot;a.b&quot;
+
+    with pytest.raises(ValueError):
+        bp.add_url_rule(&quot;/&quot;, view_func=view)
+
+
+def test_endpoint_decorator(app, client):
+    from werkzeug.routing import Rule
+
+    app.url_map.add(Rule(&quot;/foo&quot;, endpoint=&quot;bar&quot;))
+
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.endpoint(&quot;bar&quot;)
+    def foobar():
+        return flask.request.endpoint
+
+    app.register_blueprint(bp, url_prefix=&quot;/bp_prefix&quot;)
+
+    assert client.get(&quot;/foo&quot;).data == b&quot;bar&quot;
+    assert client.get(&quot;/bp_prefix/bar&quot;).status_code == 404
+
+
+def test_template_filter(app):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.app_template_filter()
+    def my_reverse(s):
+        return s[::-1]
+
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+    assert &quot;my_reverse&quot; in app.jinja_env.filters.keys()
+    assert app.jinja_env.filters[&quot;my_reverse&quot;] == my_reverse
+    assert app.jinja_env.filters[&quot;my_reverse&quot;](&quot;abcd&quot;) == &quot;dcba&quot;
+
+
+def test_add_template_filter(app):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    def my_reverse(s):
+        return s[::-1]
+
+    bp.add_app_template_filter(my_reverse)
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+    assert &quot;my_reverse&quot; in app.jinja_env.filters.keys()
+    assert app.jinja_env.filters[&quot;my_reverse&quot;] == my_reverse
+    assert app.jinja_env.filters[&quot;my_reverse&quot;](&quot;abcd&quot;) == &quot;dcba&quot;
+
+
+def test_template_filter_with_name(app):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.app_template_filter(&quot;strrev&quot;)
+    def my_reverse(s):
+        return s[::-1]
+
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+    assert &quot;strrev&quot; in app.jinja_env.filters.keys()
+    assert app.jinja_env.filters[&quot;strrev&quot;] == my_reverse
+    assert app.jinja_env.filters[&quot;strrev&quot;](&quot;abcd&quot;) == &quot;dcba&quot;
+
+
+def test_add_template_filter_with_name(app):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    def my_reverse(s):
+        return s[::-1]
+
+    bp.add_app_template_filter(my_reverse, &quot;strrev&quot;)
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+    assert &quot;strrev&quot; in app.jinja_env.filters.keys()
+    assert app.jinja_env.filters[&quot;strrev&quot;] == my_reverse
+    assert app.jinja_env.filters[&quot;strrev&quot;](&quot;abcd&quot;) == &quot;dcba&quot;
+
+
+def test_template_filter_with_template(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.app_template_filter()
+    def super_reverse(s):
+        return s[::-1]
+
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+
+    @app.route(&quot;/&quot;)
+    def index():
+        return flask.render_template(&quot;template_filter.html&quot;, value=&quot;abcd&quot;)
+
+    rv = client.get(&quot;/&quot;)
+    assert rv.data == b&quot;dcba&quot;
+
+
+def test_template_filter_after_route_with_template(app, client):
+    @app.route(&quot;/&quot;)
+    def index():
+        return flask.render_template(&quot;template_filter.html&quot;, value=&quot;abcd&quot;)
+
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.app_template_filter()
+    def super_reverse(s):
+        return s[::-1]
+
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+    rv = client.get(&quot;/&quot;)
+    assert rv.data == b&quot;dcba&quot;
+
+
+def test_add_template_filter_with_template(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    def super_reverse(s):
+        return s[::-1]
+
+    bp.add_app_template_filter(super_reverse)
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+
+    @app.route(&quot;/&quot;)
+    def index():
+        return flask.render_template(&quot;template_filter.html&quot;, value=&quot;abcd&quot;)
+
+    rv = client.get(&quot;/&quot;)
+    assert rv.data == b&quot;dcba&quot;
+
+
+def test_template_filter_with_name_and_template(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.app_template_filter(&quot;super_reverse&quot;)
+    def my_reverse(s):
+        return s[::-1]
+
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+
+    @app.route(&quot;/&quot;)
+    def index():
+        return flask.render_template(&quot;template_filter.html&quot;, value=&quot;abcd&quot;)
+
+    rv = client.get(&quot;/&quot;)
+    assert rv.data == b&quot;dcba&quot;
+
+
+def test_add_template_filter_with_name_and_template(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    def my_reverse(s):
+        return s[::-1]
+
+    bp.add_app_template_filter(my_reverse, &quot;super_reverse&quot;)
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+
+    @app.route(&quot;/&quot;)
+    def index():
+        return flask.render_template(&quot;template_filter.html&quot;, value=&quot;abcd&quot;)
+
+    rv = client.get(&quot;/&quot;)
+    assert rv.data == b&quot;dcba&quot;
+
+
+def test_template_test(app):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.app_template_test()
+    def is_boolean(value):
+        return isinstance(value, bool)
+
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+    assert &quot;is_boolean&quot; in app.jinja_env.tests.keys()
+    assert app.jinja_env.tests[&quot;is_boolean&quot;] == is_boolean
+    assert app.jinja_env.tests[&quot;is_boolean&quot;](False)
+
+
+def test_add_template_test(app):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    def is_boolean(value):
+        return isinstance(value, bool)
+
+    bp.add_app_template_test(is_boolean)
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+    assert &quot;is_boolean&quot; in app.jinja_env.tests.keys()
+    assert app.jinja_env.tests[&quot;is_boolean&quot;] == is_boolean
+    assert app.jinja_env.tests[&quot;is_boolean&quot;](False)
+
+
+def test_template_test_with_name(app):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.app_template_test(&quot;boolean&quot;)
+    def is_boolean(value):
+        return isinstance(value, bool)
+
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+    assert &quot;boolean&quot; in app.jinja_env.tests.keys()
+    assert app.jinja_env.tests[&quot;boolean&quot;] == is_boolean
+    assert app.jinja_env.tests[&quot;boolean&quot;](False)
+
+
+def test_add_template_test_with_name(app):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    def is_boolean(value):
+        return isinstance(value, bool)
+
+    bp.add_app_template_test(is_boolean, &quot;boolean&quot;)
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+    assert &quot;boolean&quot; in app.jinja_env.tests.keys()
+    assert app.jinja_env.tests[&quot;boolean&quot;] == is_boolean
+    assert app.jinja_env.tests[&quot;boolean&quot;](False)
+
+
+def test_template_test_with_template(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.app_template_test()
+    def boolean(value):
+        return isinstance(value, bool)
+
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+
+    @app.route(&quot;/&quot;)
+    def index():
+        return flask.render_template(&quot;template_test.html&quot;, value=False)
+
+    rv = client.get(&quot;/&quot;)
+    assert b&quot;Success!&quot; in rv.data
+
+
+def test_template_test_after_route_with_template(app, client):
+    @app.route(&quot;/&quot;)
+    def index():
+        return flask.render_template(&quot;template_test.html&quot;, value=False)
+
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.app_template_test()
+    def boolean(value):
+        return isinstance(value, bool)
+
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+    rv = client.get(&quot;/&quot;)
+    assert b&quot;Success!&quot; in rv.data
+
+
+def test_add_template_test_with_template(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    def boolean(value):
+        return isinstance(value, bool)
+
+    bp.add_app_template_test(boolean)
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+
+    @app.route(&quot;/&quot;)
+    def index():
+        return flask.render_template(&quot;template_test.html&quot;, value=False)
+
+    rv = client.get(&quot;/&quot;)
+    assert b&quot;Success!&quot; in rv.data
+
+
+def test_template_test_with_name_and_template(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.app_template_test(&quot;boolean&quot;)
+    def is_boolean(value):
+        return isinstance(value, bool)
+
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+
+    @app.route(&quot;/&quot;)
+    def index():
+        return flask.render_template(&quot;template_test.html&quot;, value=False)
+
+    rv = client.get(&quot;/&quot;)
+    assert b&quot;Success!&quot; in rv.data
+
+
+def test_add_template_test_with_name_and_template(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    def is_boolean(value):
+        return isinstance(value, bool)
+
+    bp.add_app_template_test(is_boolean, &quot;boolean&quot;)
+    app.register_blueprint(bp, url_prefix=&quot;/py&quot;)
+
+    @app.route(&quot;/&quot;)
+    def index():
+        return flask.render_template(&quot;template_test.html&quot;, value=False)
+
+    rv = client.get(&quot;/&quot;)
+    assert b&quot;Success!&quot; in rv.data
+
+
+def test_context_processing(app, client):
+    answer_bp = flask.Blueprint(&quot;answer_bp&quot;, __name__)
+
+    template_string = lambda: flask.render_template_string(  # noqa: E731
+        &quot;{% if notanswer %}{{ notanswer }} is not the answer. {% endif %}&quot;
+        &quot;{% if answer %}{{ answer }} is the answer.{% endif %}&quot;
+    )
+
+    # App global context processor
+    @answer_bp.app_context_processor
+    def not_answer_context_processor():
+        return {&quot;notanswer&quot;: 43}
+
+    # Blueprint local context processor
+    @answer_bp.context_processor
+    def answer_context_processor():
+        return {&quot;answer&quot;: 42}
+
+    # Setup endpoints for testing
+    @answer_bp.route(&quot;/bp&quot;)
+    def bp_page():
+        return template_string()
+
+    @app.route(&quot;/&quot;)
+    def app_page():
+        return template_string()
+
+    # Register the blueprint
+    app.register_blueprint(answer_bp)
+
+    app_page_bytes = client.get(&quot;/&quot;).data
+    answer_page_bytes = client.get(&quot;/bp&quot;).data
+
+    assert b&quot;43&quot; in app_page_bytes
+    assert b&quot;42&quot; not in app_page_bytes
+
+    assert b&quot;42&quot; in answer_page_bytes
+    assert b&quot;43&quot; in answer_page_bytes
+
+
+def test_template_global(app):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    @bp.app_template_global()
+    def get_answer():
+        return 42
+
+    # Make sure the function is not in the jinja_env already
+    assert &quot;get_answer&quot; not in app.jinja_env.globals.keys()
+    app.register_blueprint(bp)
+
+    # Tests
+    assert &quot;get_answer&quot; in app.jinja_env.globals.keys()
+    assert app.jinja_env.globals[&quot;get_answer&quot;] is get_answer
+    assert app.jinja_env.globals[&quot;get_answer&quot;]() == 42
+
+    with app.app_context():
+        rv = flask.render_template_string(&quot;{{ get_answer() }}&quot;)
+        assert rv == &quot;42&quot;
+
+
+def test_request_processing(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+    evts = []
+
+    @bp.before_request
+    def before_bp():
+        evts.append(&quot;before&quot;)
+
+    @bp.after_request
+    def after_bp(response):
+        response.data += b&quot;|after&quot;
+        evts.append(&quot;after&quot;)
+        return response
+
+    @bp.teardown_request
+    def teardown_bp(exc):
+        evts.append(&quot;teardown&quot;)
+
+    # Setup routes for testing
+    @bp.route(&quot;/bp&quot;)
+    def bp_endpoint():
+        return &quot;request&quot;
+
+    app.register_blueprint(bp)
+
+    assert evts == []
+    rv = client.get(&quot;/bp&quot;)
+    assert rv.data == b&quot;request|after&quot;
+    assert evts == [&quot;before&quot;, &quot;after&quot;, &quot;teardown&quot;]
+
+
+def test_app_request_processing(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+    evts = []
+
+    @bp.before_app_request
+    def before_app():
+        evts.append(&quot;before&quot;)
+
+    @bp.after_app_request
+    def after_app(response):
+        response.data += b&quot;|after&quot;
+        evts.append(&quot;after&quot;)
+        return response
+
+    @bp.teardown_app_request
+    def teardown_app(exc):
+        evts.append(&quot;teardown&quot;)
+
+    app.register_blueprint(bp)
+
+    # Setup routes for testing
+    @app.route(&quot;/&quot;)
+    def bp_endpoint():
+        return &quot;request&quot;
+
+    # before first request
+    assert evts == []
+
+    # first request
+    resp = client.get(&quot;/&quot;).data
+    assert resp == b&quot;request|after&quot;
+    assert evts == [&quot;before&quot;, &quot;after&quot;, &quot;teardown&quot;]
+
+    # second request
+    resp = client.get(&quot;/&quot;).data
+    assert resp == b&quot;request|after&quot;
+    assert evts == [&quot;before&quot;, &quot;after&quot;, &quot;teardown&quot;] * 2
+
+
+def test_app_url_processors(app, client):
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    # Register app-wide url defaults and preprocessor on blueprint
+    @bp.app_url_defaults
+    def add_language_code(endpoint, values):
+        values.setdefault(&quot;lang_code&quot;, flask.g.lang_code)
+
+    @bp.app_url_value_preprocessor
+    def pull_lang_code(endpoint, values):
+        flask.g.lang_code = values.pop(&quot;lang_code&quot;)
+
+    # Register route rules at the app level
+    @app.route(&quot;/&lt;lang_code&gt;/&quot;)
+    def index():
+        return flask.url_for(&quot;about&quot;)
+
+    @app.route(&quot;/&lt;lang_code&gt;/about&quot;)
+    def about():
+        return flask.url_for(&quot;index&quot;)
+
+    app.register_blueprint(bp)
+
+    assert client.get(&quot;/de/&quot;).data == b&quot;/de/about&quot;
+    assert client.get(&quot;/de/about&quot;).data == b&quot;/de/&quot;
+
+
+def test_nested_blueprint(app, client):
+    parent = flask.Blueprint(&quot;parent&quot;, __name__)
+    child = flask.Blueprint(&quot;child&quot;, __name__)
+    grandchild = flask.Blueprint(&quot;grandchild&quot;, __name__)
+
+    @parent.errorhandler(403)
+    def forbidden(e):
+        return &quot;Parent no&quot;, 403
+
+    @parent.route(&quot;/&quot;)
+    def parent_index():
+        return &quot;Parent yes&quot;
+
+    @parent.route(&quot;/no&quot;)
+    def parent_no():
+        flask.abort(403)
+
+    @child.route(&quot;/&quot;)
+    def child_index():
+        return &quot;Child yes&quot;
+
+    @child.route(&quot;/no&quot;)
+    def child_no():
+        flask.abort(403)
+
+    @grandchild.errorhandler(403)
+    def grandchild_forbidden(e):
+        return &quot;Grandchild no&quot;, 403
+
+    @grandchild.route(&quot;/&quot;)
+    def grandchild_index():
+        return &quot;Grandchild yes&quot;
+
+    @grandchild.route(&quot;/no&quot;)
+    def grandchild_no():
+        flask.abort(403)
+
+    child.register_blueprint(grandchild, url_prefix=&quot;/grandchild&quot;)
+    parent.register_blueprint(child, url_prefix=&quot;/child&quot;)
+    app.register_blueprint(parent, url_prefix=&quot;/parent&quot;)
+
+    assert client.get(&quot;/parent/&quot;).data == b&quot;Parent yes&quot;
+    assert client.get(&quot;/parent/child/&quot;).data == b&quot;Child yes&quot;
+    assert client.get(&quot;/parent/child/grandchild/&quot;).data == b&quot;Grandchild yes&quot;
+    assert client.get(&quot;/parent/no&quot;).data == b&quot;Parent no&quot;
+    assert client.get(&quot;/parent/child/no&quot;).data == b&quot;Parent no&quot;
+    assert client.get(&quot;/parent/child/grandchild/no&quot;).data == b&quot;Grandchild no&quot;
+
+
+def test_nested_callback_order(app, client):
+    parent = flask.Blueprint(&quot;parent&quot;, __name__)
+    child = flask.Blueprint(&quot;child&quot;, __name__)
+
+    @app.before_request
+    def app_before1():
+        flask.g.setdefault(&quot;seen&quot;, []).append(&quot;app_1&quot;)
+
+    @app.teardown_request
+    def app_teardown1(e=None):
+        assert flask.g.seen.pop() == &quot;app_1&quot;
+
+    @app.before_request
+    def app_before2():
+        flask.g.setdefault(&quot;seen&quot;, []).append(&quot;app_2&quot;)
+
+    @app.teardown_request
+    def app_teardown2(e=None):
+        assert flask.g.seen.pop() == &quot;app_2&quot;
+
+    @app.context_processor
+    def app_ctx():
+        return dict(key=&quot;app&quot;)
+
+    @parent.before_request
+    def parent_before1():
+        flask.g.setdefault(&quot;seen&quot;, []).append(&quot;parent_1&quot;)
+
+    @parent.teardown_request
+    def parent_teardown1(e=None):
+        assert flask.g.seen.pop() == &quot;parent_1&quot;
+
+    @parent.before_request
+    def parent_before2():
+        flask.g.setdefault(&quot;seen&quot;, []).append(&quot;parent_2&quot;)
+
+    @parent.teardown_request
+    def parent_teardown2(e=None):
+        assert flask.g.seen.pop() == &quot;parent_2&quot;
+
+    @parent.context_processor
+    def parent_ctx():
+        return dict(key=&quot;parent&quot;)
+
+    @child.before_request
+    def child_before1():
+        flask.g.setdefault(&quot;seen&quot;, []).append(&quot;child_1&quot;)
+
+    @child.teardown_request
+    def child_teardown1(e=None):
+        assert flask.g.seen.pop() == &quot;child_1&quot;
+
+    @child.before_request
+    def child_before2():
+        flask.g.setdefault(&quot;seen&quot;, []).append(&quot;child_2&quot;)
+
+    @child.teardown_request
+    def child_teardown2(e=None):
+        assert flask.g.seen.pop() == &quot;child_2&quot;
+
+    @child.context_processor
+    def child_ctx():
+        return dict(key=&quot;child&quot;)
+
+    @child.route(&quot;/a&quot;)
+    def a():
+        return &quot;, &quot;.join(flask.g.seen)
+
+    @child.route(&quot;/b&quot;)
+    def b():
+        return flask.render_template_string(&quot;{{ key }}&quot;)
+
+    parent.register_blueprint(child)
+    app.register_blueprint(parent)
+    assert (
+        client.get(&quot;/a&quot;).data == b&quot;app_1, app_2, parent_1, parent_2, child_1, child_2&quot;
+    )
+    assert client.get(&quot;/b&quot;).data == b&quot;child&quot;
+
+
+@pytest.mark.parametrize(
+    &quot;parent_init, child_init, parent_registration, child_registration&quot;,
+    [
+        (&quot;/parent&quot;, &quot;/child&quot;, None, None),
+        (&quot;/parent&quot;, None, None, &quot;/child&quot;),
+        (None, None, &quot;/parent&quot;, &quot;/child&quot;),
+        (&quot;/other&quot;, &quot;/something&quot;, &quot;/parent&quot;, &quot;/child&quot;),
+    ],
+)
+def test_nesting_url_prefixes(
+    parent_init,
+    child_init,
+    parent_registration,
+    child_registration,
+    app,
+    client,
+) -&gt; None:
+    parent = flask.Blueprint(&quot;parent&quot;, __name__, url_prefix=parent_init)
+    child = flask.Blueprint(&quot;child&quot;, __name__, url_prefix=child_init)
+
+    @child.route(&quot;/&quot;)
+    def index():
+        return &quot;index&quot;
+
+    parent.register_blueprint(child, url_prefix=child_registration)
+    app.register_blueprint(parent, url_prefix=parent_registration)
+
+    response = client.get(&quot;/parent/child/&quot;)
+    assert response.status_code == 200
+
+
+def test_nesting_subdomains(app, client) -&gt; None:
+    subdomain = &quot;api&quot;
+    parent = flask.Blueprint(&quot;parent&quot;, __name__)
+    child = flask.Blueprint(&quot;child&quot;, __name__)
+
+    @child.route(&quot;/child/&quot;)
+    def index():
+        return &quot;child&quot;
+
+    parent.register_blueprint(child)
+    app.register_blueprint(parent, subdomain=subdomain)
+
+    client.allow_subdomain_redirects = True
+
+    domain_name = &quot;domain.tld&quot;
+    app.config[&quot;SERVER_NAME&quot;] = domain_name
+    response = client.get(&quot;/child/&quot;, base_url=&quot;http://api.&quot; + domain_name)
+
+    assert response.status_code == 200
+
+
+def test_child_and_parent_subdomain(app, client) -&gt; None:
+    child_subdomain = &quot;api&quot;
+    parent_subdomain = &quot;parent&quot;
+    parent = flask.Blueprint(&quot;parent&quot;, __name__)
+    child = flask.Blueprint(&quot;child&quot;, __name__, subdomain=child_subdomain)
+
+    @child.route(&quot;/&quot;)
+    def index():
+        return &quot;child&quot;
+
+    parent.register_blueprint(child)
+    app.register_blueprint(parent, subdomain=parent_subdomain)
+
+    client.allow_subdomain_redirects = True
+
+    domain_name = &quot;domain.tld&quot;
+    app.config[&quot;SERVER_NAME&quot;] = domain_name
+    response = client.get(
+        &quot;/&quot;, base_url=f&quot;http://{child_subdomain}.{parent_subdomain}.{domain_name}&quot;
+    )
+
+    assert response.status_code == 200
+
+    response = client.get(&quot;/&quot;, base_url=f&quot;http://{parent_subdomain}.{domain_name}&quot;)
+
+    assert response.status_code == 404
+
+
+def test_unique_blueprint_names(app, client) -&gt; None:
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+    bp2 = flask.Blueprint(&quot;bp&quot;, __name__)
+
+    app.register_blueprint(bp)
+
+    with pytest.raises(ValueError):
+        app.register_blueprint(bp)  # same bp, same name, error
+
+    app.register_blueprint(bp, name=&quot;again&quot;)  # same bp, different name, ok
+
+    with pytest.raises(ValueError):
+        app.register_blueprint(bp2)  # different bp, same name, error
+
+    app.register_blueprint(bp2, name=&quot;alt&quot;)  # different bp, different name, ok
+
+
+def test_self_registration(app, client) -&gt; None:
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+    with pytest.raises(ValueError):
+        bp.register_blueprint(bp)
+
+
+def test_blueprint_renaming(app, client) -&gt; None:
+    bp = flask.Blueprint(&quot;bp&quot;, __name__)
+    bp2 = flask.Blueprint(&quot;bp2&quot;, __name__)
+
+    @bp.get(&quot;/&quot;)
+    def index():
+        return flask.request.endpoint
+
+    @bp.get(&quot;/error&quot;)
+    def error():
+        flask.abort(403)
+
+    @bp.errorhandler(403)
+    def forbidden(_: Exception):
+        return &quot;Error&quot;, 403
+
+    @bp2.get(&quot;/&quot;)
+    def index2():
+        return flask.request.endpoint
+
+    bp.register_blueprint(bp2, url_prefix=&quot;/a&quot;, name=&quot;sub&quot;)
+    app.register_blueprint(bp, url_prefix=&quot;/a&quot;)
+    app.register_blueprint(bp, url_prefix=&quot;/b&quot;, name=&quot;alt&quot;)
+
+    assert client.get(&quot;/a/&quot;).data == b&quot;bp.index&quot;
+    assert client.get(&quot;/b/&quot;).data == b&quot;alt.index&quot;
+    assert client.get(&quot;/a/a/&quot;).data == b&quot;bp.sub.index2&quot;
+    assert client.get(&quot;/b/a/&quot;).data == b&quot;alt.sub.index2&quot;
+    assert client.get(&quot;/a/error&quot;).data == b&quot;Error&quot;
+    assert client.get(&quot;/b/error&quot;).data == b&quot;Error&quot;
+</pre></div></div>
+<details><summary>original+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_blueprints.py::test_empty_name_not_allowed&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.11.10, pytest-7.3.0, pluggy-1.0.0
+rootdir: /testbed
+configfile: pyproject.toml
+collected 1 item
+
+tests/test_blueprints.py F                                               [100%]
+
+=================================== FAILURES ===================================
+_________________________ test_empty_name_not_allowed __________________________
+
+app = &lt;Flask &#x27;flask_test&#x27;&gt;, client = &lt;FlaskClient &lt;Flask &#x27;flask_test&#x27;&gt;&gt;
+
+    def test_empty_name_not_allowed(app, client):
+&gt;       with pytest.raises(ValueError):
+E       Failed: DID NOT RAISE &lt;class &#x27;ValueError&#x27;&gt;
+
+tests/test_blueprints.py:260: Failed
+=========================== short test summary info ============================
+FAILED tests/test_blueprints.py::test_empty_name_not_allowed - Failed: DID NO...
+============================== 1 failed in 0.08s ===============================
+</pre><pre></pre></details><details><summary>patched+test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_blueprints.py::test_empty_name_not_allowed&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.11.10, pytest-7.3.0, pluggy-1.0.0
+rootdir: /testbed
+configfile: pyproject.toml
+collected 1 item
+
+tests/test_blueprints.py .                                               [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_blueprints.py::test_empty_name_not_allowed
+============================== 1 passed in 0.06s ===============================
+</pre><pre></pre></details><details><summary>patched+p2p: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_blueprints.py&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.11.10, pytest-7.3.0, pluggy-1.0.0
+rootdir: /testbed
+configfile: pyproject.toml
+collected 60 items
+
+tests/test_blueprints.py ............................................... [ 78%]
+.............                                                            [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_blueprints.py::test_blueprint_specific_error_handling
+PASSED tests/test_blueprints.py::test_blueprint_specific_user_error_handling
+PASSED tests/test_blueprints.py::test_blueprint_app_error_handling
+PASSED tests/test_blueprints.py::test_blueprint_prefix_slash[-/-/]
+PASSED tests/test_blueprints.py::test_blueprint_prefix_slash[/--/]
+PASSED tests/test_blueprints.py::test_blueprint_prefix_slash[/-/-/]
+PASSED tests/test_blueprints.py::test_blueprint_prefix_slash[/foo--/foo]
+PASSED tests/test_blueprints.py::test_blueprint_prefix_slash[/foo/--/foo/]
+PASSED tests/test_blueprints.py::test_blueprint_prefix_slash[-/bar-/bar]
+PASSED tests/test_blueprints.py::test_blueprint_prefix_slash[/foo/-/bar-/foo/bar]
+PASSED tests/test_blueprints.py::test_blueprint_prefix_slash[/foo/-bar-/foo/bar]
+PASSED tests/test_blueprints.py::test_blueprint_prefix_slash[/foo-/bar-/foo/bar]
+PASSED tests/test_blueprints.py::test_blueprint_prefix_slash[/foo/-//bar-/foo/bar]
+PASSED tests/test_blueprints.py::test_blueprint_prefix_slash[/foo//-/bar-/foo/bar]
+PASSED tests/test_blueprints.py::test_blueprint_url_defaults
+PASSED tests/test_blueprints.py::test_blueprint_url_processors
+PASSED tests/test_blueprints.py::test_templates_and_static
+PASSED tests/test_blueprints.py::test_default_static_max_age
+PASSED tests/test_blueprints.py::test_templates_list
+PASSED tests/test_blueprints.py::test_dotted_name_not_allowed
+PASSED tests/test_blueprints.py::test_empty_name_not_allowed
+PASSED tests/test_blueprints.py::test_dotted_names_from_app
+PASSED tests/test_blueprints.py::test_empty_url_defaults
+PASSED tests/test_blueprints.py::test_route_decorator_custom_endpoint
+PASSED tests/test_blueprints.py::test_route_decorator_custom_endpoint_with_dots
+PASSED tests/test_blueprints.py::test_endpoint_decorator
+PASSED tests/test_blueprints.py::test_template_filter
+PASSED tests/test_blueprints.py::test_add_template_filter
+PASSED tests/test_blueprints.py::test_template_filter_with_name
+PASSED tests/test_blueprints.py::test_add_template_filter_with_name
+PASSED tests/test_blueprints.py::test_template_filter_with_template
+PASSED tests/test_blueprints.py::test_template_filter_after_route_with_template
+PASSED tests/test_blueprints.py::test_add_template_filter_with_template
+PASSED tests/test_blueprints.py::test_template_filter_with_name_and_template
+PASSED tests/test_blueprints.py::test_add_template_filter_with_name_and_template
+PASSED tests/test_blueprints.py::test_template_test
+PASSED tests/test_blueprints.py::test_add_template_test
+PASSED tests/test_blueprints.py::test_template_test_with_name
+PASSED tests/test_blueprints.py::test_add_template_test_with_name
+PASSED tests/test_blueprints.py::test_template_test_with_template
+PASSED tests/test_blueprints.py::test_template_test_after_route_with_template
+PASSED tests/test_blueprints.py::test_add_template_test_with_template
+PASSED tests/test_blueprints.py::test_template_test_with_name_and_template
+PASSED tests/test_blueprints.py::test_add_template_test_with_name_and_template
+PASSED tests/test_blueprints.py::test_context_processing
+PASSED tests/test_blueprints.py::test_template_global
+PASSED tests/test_blueprints.py::test_request_processing
+PASSED tests/test_blueprints.py::test_app_request_processing
+PASSED tests/test_blueprints.py::test_app_url_processors
+PASSED tests/test_blueprints.py::test_nested_blueprint
+PASSED tests/test_blueprints.py::test_nested_callback_order
+PASSED tests/test_blueprints.py::test_nesting_url_prefixes[/parent-/child-None-None]
+PASSED tests/test_blueprints.py::test_nesting_url_prefixes[/parent-None-None-/child]
+PASSED tests/test_blueprints.py::test_nesting_url_prefixes[None-None-/parent-/child]
+PASSED tests/test_blueprints.py::test_nesting_url_prefixes[/other-/something-/parent-/child]
+PASSED tests/test_blueprints.py::test_nesting_subdomains
+PASSED tests/test_blueprints.py::test_child_and_parent_subdomain
+PASSED tests/test_blueprints.py::test_unique_blueprint_names
+PASSED tests/test_blueprints.py::test_self_registration
+PASSED tests/test_blueprints.py::test_blueprint_renaming
+============================== 60 passed in 0.23s ==============================
+</pre><pre></pre></details><details><summary>canary: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_blueprints.py::test_empty_name_not_allowed&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.11.10, pytest-7.3.0, pluggy-1.0.0
+rootdir: /testbed
+configfile: pyproject.toml
+collected 1 item
+
+tests/test_blueprints.py F                                               [100%]
+
+=================================== FAILURES ===================================
+_________________________ test_empty_name_not_allowed __________________________
+
+app = &lt;Flask &#x27;flask_test&#x27;&gt;, client = &lt;FlaskClient &lt;Flask &#x27;flask_test&#x27;&gt;&gt;
+
+    def test_empty_name_not_allowed(app, client):
+        with pytest.raises(ValueError):
+&gt;           flask.Blueprint(&quot;&quot;, __name__)
+
+tests/test_blueprints.py:261: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;[AttributeError(&quot;&#x27;Blueprint&#x27; object has no attribute &#x27;name&#x27;&quot;) raised in repr()] Blueprint object at 0x7ffff6e2d810&gt;
+name = &#x27;&#x27;, import_name = &#x27;test_blueprints&#x27;, static_folder = None
+static_url_path = None, template_folder = None, url_prefix = None
+subdomain = None, url_defaults = None, root_path = None
+cli_group = &lt;object object at 0x7ffff7b85340&gt;
+
+    def __init__(
+        self,
+        name: str,
+        import_name: str,
+        static_folder: t.Optional[t.Union[str, os.PathLike]] = None,
+        static_url_path: t.Optional[str] = None,
+        template_folder: t.Optional[t.Union[str, os.PathLike]] = None,
+        url_prefix: t.Optional[str] = None,
+        subdomain: t.Optional[str] = None,
+        url_defaults: t.Optional[dict] = None,
+        root_path: t.Optional[str] = None,
+        cli_group: t.Optional[str] = _sentinel,  # type: ignore
+    ):
+&gt;       raise AssertionError(&quot;canary&quot;)
+E       AssertionError: canary
+
+src/flask/blueprints.py:185: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_blueprints.py::test_empty_name_not_allowed - AssertionError...
+============================== 1 failed in 0.08s ===============================
+</pre><pre></pre></details>
+<h2>Other mutants</h2><details><summary>m1 · killed: exit 1, 1 failed in 0.07s</summary><p>The guard `if not name:` treats a name of just whitespace as valid, but the correct patch rejects any falsy name; a name of `&quot; &quot;` passes the off-by-one check but fails the correct patch. The concrete input is `name=&quot; &quot;`.</p><pre><span class="line">--- a/src/flask/blueprints.py</span><span class="line">+++ b/src/flask/blueprints.py</span><span class="line">@@ -190,10 +190,7 @@ class Blueprint(Scaffold):</span><span class="line">             root_path=root_path,</span><span class="line">         )</span><span class="line"> </span><span class="line del">-        if not name:</span><span class="line del">-            raise ValueError(&quot;&#x27;name&#x27; may not be empty.&quot;)</span><span class="line del">-</span><span class="line del">-        if &quot;.&quot; in name:</span><span class="line add">+        if len(name) &gt; 0 and &quot;.&quot; in name:</span><span class="line">             raise ValueError(&quot;&#x27;name&#x27; may not contain a dot &#x27;.&#x27; character.&quot;)</span><span class="line"> </span><span class="line">         self.name = name</span></pre><pre>from flask import Blueprint
+# Correct patch raises ValueError for empty/whitespace name
+try:
+    bp = Blueprint(&#x27; &#x27;, import_name=&#x27;test&#x27;)
+    print(&#x27;CORRECT PATCH: No error raised (unexpected)&#x27;)
+except ValueError as e:
+    print(f&#x27;CORRECT PATCH: ValueError: {e}&#x27;)
+
+# Mutant with off-by-one (len &gt; 0 instead of not) allows whitespace
+try:
+    bp = Blueprint(&#x27; &#x27;, import_name=&#x27;test&#x27;)
+    print(&#x27;MUTANT 1: No error raised (wrong)&#x27;)
+except ValueError as e:
+    print(f&#x27;MUTANT 1: ValueError: {e}&#x27;)</pre><details><summary>mutant + test: command and captured output (truncate_output_at=1048576 bytes)</summary><pre>$ taskset -c 0 sh -c &#x27;export HOME=/root PYTHONDONTWRITEBYTECODE=1 PATH=/opt/miniconda3/envs/testbed/bin:$PATH &amp;&amp; cd /testbed &amp;&amp; python -m pytest -rA -p no:cacheprovider tests/test_blueprints.py::test_empty_name_not_allowed&#x27;</pre><pre>============================= test session starts ==============================
+platform linux -- Python 3.11.10, pytest-7.3.0, pluggy-1.0.0
+rootdir: /testbed
+configfile: pyproject.toml
+collected 1 item
+
+tests/test_blueprints.py F                                               [100%]
+
+=================================== FAILURES ===================================
+_________________________ test_empty_name_not_allowed __________________________
+
+app = &lt;Flask &#x27;flask_test&#x27;&gt;, client = &lt;FlaskClient &lt;Flask &#x27;flask_test&#x27;&gt;&gt;
+
+    def test_empty_name_not_allowed(app, client):
+&gt;       with pytest.raises(ValueError):
+E       Failed: DID NOT RAISE &lt;class &#x27;ValueError&#x27;&gt;
+
+tests/test_blueprints.py:260: Failed
+=========================== short test summary info ============================
+FAILED tests/test_blueprints.py::test_empty_name_not_allowed - Failed: DID NO...
+============================== 1 failed in 0.07s ===============================
+</pre><pre></pre></details></details>
+<h2>Every fork</h2><table><colgroup><col style='width:34%'><col style='width:6%'><col style='width:26%'><col style='width:8%'><col style='width:8%'><col style='width:9%'><col style='width:9%'></colgroup><tr><th>branch</th><th>exit</th><th>pytest</th><th>CPU-s</th><th>wall s</th><th>cost</th><th>timeout</th></tr><tr><td>pallets__flask-5014/original+test<br><span class='muted'>@e4489d32-4203-45fe-b3d1-c4be5ad55543</span></td><td>1</td><td>1 failed in 0.08s</td><td>0.297</td><td>0.62</td><td>$0.00319</td><td>15 s</td></tr><tr><td>pallets__flask-5014/patched+test<br><span class='muted'>@e4489d32-4203-45fe-b3d1-c4be5ad55543</span></td><td>0</td><td>1 passed in 0.06s</td><td>0.287</td><td>0.59</td><td>$0.00308</td><td>15 s</td></tr><tr><td>pallets__flask-5014/patched+p2p<br><span class='muted'>@e4489d32-4203-45fe-b3d1-c4be5ad55543</span></td><td>0</td><td>60 passed in 0.23s</td><td>0.415</td><td>0.79</td><td>$0.00437</td><td>15 s</td></tr><tr><td>pallets__flask-5014/canary+test<br><span class='muted'>@e4489d32-4203-45fe-b3d1-c4be5ad55543</span></td><td>1</td><td>1 failed in 0.08s</td><td>0.293</td><td>0.59</td><td>$0.00315</td><td>15 s</td></tr><tr><td>pallets__flask-5014/mutant-m1+test<br><span class='muted'>@e4489d32-4203-45fe-b3d1-c4be5ad55543</span></td><td>1</td><td>1 failed in 0.07s</td><td>0.287</td><td>0.58</td><td>$0.00309</td><td>15 s</td></tr></table>
+</main></body></html>

@@ -45,6 +45,7 @@ from falsifier.evidence import (
     MutantResult,
     RunRecord,
     Verdict,
+    canary_live,
     classify_test_run,
     passed_ids,
     pytest_summary,
@@ -57,23 +58,29 @@ Fork = Callable[[str, dict[str, str], str, int], Awaitable[RunRecord]]
 RUNNER_PATH = "/tmp/falsifier/witness_runner.py"
 SNIPPET_PATH = "/tmp/falsifier/witness.py"
 WITNESS_RUNNER = f'''\
-"""Run a witness: execute its statements, evaluate its final expression, print one JSON line."""
-import ast, json, re, sys
+"""Run a witness: execute it, evaluate its final expression if it has one, and report the value
+or the exception plus everything it printed, as one JSON line."""
+import ast, contextlib, io, json, re, sys
 
 def norm(s):
     return re.sub(r"0x[0-9a-fA-F]+", "0x?", s)  # object addresses differ run to run
 
 sys.path.insert(0, ".")
 src = open(sys.argv[1]).read()
+printed = io.StringIO()
 try:
     tree = ast.parse(src)
     last = tree.body.pop() if tree.body and isinstance(tree.body[-1], ast.Expr) else None
     scope = {{"__name__": "__witness__"}}
-    exec(compile(tree, "<witness>", "exec"), scope)
-    value = eval(compile(ast.Expression(last.value), "<witness>", "eval"), scope) if last else None
+    with contextlib.redirect_stdout(printed):
+        exec(compile(tree, "<witness>", "exec"), scope)
+        value = None
+        if last:
+            value = eval(compile(ast.Expression(last.value), "<witness>", "eval"), scope)
     out = {{"outcome": "value", "repr": norm(repr(value))}}
 except BaseException as e:
     out = {{"outcome": "raised", "type": type(e).__name__, "message": norm(str(e))}}
+out["stdout"] = norm(printed.getvalue())
 print({WITNESS_TAG!r} + json.dumps(out, sort_keys=True))
 '''
 
@@ -84,15 +91,24 @@ def pytest_command(inst: Instance, args: list[str]) -> str:
 
 
 def witness_command(inst: Instance) -> str:
-    return f"{inst.env} && cd {inst.workdir} && python {RUNNER_PATH} {SNIPPET_PATH}"
+    # PYTHONHASHSEED pins set and dict-of-str ordering, the one nondeterminism that could make a
+    # witness differ between two identical programs and so fake an UNEARNED.
+    return (
+        f"{inst.env} && export PYTHONHASHSEED=0 && cd {inst.workdir} && "
+        f"python {RUNNER_PATH} {SNIPPET_PATH}"
+    )
 
 
 def describe_witness(result: dict | None) -> str:
     if result is None:
         return "no witness output"
     if result["outcome"] == "value":
-        return f"returns {result['repr']}"
-    return f"raises {result['type']}({result['message']!r})"
+        text = f"returns {result['repr']}"
+    else:
+        text = f"raises {result['type']}({result['message']!r})"
+    if result.get("stdout"):
+        text += f", prints {result['stdout'].strip()[:300]!r}"
+    return text
 
 
 async def verify(inst: Instance, fork: Fork) -> Verdict:
@@ -100,22 +116,32 @@ async def verify(inst: Instance, fork: Fork) -> Verdict:
     patched_and_test = {**inst.patched, **inst.test}
     test_cmd = pytest_command(inst, inst.f2p)
 
-    orig_r, pat_r, reg_r = await asyncio.gather(
+    jobs = [
         fork("original+test", dict(inst.test), test_cmd, t.test),
         fork("patched+test", patched_and_test, test_cmd, t.test),
         fork("patched+p2p", patched_and_test, pytest_command(inst, inst.p2p_files), t.regression),
-    )
+    ]
+    if inst.canary is not None:  # the negative control, through the same path as any mutant
+        canary_overlay = {**inst.patched, **inst.canary.overlay, **inst.test}
+        jobs.append(fork("canary+test", canary_overlay, test_cmd, t.test))
+    orig_r, pat_r, reg_r, *canary_r = await asyncio.gather(*jobs)
     # Every fork that was paid for is evidence, including the P2P fork on a short-circuited verdict.
     forks = {
         "original+test": orig_r.to_dict(),
         "patched+test": pat_r.to_dict(),
         "patched+p2p": reg_r.to_dict(),
     }
+    if canary_r:
+        forks["canary"] = canary_r[0].to_dict()
+    live, canary_why = canary_live(forks.get("canary"))
     orig, orig_why = classify_test_run(orig_r)
     pat, pat_why = classify_test_run(pat_r)
     not_run = [_mutant(m, NOT_RUN) for m in inst.mutants]
 
     def done(verdict: str, reason: str, mutants: list[MutantResult], **counts) -> Verdict:
+        if verdict != INCONCLUSIVE:
+            reason += f". Negative control: {canary_why}"
+        counts["canary_exit"] = forks.get("canary", {}).get("exit_code")
         return Verdict(
             instance_id=inst.id,
             verdict=verdict,
@@ -127,6 +153,13 @@ async def verify(inst: Instance, fork: Fork) -> Verdict:
             expected_verdict=inst.expected_verdict,
         )
 
+    if not live:
+        return done(
+            INCONCLUSIVE,
+            f"negative control failed: {canary_why}. Every mutant result for this instance would "
+            "be void, so none is reported",
+            not_run,
+        )
     if orig == ERROR:
         return done(INCONCLUSIVE, f"original + test did not run cleanly: {orig_why}", not_run)
     if orig == PASS:
@@ -151,7 +184,7 @@ async def verify(inst: Instance, fork: Fork) -> Verdict:
             f"PASS_TO_PASS run did not complete: exit {reg_r.exit_code} {reg_r.error or ''}",
             not_run,
         )
-    seen = passed_ids(reg_r.stdout)
+    seen = passed_ids(reg_r.stdout, normalize_options=inst.log_parser == "parse_log_requests")
     missing = [i for i in inst.p2p if i not in seen]
     if missing:
         return done(

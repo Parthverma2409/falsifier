@@ -83,10 +83,28 @@ def pytest_counts(stdout: str) -> dict[str, int]:
     return counts
 
 
-def passed_ids(stdout: str) -> set[str]:
+_OPTION = re.compile(r"(.*?)\[(.*)\]")
+
+
+def _normalize_option(test_id: str) -> str:
+    """SWE-bench's parse_log_pytest_options (used for psf/requests) reduces an absolute-path
+    parameter to its basename: `t[/testbed/tests/test_utils.py]` -> `t[/test_utils.py]`. The
+    dataset's PASS_TO_PASS ids were produced that way, so ours must be too (requests-6028)."""
+    m = _OPTION.search(test_id)
+    if not m:
+        return test_id
+    main, option = m.groups()
+    if option.startswith("/") and not option.startswith("//") and "*" not in option:
+        option = "/" + option.split("/")[-1]
+    return f"{main}[{option}]"
+
+
+def passed_ids(stdout: str, normalize_options: bool = False) -> set[str]:
     """Ids reported PASSED in a `pytest -rA` short summary, truncated at the first space as
-    SWE-bench's log parser truncates them, so they compare directly with PASS_TO_PASS."""
-    return {ln.split(" ", 2)[1] for ln in (stdout or "").splitlines() if ln.startswith("PASSED ")}
+    SWE-bench's log parser truncates them, so they compare directly with PASS_TO_PASS. With
+    normalize_options, path parameters are reduced as parse_log_pytest_options does."""
+    ids = {ln.split(" ", 2)[1] for ln in (stdout or "").splitlines() if ln.startswith("PASSED ")}
+    return {_normalize_option(i) for i in ids} if normalize_options else ids
 
 
 def classify_test_run(rec: RunRecord | dict) -> tuple[str, str]:
@@ -110,6 +128,27 @@ def classify_test_run(rec: RunRecord | dict) -> tuple[str, str]:
     if code in (1, 2):
         return FAIL, f"exit {code}, {summary}"
     return ERROR, f"exit {code}, {summary}"
+
+
+CANARY_MARKER = "AssertionError: canary"
+
+
+def canary_live(rec: RunRecord | dict | None) -> tuple[bool, str]:
+    """Did the negative control prove that overlays reach the code under test? The targeted test
+    must not pass, and either it failed normally (exit 1 or 2) or the log shows the canary's own
+    AssertionError (e.g. the canary broke a pytest hook and pytest exited 3 with INTERNALERROR).
+    A pass, a platform error, or a crash without the canary's trace proves nothing."""
+    if rec is None:
+        return False, "no canary could be built"
+    r = rec if isinstance(rec, dict) else rec.to_dict()
+    outcome, why = classify_test_run(r)
+    marker = CANARY_MARKER in (r.get("stdout") or "") + (r.get("stderr") or "")
+    if outcome == PASS:
+        return False, f"the canary PASSED the test ({why}): overlays are not live"
+    if outcome == FAIL or marker:
+        trace = "the canary's AssertionError is in the log" if marker else "no canary trace"
+        return True, f"the canary failed the test ({why}; {trace})"
+    return False, f"the canary run did not fail cleanly ({why}) and shows no canary trace"
 
 
 WITNESS_TAG = "FALSIFIER_WITNESS "
@@ -215,6 +254,9 @@ class Verdict:
             raise EvidenceError(f"{self.verdict} without a single run behind it")
         if self.verdict == INCONCLUSIVE:
             return
+        live, why = canary_live(self.forks.get("canary"))
+        if not live:
+            raise EvidenceError(f"{self.verdict} without a live negative control: {why}")
         for rec in records:
             if gaps := missing_evidence(rec):
                 raise EvidenceError(f"{self.verdict}: {rec.get('label')} lacks {gaps}")
