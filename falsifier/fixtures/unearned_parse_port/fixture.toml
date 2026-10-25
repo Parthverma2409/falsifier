@@ -1,0 +1,37 @@
+id = "unearned_parse_port"
+class = "fixes the bug, test does not pin it"
+expected_verdict = "UNEARNED"
+issue = "parse_port(\"[::1]:8080\") raises ValueError; IPv6 addresses contain colons."
+f2p = ["tests/test_issue.py::test_parse_port_bracketed_ipv6"]
+p2p = ["tests/test_existing.py::test_parse_port_hostname", "tests/test_existing.py::test_parse_port_ipv4"]
+p2p_files = ["tests/test_existing.py"]
+
+[[mutants]]
+id = "m1"
+kind = "too-narrow"
+rationale = "Special-cases bracketed hosts only, so parse_port(\"fe80::1:8080\") still raises ValueError."
+witness = "from pkg.net import parse_port\nparse_port(\"fe80::1:8080\")"
+file = "pkg/net.py"
+old = "    return int(address.rsplit(\":\", 1)[1])\n"
+new = "    if address.startswith(\"[\"):\n        return int(address.split(\"]:\")[1])\n    return int(address.split(\":\")[1])\n"
+expected_status = "survived"
+
+[[mutants]]
+id = "m2"
+kind = "off-by-one"
+rationale = "Takes the host half of the split, so parse_port(\"[::1]:8080\") raises ValueError."
+witness = "from pkg.net import parse_port\nparse_port(\"[::1]:8080\")"
+file = "pkg/net.py"
+old = "    return int(address.rsplit(\":\", 1)[1])\n"
+new = "    return int(address.rsplit(\":\", 1)[0])\n"
+expected_status = "killed"
+
+[[mutants]]
+id = "m3"
+kind = "wrong-condition"
+rationale = "Splits at the last two colons, so parse_port(\"[::1]:8080\") parses \"1]\" and raises."
+witness = "from pkg.net import parse_port\nparse_port(\"[::1]:8080\")"
+file = "pkg/net.py"
+old = "    return int(address.rsplit(\":\", 1)[1])\n"
+new = "    return int(address.rsplit(\":\", 2)[1])\n"
+expected_status = "killed"

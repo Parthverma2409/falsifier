@@ -1,0 +1,17 @@
+id = "broken_clamp"
+class = "test never failed on the original"
+expected_verdict = "BROKEN"
+issue = "clamp(x, lo, hi) ignores hi: clamp(15, 0, 10) returns 15 instead of 10."
+f2p = ["tests/test_issue.py::test_clamp_inside_range"]
+p2p = ["tests/test_existing.py::test_clamp_below", "tests/test_existing.py::test_clamp_inside"]
+p2p_files = ["tests/test_existing.py"]
+
+[[mutants]]
+id = "m1"
+kind = "off-by-one"
+rationale = "Clamps only above hi + 1, so clamp(11, 0, 10) returns 11."
+witness = "from pkg.numeric import clamp\nclamp(11, 0, 10)"
+file = "pkg/numeric.py"
+old = "    if x > hi:\n"
+new = "    if x > hi + 1:\n"
+expected_status = "not-run"

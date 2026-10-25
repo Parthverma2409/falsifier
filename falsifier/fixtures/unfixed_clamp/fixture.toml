@@ -1,0 +1,17 @@
+id = "unfixed_clamp"
+class = "extra: the patch fails its own test"
+expected_verdict = "UNFIXED"
+issue = "clamp(x, lo, hi) ignores hi: clamp(15, 0, 10) returns 15 instead of 10."
+f2p = ["tests/test_issue.py::test_clamp_upper_bound"]
+p2p = ["tests/test_existing.py::test_clamp_below", "tests/test_existing.py::test_clamp_inside"]
+p2p_files = ["tests/test_existing.py"]
+
+[[mutants]]
+id = "m1"
+kind = "off-by-one"
+rationale = "Clamps only above hi + 1."
+witness = "from pkg.numeric import clamp\nclamp(11, 0, 10)"
+file = "pkg/numeric.py"
+old = "    if x > hi:\n"
+new = "    if x > hi + 1:\n"
+expected_status = "not-run"

@@ -1,0 +1,27 @@
+id = "nonfix_slugify"
+class = "does not fix the bug, test passes anyway"
+expected_verdict = "UNEARNED"
+issue = "slugify should trim and collapse whitespace: slugify(\"Hello  World \") should be \"hello-world\". The patch only trims."
+f2p = ["tests/test_issue.py::test_slugify_trailing_space"]
+p2p = ["tests/test_existing.py::test_slugify_simple", "tests/test_existing.py::test_slugify_single_word"]
+p2p_files = ["tests/test_existing.py"]
+
+[[mutants]]
+id = "m1"
+kind = "wrong-condition"
+rationale = "Splits on any whitespace run (the full fix), so slugify(\"Hello  World\") gives \"hello-world\" where the patch gives \"hello--world\"."
+witness = "from pkg.text import slugify\nslugify(\"Hello  World\")"
+file = "pkg/text.py"
+old = "    return title.strip().lower().replace(\" \", \"-\")\n"
+new = "    return \"-\".join(title.lower().split())\n"
+expected_status = "survived"
+
+[[mutants]]
+id = "m2"
+kind = "too-narrow"
+rationale = "Strips only the left side, so slugify(\"Hello World \") keeps a trailing hyphen."
+witness = "from pkg.text import slugify\nslugify(\"Hello World \")"
+file = "pkg/text.py"
+old = "    return title.strip().lower().replace(\" \", \"-\")\n"
+new = "    return title.lstrip().lower().replace(\" \", \"-\")\n"
+expected_status = "killed"

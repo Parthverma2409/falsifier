@@ -1,0 +1,17 @@
+id = "regressed_last_n"
+class = "extra: the patch breaks an existing test"
+expected_verdict = "REGRESSED"
+issue = "last_n(items, n) returns the whole list for n <= 0; it should return []."
+f2p = ["tests/test_issue.py::test_last_n_zero"]
+p2p = ["tests/test_existing.py::test_last_n_basic", "tests/test_existing.py::test_first_n_basic", "tests/test_existing.py::test_first_n_negative"]
+p2p_files = ["tests/test_existing.py"]
+
+[[mutants]]
+id = "m1"
+kind = "off-by-one"
+rationale = "Uses n < 0, so n = 0 returns the whole list."
+witness = "from pkg.window import last_n\nlast_n([1, 2, 3], 0)"
+file = "pkg/window.py"
+old = "    if n <= 0:\n"
+new = "    if n < 0:\n"
+expected_status = "not-run"

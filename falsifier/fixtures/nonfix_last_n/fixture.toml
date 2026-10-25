@@ -1,0 +1,27 @@
+id = "nonfix_last_n"
+class = "does not fix the bug, test passes anyway"
+expected_verdict = "UNEARNED"
+issue = "last_n(items, n) returns the whole list for n <= 0; it should return []. The patch handles n == 0 only."
+f2p = ["tests/test_issue.py::test_last_n_zero"]
+p2p = ["tests/test_existing.py::test_last_n_basic", "tests/test_existing.py::test_first_n_basic", "tests/test_existing.py::test_first_n_negative"]
+p2p_files = ["tests/test_existing.py"]
+
+[[mutants]]
+id = "m1"
+kind = "wrong-condition"
+rationale = "Guards n <= 0 (the full fix), so last_n([1, 2, 3], -1) returns [] where the patch returns [2, 3]."
+witness = "from pkg.window import last_n\nlast_n([1, 2, 3], -1)"
+file = "pkg/window.py"
+old = "    if n == 0:\n"
+new = "    if n <= 0:\n"
+expected_status = "survived"
+
+[[mutants]]
+id = "m2"
+kind = "off-by-one"
+rationale = "Guards n == 1, so last_n([1, 2, 3], 0) returns the whole list."
+witness = "from pkg.window import last_n\nlast_n([1, 2, 3], 0)"
+file = "pkg/window.py"
+old = "    if n == 0:\n"
+new = "    if n == 1:\n"
+expected_status = "killed"

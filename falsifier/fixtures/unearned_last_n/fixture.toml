@@ -1,0 +1,37 @@
+id = "unearned_last_n"
+class = "fixes the bug, test does not pin it"
+expected_verdict = "UNEARNED"
+issue = "last_n(items, n) returns the whole list for n <= 0; it should return []."
+f2p = ["tests/test_issue.py::test_last_n_zero"]
+p2p = ["tests/test_existing.py::test_last_n_basic", "tests/test_existing.py::test_first_n_basic", "tests/test_existing.py::test_first_n_negative"]
+p2p_files = ["tests/test_existing.py"]
+
+[[mutants]]
+id = "m1"
+kind = "off-by-one"
+rationale = "Uses n < 0, so n = 0 slices items[-0:] and returns the whole list."
+witness = "from pkg.window import last_n\nlast_n([1, 2, 3], 0)"
+file = "pkg/window.py"
+old = "    if n <= 0:\n"
+new = "    if n < 0:\n"
+expected_status = "killed"
+
+[[mutants]]
+id = "m2"
+kind = "too-narrow"
+rationale = "Only catches n == 0, so last_n([1, 2, 3], -1) returns [2, 3]."
+witness = "from pkg.window import last_n\nlast_n([1, 2, 3], -1)"
+file = "pkg/window.py"
+old = "    if n <= 0:\n"
+new = "    if n == 0:\n"
+expected_status = "survived"
+
+[[mutants]]
+id = "m3"
+kind = "off-by-one"
+rationale = "Treats n = 1 as empty, so last_n([1, 2, 3], 1) returns [] instead of [3]."
+witness = "from pkg.window import last_n\nlast_n([1, 2, 3], 1)"
+file = "pkg/window.py"
+old = "    if n <= 0:\n"
+new = "    if n <= 1:\n"
+expected_status = "survived"
