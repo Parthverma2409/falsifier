@@ -18,6 +18,21 @@ _TODO: list the possible verdicts and what each one means._
 
 _TODO: installation and CLI usage._
 
+### Configuration
+
+Settings live in `falsifier/config.py`; this list mirrors it.
+
+| Setting | Value | Override |
+|---|---|---|
+| Token Factory base_url (OpenAI-compatible) | `https://api.tokenfactory.nebius.com/v1/` | `FALSIFIER_BASE_URL` |
+| Generation model | `nvidia/Nemotron-3_5-Lightning`, thinking off | `FALSIFIER_MODEL` |
+| Model price, USD per 1M tokens in / out | 0.06 / 0.24 | `FALSIFIER_USD_PER_M_INPUT`, `FALSIFIER_USD_PER_M_OUTPUT` |
+| Response cache (gitignored) | `.cache/generate/` | `FALSIFIER_GENERATE_CACHE` |
+| Sandbox spend ceiling | set per script | `FALSIFIER_SPEND_CEILING_USD` |
+
+`NEBIUS_API_KEY` and `NEBIUS_PROJECT_ID` are read from the environment or a local `.env`; see
+`.env.example`.
+
 ## Limitations
 
 _TODO: known limitations._

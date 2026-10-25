@@ -1,0 +1,175 @@
+### MUTANT 1
+KIND: off-by-one
+RATIONALE: Uses `len(name) < 1` which is functionally equivalent for strings but the developer likely intended a different check; differs on input `name=""` where `not name` raises but `len(name) < 1` also raises, so this is actually equivalent—correction: uses `not name` vs `name is None` which differs on `name=""` vs `name=None`, but the issue is about empty name. Better: uses `name is not None` which allows empty string.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -188,6 +188,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if name is not None:
++            raise ValueError("'name' may not be empty.")
+ 
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 2
+KIND: wrong-condition
+RATIONALE: The guard tests `if name:` instead of `if not name:`, so it only raises when name is falsy but misses the case where name is an empty string passed explicitly; differs on input `name=""` which passes the check instead of raising.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -188,6 +188,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if name:
++            raise ValueError("'name' may not be empty.")
+ 
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 3
+KIND: too-narrow
+RATIONALE: Only checks for `None` and raises, allowing empty string `""` to pass through without error; differs on input `name=""` which is accepted instead of raising `ValueError`.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -188,6 +188,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if name is None:
++            raise ValueError("'name' may not be empty.")
+ 
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 4
+KIND: silences-symptom
+RATIONALE: Catches the `ValueError` and silently ignores it, so the blueprint is created with an empty name instead of failing; differs on input `name=""` which is accepted instead of raising.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -188,6 +188,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        try:
++            if not name:
++                raise ValueError("'name' may not be empty.")
++        except ValueError:
++            pass
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 5
+KIND: off-by-one
+RATIONALE: Uses `if not name or len(name) == 1:` which incorrectly allows single-character names while rejecting empty ones; differs on input `name="a"` which is accepted instead of raising (the correct patch raises only for empty, not single-char).
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -188,6 +188,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if not name or len(name) == 1:
++            raise ValueError("'name' may not be empty.")
+ 
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 6
+KIND: wrong-condition
+RATIONALE: The guard uses `and` instead of the correct implicit check, testing `if "." not in name and not name:` which only raises when both conditions are true; differs on input `name=""` which does not contain a dot but also is falsy, so the `and` makes the condition false and no error is raised—actually `not name` is True, `"." not in name` is True, so `and` is True, raising. Need a case where it fails: `name="foo"` has dot? No. Let's use `name="."` which has dot and is truthy, condition false. Better: `name="bar"` no dot, truthy, condition false. The wrong condition `if "." not in name and not name:` raises only when name has no dot AND is empty. For `name=""` it raises, for `name="foo"` it doesn't. But the correct patch raises for ALL empty names regardless of dot. The difference: `name="."` has dot, so correct patch raises (empty check first), this mutant's condition `if "." not in name and not name:` is False because dot is in name, so no raise. But `name="."` is not empty, correct patch raises because `not name` is False, so correct patch does NOT raise for `name="."`. Wait, correct patch: `if not name:` raises if empty. `name="."` is not empty, so correct patch does NOT raise. My mutant also does NOT raise for `name="."`. Need input where they differ. `name=""`: correct raises, mutant `if "." not in name and not name:` -> `"." not in ""` True, `not ""` True, `and` True, raises. Same. `name="a"`: correct does not raise (not empty), mutant `if "." not in "a" and not "a":` -> `True and False` False, does not raise. Same. Actually the mutant's condition is `if "." not in name and not name:` which is equivalent to `if name == "" and "." not in name:` which is always `name == ""` since empty string has no dot. So it's equivalent to the correct patch for all strings. I need a different wrong-condition.
+
+Let's use `if name and "." in name:` which is completely wrong—raises only if name is truthy AND has dot.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -188,6 +188,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if name and "." in name:
++            raise ValueError("'name' may not be empty.")
+ 
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 7
+KIND: too-narrow
+RATIONALE: Only raises when name is the literal string `""` using `is`, missing other falsy-like cases; differs on input `name=None` which is accepted instead of raising (though name is typically str, the check `name is ""` is always False for any variable).
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -188,6 +188,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if name is "":
++            raise ValueError("'name' may not be empty.")
+ 
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 8
+KIND: silences-symptom
+RATIONALE: Returns `None` early when name is empty, preventing the ValueError from being raised but also not setting a name; differs on input `name=""` which returns None from __init__ instead of raising (though __init__ returning None is unusual, the effect is the error is suppressed).
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -188,6 +188,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if not name:
++            return None
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 9
+KIND: off-by-one
+RATIONALE: Uses `if len(name) <= 0:` which is equivalent to `not name` for strings but the developer might have intended `<= 0` vs `not`; differs on input `name=""` where both raise, so actually equivalent—let's use `if len(name) < 0:` which never raises since len is never negative; differs on no input since len < 0 never true. Need actual off-by-one: `if len(name) > 0:` which raises when name has content, opposite of intent.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -188,6 +188,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if len(name) > 0:
++            raise ValueError("'name' may not be empty.")
+ 
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 10
+KIND: wrong-condition
+RATIONALE: The guard checks `if "." in name or not name:` which is actually equivalent to the correct patch since `or` matches De Morgan, but the developer might have intended `if "." in name and not name:` which only raises when both dot and empty; differs on input `name="foo"` which has no dot and is truthy, so `if "." in name or not name:` is `False or False` False, no raise, correct patch also does not raise for `name="foo"`. Need difference: `name=""` correct raises, `if "." in name or not name:` -> `"." in ""` False, `not ""` True, `or` True, raises. Same. `name="."` correct does not raise (not empty), mutant `if "." in "." or not ".":` -> `True or False` True, raises. Aha! `name="."` has a dot but is not empty. Correct patch: `if not name:` is False, so does NOT raise. Mutant: `if "." in name or not name:` is True, raises. Differs on input `name="."`.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -188,6 +188,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if "." in name or not name:
++            raise ValueError("'name' may not be empty.")
+ 
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```

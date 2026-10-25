@@ -1,0 +1,173 @@
+### MUTANT 1
+KIND: off-by-one
+RATIONALE: Uses `not not name` (always True) instead of `not name`, allowing empty strings to pass; the check becomes a no-op, so a Blueprint with an empty name is accepted.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -187,6 +187,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if not not name:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 2
+KIND: off-by-one
+RATIONALE: Checks `if name is None` only, so empty string `""` and `False` pass through without raising; the guard misses the falsy empty string case.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -187,6 +187,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if name is None:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 3
+KIND: wrong-condition
+RATIONALE: Checks `if name and "." in name` which only raises when a dot is present; an empty name passes because `name` is falsy but the `and` short-circuits, so the dot check is skipped entirely.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -187,6 +187,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if name and "." in name:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 4
+KIND: wrong-condition
+RATIONALE: Uses `if not name or "." in name:` which raises the same error for both empty names and names with dots; a name like `"foo"` passes the empty check but the dot check correctly rejects it, yet the combined condition masks the distinct intent and accepts empty names when no dot is present.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -187,6 +187,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if not name or "." in name:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 5
+KIND: too-narrow
+RATIONALE: Only checks `if len(name) == 0`, which works for strings but would not catch a non-string falsy value like `0` or `False` if they were ever passed; the fix is narrow to the exact issue case.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -187,6 +187,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if len(name) == 0:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 6
+KIND: too-narrow
+RATIONALE: Only rejects the literal string `""` by checking `if name == ""`, so `None` or other falsy values slip through without error; the fix does not generalize to all empty-like inputs.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -187,6 +187,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if name == "":
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 7
+KIND: silences-symptom
+RATIONALE: Catches the `ValueError` raised by the dot check and ignores it, so the empty name check never runs; the reported error about empty names goes away but the root cause is not addressed.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -187,6 +187,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        try:
++            if "." in name:
++                raise ValueError("'name' may not contain a dot '.' character.")
++        except ValueError:
++            pass
++
+         if not name:
+             raise ValueError("'name' may not be empty.")
+ 
+```
+### MUTANT 8
+KIND: silences-symptom
+RATIONALE: Returns `None` immediately on empty name, suppressing the `ValueError` entirely; the function exits early without raising, so the caller sees no error but the blueprint is created with an invalid empty name.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -187,6 +187,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if not name:
++            return None
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 9
+KIND: off-by-one
+RATIONALE: Uses `if len(name) < 1:` which is logically equivalent to `if not name` for strings, but if `name` is a non-string sequence, `len(name) < 1` could behave differently; however, for the string case it correctly blocks empty names, yet the off-by-one nature introduces risk for edge cases with subclasses.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -187,6 +187,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if len(name) < 1:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+### MUTANT 10
+KIND: wrong-condition
+RATIONALE: Checks `if name and "." not in name:` which only raises when there is no dot but a name exists; an empty name passes because `name` is falsy and the condition short-circuits, so the check is skipped and empty names are accepted.
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -187,6 +187,9 @@ def __init__(
+             root_path=root_path,
+         )
+ 
++        if name and "." not in name:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```

@@ -1,0 +1,203 @@
+### MUTANT 1
+**KIND:** off-by-one  
+**RATIONALE:** Checks `if not name:` but uses `if name == ""` which misses falsy values like `None` or `0`, allowing empty-ish names to slip through.
+
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -189,6 +189,9 @@ class Blueprint:
+             root_path=root_path,
+         )
+ 
+-        if not name:
++        if name == "":
+             raise ValueError("'name' may not be empty.")
+ 
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+---
+
+### MUTANT 2
+**KIND:** wrong-condition  
+**RATIONALE:** The guard tests `if name:` (truthy check) instead of `if not name:`, so it raises the error when a name IS provided, rejecting valid blueprint names.
+
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -189,6 +189,9 @@ class Blueprint:
+             root_path=root_path,
+         )
+ 
++        if name:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+---
+
+### MUTANT 3
+**KIND:** too-narrow  
+**RATIONALE:** Only checks for `None` and raises the error, so empty string `""` and other falsy values like `0` are accepted, failing to catch the general case of empty names.
+
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -189,6 +189,9 @@ class Blueprint:
+             root_path=root_path,
+         )
+ 
++        if name is None:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+---
+
+### MUTANT 4
+**KIND:** silences-symptom  
+**RATIONALE:** Catches the `ValueError` and silently ignores it, so creating a Blueprint with an empty name succeeds instead of raising an error, masking the bug.
+
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -189,6 +189,9 @@ class Blueprint:
+             root_path=root_path,
+         )
+ 
++        try:
++            if not name:
++                pass
++        except ValueError:
++            pass
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+---
+
+### MUTANT 5
+**KIND:** off-by-one  
+**RATIONALE:** Uses `if len(name) < 1:` which is functionally equivalent but introduces an off-by-one risk if the logic is later modified to `len(name) <= 0` or similar, missing the empty case.
+
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -189,6 +189,9 @@ class Blueprint:
+             root_path=root_path,
+         )
+ 
++        if len(name) < 1:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+---
+
+### MUTANT 6
+**KIND:** wrong-condition  
+**RATIONALE:** The guard checks `if "." not in name:` (missing dot is okay) instead of checking for empty name, so it only rejects names with dots and allows empty names to pass.
+
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -189,6 +189,9 @@ class Blueprint:
+             root_path=root_path,
+         )
+ 
++        if "." not in name:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+---
+
+### MUTANT 7
+**KIND:** too-narrow  
+**RATIONALE:** Only raises the error when the name is an empty string literal, so names like `None` or whitespace-only strings are accepted, not covering the general empty-name case.
+
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -189,6 +189,9 @@ class Blueprint:
+             root_path=root_path,
+         )
+ 
++        if name == "":
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+---
+
+### MUTANT 8
+**KIND:** silences-symptom  
+**RATIONALE:** Returns `None` immediately when name is empty, skipping the validation entirely and allowing the Blueprint to be created without raising an error.
+
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -189,6 +189,9 @@ class Blueprint:
+             root_path=root_path,
+         )
+ 
++        if not name:
++            return None
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+---
+
+### MUTANT 9
+**KIND:** wrong-condition  
+**RATIONALE:** The guard uses `and` instead of the correct logic, checking `if not name and "." in name:` which only raises when both conditions are true, letting empty names without dots pass through.
+
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -189,6 +189,9 @@ class Blueprint:
+             root_path=root_path,
+         )
+ 
++        if not name and "." in name:
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+---
+
+### MUTANT 10
+**KIND:** too-narrow  
+**RATIONALE:** Only checks the first character of the name, so a name consisting of a single space `" "` passes validation, failing to catch truly empty or whitespace-only names.
+
+```diff
+--- a/src/flask/blueprints.py
++++ b/src/flask/blueprints.py
+@@ -189,6 +189,9 @@ class Blueprint:
+             root_path=root_path,
+         )
+ 
++        if name and name[0] == " ":
++            raise ValueError("'name' may not be empty.")
++
+         if "." in name:
+             raise ValueError("'name' may not contain a dot '.' character.")
+ 
+```
+---

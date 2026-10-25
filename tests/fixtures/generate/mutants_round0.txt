@@ -1,0 +1,119 @@
+### MUTANT 1
+KIND: off-by-one
+RATIONALE: Uses n < 0, so n=0 still slices items[-0:] and returns the whole list.
+```diff
+--- a/pkg/window.py
++++ b/pkg/window.py
+@@ -1,5 +1,5 @@
+ def last_n(items, n):
+     """Return the last n items of a list."""
+-    if n <= 0:
++    if n < 0:
+         return []
+     return items[-n:]
+```
+
+### MUTANT 2
+KIND: wrong-condition
+RATIONALE: Guards on an empty list instead of a non-positive n, so last_n([1, 2], 0) still returns everything.
+```diff
+--- a/pkg/window.py
++++ b/pkg/window.py
+@@ -1,9 +1,9 @@
+ def last_n(items, n):
+     """Return the last n items of a list."""
+-    if n <= 0:
++    if not items:
+         return []
+     return items[-n:]
+```
+
+### MUTANT 3
+KIND: too-narrow
+RATIONALE: Context does not match the source, so this cannot apply.
+```diff
+--- a/pkg/window.py
++++ b/pkg/window.py
+@@ -1,5 +1,5 @@
+ def last_n(items, n):
+     """Return the last n items of a list."""
+-    if n <= 0:
++    if n == 0:
+         return []
+     return items[-n:]  # tail
+```
+
+### MUTANT 4
+KIND: wrong-condition
+RATIONALE: Drops the colon, which does not parse.
+```diff
+--- a/pkg/window.py
++++ b/pkg/window.py
+@@ -1,5 +1,5 @@
+ def last_n(items, n):
+     """Return the last n items of a list."""
+-    if n <= 0:
++    if n <= 0
+         return []
+     return items[-n:]
+```
+
+### MUTANT 5
+KIND: silences-symptom
+RATIONALE: Reads the queue without popping, so the loop never ends.
+```diff
+--- a/pkg/window.py
++++ b/pkg/window.py
+@@ -8,6 +8,6 @@
+ def drain(queue):
+     """Pop every item off the queue, last first."""
+     out = []
+     while queue:
+-        out.append(queue.pop())
++        out.append(queue[-1])
+     return out
+```
+
+### MUTANT 6
+KIND: silences-symptom
+RATIONALE: Removes the guard entirely, which is just the original code.
+```diff
+--- a/pkg/window.py
++++ b/pkg/window.py
+@@ -1,5 +1,3 @@
+ def last_n(items, n):
+     """Return the last n items of a list."""
+-    if n <= 0:
+-        return []
+     return items[-n:]
+```
+
+### MUTANT 7
+KIND: wrong-condition
+RATIONALE: Loops forever on a constant condition.
+```diff
+--- a/pkg/window.py
++++ b/pkg/window.py
+@@ -8,6 +8,6 @@
+ def drain(queue):
+     """Pop every item off the queue, last first."""
+     out = []
+-    while queue:
++    while True:
+         out.append(queue.pop())
+     return out
+```
+
+### MUTANT 8
+KIND: off-by-one
+```diff
+--- a/pkg/window.py
++++ b/pkg/window.py
+@@ -1,5 +1,5 @@
+ def last_n(items, n):
+     """Return the last n items of a list."""
+-    if n <= 0:
++    if n <= 1:
+         return []
+     return items[-n:]
+```

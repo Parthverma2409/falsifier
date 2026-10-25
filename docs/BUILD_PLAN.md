@@ -171,6 +171,8 @@ This page is what gets filmed.
 
 ### Step 6. `official.py`
 
+> Revised 2026-10-25: reduced to the dataset's published label. See §6 and `docs/plan_deviations.md`.
+
 Reproduce the official verdict: apply the gold or candidate patch, run FAIL_TO_PASS and
 PASS_TO_PASS, apply the benchmark's own resolution criteria. Match their definitions exactly; read
 the SWE-bench harness source rather than guessing.
@@ -192,6 +194,8 @@ Four classes, at least two of each:
 correctly. This answers "who checks the checker" and is the single strongest moment in the demo.
 
 ### Step 8. Adversarial self-audit
+
+> Revised 2026-10-25: reduced to hand-constructed cases plus a limitations section. See §6.
 
 Use Nemotron to attack the oracle rather than the patch. Ask it to produce cases designed to fool
 Falsifier: mutants that are semantically identical to the patch and should not count as survivors,
@@ -220,12 +224,24 @@ tested. Do not generalise to the whole benchmark.
 
 Deadline 30 October, 10:00 PDT. MPI submits on the 22nd; Devfest and travel take the 24th.
 
-| Dates | Work |
-|---|---|
-| now to beta access | steps 2 and 7 fixtures; instance selection |
-| day beta lands | step 1 probe, immediately, and report |
-| then to 22 Oct | steps 3 and 4 |
-| 23 to 24 Oct | written off |
-| 25 to 28 Oct | steps 5, 6, 8 |
-| 29 Oct | step 9, video, README |
-| 30 Oct | buffer, not build time |
+Revised 2026-10-25 (the original table is in git history). Reasons are in
+`docs/plan_deviations.md`.
+
+| Day | Date | Work |
+|---|---|---|
+| 1 | Sun 25 Oct | step 1 gate, latency and cost (done); step 2 `generate.py` |
+| 2 | Mon 26 Oct | step 7 fixtures first; step 3 `instance.py` on the official SWE-bench images |
+| 3 | Tue 27 Oct | step 4 `verify.py`, built and tested against the fixtures; step 5 evidence and report |
+| 4 | Wed 28 Oct | rough video (the first 3 minutes); step 6 `official.py`; first run on the chosen instances |
+| 5 | Thu 29 Oct | step 8 hand-constructed adversarial cases and limitations; step 9 run, write-up, final video, README |
+| 6 | Fri 30 Oct | buffer until 10:00 PDT, not build time |
+
+Changes from the original order and scope:
+
+- **Fixtures (step 7) before `verify.py` (step 4).** The fixtures are the only cases with a known
+  correct verdict, so they are the test harness for `verify.py`. They have to exist first.
+- **Rough video on day 4**, so the final day refines a cut that already exists instead of making one.
+- **`official.py` reports the dataset's published label** instead of reproducing SWE-bench's harness
+  logic.
+- **The adversarial audit (step 8) is hand-constructed cases plus a limitations section**, not
+  Nemotron-generated attacks.
