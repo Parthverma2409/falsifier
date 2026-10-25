@@ -19,8 +19,12 @@ rationale, and a **witness**: Python source whose final expression's value, or t
 raises, should differ between the patch and the mutant. Each mutant's `expected_status` is one of:
 
 - `killed`: the test fails on the mutant.
-- `survived`: the test passes on the mutant, and the witness shows it differs from the patch.
-  This status is evidence for UNEARNED.
+- `survived`: the mutant passes FAIL_TO_PASS, its witness shows it differs from the patch, and
+  it also passes every PASS_TO_PASS test. It clears SWE-bench's full resolution criterion, which
+  is the evidence for UNEARNED.
+- `caught-by-p2p`: the mutant passes FAIL_TO_PASS and is distinguishable, but PASS_TO_PASS catches
+  it. This is the evidence for UNPINNED: the designated test does not pin the bug, and the suite
+  catches the mutant incidentally.
 - `equivalent`: the test passes, but the witness gives the same result on the patch and the
   mutant. The mutant is discarded and counted separately, never as UNEARNED.
 - `not-run`: an earlier verdict short-circuits the run (BROKEN, UNFIXED or REGRESSED), so no
@@ -28,6 +32,7 @@ raises, should differ between the patch and the mutant. Each mutant's `expected_
 
 The plan's four classes have two fixtures each (`earned_*`, `unearned_*`, `nonfix_*`, `broken_*`).
 `unfixed_clamp` and `regressed_last_n` are extras that exercise the other two verdicts.
+`unpinned_last_n` exercises UNPINNED (added 2026-10-25 with the verdict split).
 `unearned_clamp_float` covers a domain wider than the test: clamp accepts floats, the test covers
 integers only, and m4 differs from the patch only on a float. Its sibling `earned_clamp` restricts
 clamp to integers, so there the same m4 is equivalent over the whole domain.

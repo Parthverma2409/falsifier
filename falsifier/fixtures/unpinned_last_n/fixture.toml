@@ -1,0 +1,27 @@
+id = "unpinned_last_n"
+class = "fixes the bug, test does not pin it, the suite catches the mutant"
+expected_verdict = "UNPINNED"
+issue = "last_n(items, n) returns the whole list for n <= 0; it should return []."
+f2p = ["tests/test_issue.py::test_last_n_zero"]
+p2p = ["tests/test_existing.py::test_last_n_basic", "tests/test_existing.py::test_first_n_basic", "tests/test_existing.py::test_first_n_negative"]
+p2p_files = ["tests/test_existing.py"]
+
+[[mutants]]
+id = "m1"
+kind = "off-by-one"
+rationale = "Uses n < 0, so n = 0 slices items[-0:] and returns the whole list."
+witness = "from pkg.window import last_n\nlast_n([1, 2, 3], 0)"
+file = "pkg/window.py"
+old = "    if n <= 0:\n"
+new = "    if n < 0:\n"
+expected_status = "killed"
+
+[[mutants]]
+id = "m2"
+kind = "wrong-condition"
+rationale = "Returns only the last element for every positive n, so last_n([1, 2, 3], 2) gives [3] instead of [2, 3]."
+witness = "from pkg.window import last_n\nlast_n([1, 2, 3], 2)"
+file = "pkg/window.py"
+old = "    return items[-n:]\n"
+new = "    return items[-1:]\n"
+expected_status = "caught-by-p2p"
